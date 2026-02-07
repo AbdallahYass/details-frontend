@@ -1,4 +1,4 @@
-name: Final Fix Deploy
+name: Deployment
 on:
   push:
     branches: [ main ]
@@ -7,37 +7,35 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      # 1. نزل الكود
       - uses: actions/checkout@v2
 
-      # 1. تنزيل Flutter
+      # 2. نزل Flutter
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
       
-      # 2. بناء الموقع
-      - name: Build Web App
+      # 3. ابني الموقع
+      - name: Build Flutter Web
         run: |
           flutter config --enable-web
           flutter build web --release
 
-      # 3. الحركة السحرية: نقل الملفات للواجهة + إنشاء ملف التوجيه
-      - name: Move Files to Root
+      # 4. الخطوة الحاسمة: ادخل المجلد وارفع يدوياً
+      - name: Manual Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          # انسخ ملفات الموقع من المجلد الداخلي للمجلد الرئيسي
-          cp -r build/web/* .
+          # نزل أداة Vercel الرسمية
+          npm install -g vercel
           
-          # احذف مجلد البناء القديم عشان ما يصير لخبطة
-          rm -rf build
+          # ادخل على المجلد الجاهز (زي ما كنت تعمل بجهازك)
+          cd build/web
           
-          # إنشاء ملف عشان تحديث الصفحة ما يعطي خطأ
+          # صنع ملف صغير عشان ما يعطي 404 لما تعمل Refresh
           echo '{"rewrites": [{"source": "/(.*)", "destination": "/index.html"}]}' > vercel.json
-
-      # 4. الرفع لـ Vercel (من المكان الحالي)
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v20
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
-          working-directory: ./
+          
+          # أمر الرفع المباشر (بدون فلسفة)
+          vercel deploy --prod --token $VERCEL_TOKEN --yes
