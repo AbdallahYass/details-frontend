@@ -1,4 +1,4 @@
-name: Deploy Flutter Web
+name: Final Fix Deploy
 on:
   push:
     branches: [ main ]
@@ -9,18 +9,35 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # تثبيت Flutter وبناء الموقع
+      # 1. تنزيل Flutter
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-      - run: flutter config --enable-web
-      - run: flutter build web --release
+      
+      # 2. بناء الموقع
+      - name: Build Web App
+        run: |
+          flutter config --enable-web
+          flutter build web --release
 
-      # رفع المجلد الجاهز فقط (بدون فلسفة)
-      - uses: amondnet/vercel-action@v20
+      # 3. الحركة السحرية: نقل الملفات للواجهة + إنشاء ملف التوجيه
+      - name: Move Files to Root
+        run: |
+          # انسخ ملفات الموقع من المجلد الداخلي للمجلد الرئيسي
+          cp -r build/web/* .
+          
+          # احذف مجلد البناء القديم عشان ما يصير لخبطة
+          rm -rf build
+          
+          # إنشاء ملف عشان تحديث الصفحة ما يعطي خطأ
+          echo '{"rewrites": [{"source": "/(.*)", "destination": "/index.html"}]}' > vercel.json
+
+      # 4. الرفع لـ Vercel (من المكان الحالي)
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v20
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod' 
-          working-directory: build/web # 👈 حددنا المجلد بدقة
+          vercel-args: '--prod'
+          working-directory: ./
