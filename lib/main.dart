@@ -13,7 +13,7 @@ class DetailsStoreApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Details Store', // اسم التبويب
+      title: 'Details Store',
       theme: ThemeData(
         // 1. سر التصميم: الخلفية البيضاء النقية
         scaffoldBackgroundColor: const Color(0xFFFFFFFF),
@@ -22,15 +22,15 @@ class DetailsStoreApp extends StatelessWidget {
         // 2. تصميم البار العلوي (Minimal Header)
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.white,
-          elevation: 0, // بدون ظل نهائياً
+          elevation: 0,
           centerTitle: true,
           iconTheme: IconThemeData(color: Colors.black, size: 24),
           titleTextStyle: TextStyle(
             color: Colors.black,
-            fontFamily: 'Times New Roman', // خط كلاسيكي فخم للعنوان
+            fontFamily: 'Times New Roman',
             fontSize: 28,
             fontWeight: FontWeight.w500,
-            letterSpacing: 2.0, // تباعد الأحرف
+            letterSpacing: 2.0,
           ),
         ),
       ),
@@ -39,7 +39,6 @@ class DetailsStoreApp extends StatelessWidget {
   }
 }
 
-// موديل البيانات (نفس البنية اللي في السيرفر)
 class Product {
   final String name;
   final double price;
@@ -89,7 +88,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
   }
 
   Future<void> fetchProducts() async {
-    // 🔴 تأكد أن هذا الرابط هو رابط الباك إند الصحيح
+    // الرابط الموجه لـ API الخاص بك
     final url = Uri.parse('https://api.details-store.com/api/products');
     try {
       final response = await http.get(url);
@@ -101,25 +100,20 @@ class _StoreHomePageState extends State<StoreHomePage> {
         });
       }
     } catch (e) {
-      print('Error: $e');
+      debugPrint('Error: $e');
       setState(() => isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // تحديد عدد الأعمدة حسب حجم الشاشة (للموبايل 2، للكمبيوتر 4)
     double width = MediaQuery.of(context).size.width;
     int crossAxisCount = width > 600 ? 4 : 2;
 
     return Scaffold(
-      // الهيدر الفخم
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.menu),
-        ), // زر القائمة
-        title: const Text("DETAILS1"), // اللوجو
+        leading: IconButton(onPressed: () {}, icon: const Icon(Icons.menu)),
+        title: const Text("DETAILS"), // اسم البراند الخاص بك
         actions: [
           IconButton(onPressed: () {}, icon: const Icon(Icons.search)),
           IconButton(
@@ -129,7 +123,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
           const SizedBox(width: 10),
         ],
       ),
-
       body: isLoading
           ? const Center(
               child: CircularProgressIndicator(
@@ -138,60 +131,54 @@ class _StoreHomePageState extends State<StoreHomePage> {
               ),
             )
           : Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-              ), // هوامش جانبية
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: GridView.builder(
                 physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.only(top: 20, bottom: 40),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: crossAxisCount,
-                  childAspectRatio:
-                      0.60, // 👈 السر هنا: نسبة الطول للعرض (جعلناها طويلة جداً)
-                  crossAxisSpacing: 15, // مسافة أفقية بين المنتجات
-                  mainAxisSpacing: 30, // مسافة عمودية كبيرة
+                  childAspectRatio: 0.60, // نسبة الطول للعرض (Portrait)
+                  crossAxisSpacing: 15,
+                  mainAxisSpacing: 30,
                 ),
                 itemCount: products.length,
                 itemBuilder: (context, index) {
-                  return _buildLady90sCard(products[index]);
+                  return _buildDetailsCard(
+                    products[index],
+                  ); // الكارت الخاص بـ Details
                 },
               ),
             ),
     );
   }
 
-  // تصميم الكارت (نسخة Lady90s)
-  Widget _buildLady90sCard(Product product) {
+  // تصميم الكارت الخاص ببراند Details
+  Widget _buildDetailsCard(Product product) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start, // كل النصوص تبدأ من اليسار
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 1. الصورة (تأخذ المساحة الأكبر)
         Expanded(
           child: Stack(
             children: [
-              // الصورة نفسها
               Container(
                 width: double.infinity,
-                color: const Color(
-                  0xFFF5F5F5,
-                ), // خلفية رمادية خفيفة جداً للصورة (مثل الموقع)
+                color: const Color(0xFFF5F5F5),
                 child: Image.network(
                   product.imageUrl,
-                  fit: BoxFit.cover, // تغطية كاملة
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => const Center(
+                    child: Icon(Icons.broken_image, color: Colors.grey),
+                  ),
                 ),
               ),
-
-              // بادج "SOLD OUT" (تصميم بسيط وراقي)
               if (product.isSoldOut)
                 Positioned(
-                  bottom: 0, // البادج في الأسفل فوق الصورة
+                  bottom: 0,
                   left: 0,
                   right: 0,
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 6),
-                    color: Colors.white.withOpacity(
-                      0.9,
-                    ), // خلفية بيضاء شبه شفافة
+                    color: Colors.white.withOpacity(0.9),
                     alignment: Alignment.center,
                     child: const Text(
                       "SOLD OUT",
@@ -207,59 +194,48 @@ class _StoreHomePageState extends State<StoreHomePage> {
             ],
           ),
         ),
-
-        const SizedBox(height: 12), // مسافة بين الصورة والنصوص
-        // 2. اسم الماركة (صغير، رمادي، حروف كبيرة)
+        const SizedBox(height: 12),
         if (product.brand != null)
           Text(
             product.brand!.toUpperCase(),
             style: const TextStyle(
               fontSize: 10,
-              color: Color(0xFF888888), // رمادي متوسط
+              color: Color(0xFF888888),
               fontWeight: FontWeight.w600,
               letterSpacing: 1.2,
             ),
           ),
-
         const SizedBox(height: 4),
-
-        // 3. اسم المنتج (خط عادي، ليس سميكاً)
         Text(
           product.name,
           maxLines: 1,
-          overflow: TextOverflow.ellipsis, // نقاط (...) اذا الاسم طويل
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(
-            fontFamily: 'Times New Roman', // نفس خط الهيدر لزيادة الفخامة
+            fontFamily: 'Times New Roman',
             fontSize: 15,
             color: Colors.black,
             height: 1.2,
           ),
         ),
-
         const SizedBox(height: 6),
-
-        // 4. السعر (بسيط جداً)
         Row(
           children: [
-            // السعر الجديد
             Text(
               "\$${product.price.toStringAsFixed(0)}",
               style: const TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w500, // وزن متوسط
+                fontWeight: FontWeight.w500,
                 color: Colors.black,
               ),
             ),
-
-            // السعر القديم (اذا وجد)
             if (product.oldPrice != null) ...[
               const SizedBox(width: 8),
               Text(
                 "\$${product.oldPrice!.toStringAsFixed(0)}",
                 style: const TextStyle(
                   fontSize: 12,
-                  color: Color(0xFFB0B0B0), // رمادي فاتح
-                  decoration: TextDecoration.lineThrough, // خط في المنتصف
+                  color: Color(0xFFB0B0B0),
+                  decoration: TextDecoration.lineThrough,
                 ),
               ),
             ],
