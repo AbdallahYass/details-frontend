@@ -541,16 +541,11 @@ class _StoreHomePageState extends State<StoreHomePage> {
         _navIcon(Icons.person_outline, "الحساب"),
         _navIcon(Icons.shopping_bag_outlined, "السلة"),
         _navIcon(Icons.favorite_border, "الأمنيات"),
-        _navIcon(Icons.chat_bubble_outline, "تسوق", color: Colors.green),
+        _navIcon(Icons.chat_bubble_outline, "تسوق", c: Colors.green),
       ],
     ),
   );
-  Widget _navIcon(
-    IconData i,
-    String l, {
-    Color c = Colors.black,
-    required MaterialColor color,
-  }) => Column(
+  Widget _navIcon(IconData i, String l, {Color c = Colors.black}) => Column(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
       Icon(i, color: c, size: 24),
