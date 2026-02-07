@@ -90,13 +90,11 @@ class _StoreHomePageState extends State<StoreHomePage> {
   List<BannerModel> banners = [];
   bool isLoading = true;
 
-  // التحكم في السلايدرات
   int _currentBannerIndex = 0;
   final PageController _heroController = PageController();
   final PageController _announcementController = PageController();
   Timer? _autoScrollTimer;
 
-  // إعلانات الشريط العلوي (يمكنك جلبها لاحقاً من الـ API)
   final List<String> _topAnnouncements = [
     "توصيل مجاني للطلبات فوق 500 ريال",
     "خصم 20% على تشكيلة الساعات الجديدة",
@@ -111,7 +109,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
 
   @override
   void dispose() {
-    _autoScrollTimer?.cancel(); // إيقاف المؤقت عند إغلاق التطبيق
+    _autoScrollTimer?.cancel();
     _heroController.dispose();
     _announcementController.dispose();
     super.dispose();
@@ -121,7 +119,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
     await Future.wait([fetchProducts(), fetchBanners()]);
     if (mounted) {
       setState(() => isLoading = false);
-      _startAutoScroll(); // بدء التمرير التلقائي بعد تحميل البيانات
+      _startAutoScroll();
     }
   }
 
@@ -132,8 +130,8 @@ class _StoreHomePageState extends State<StoreHomePage> {
         if (_heroController.hasClients) {
           _heroController.animateToPage(
             _currentBannerIndex,
-            duration: const Duration(milliseconds: 800),
-            curve: Curves.easeInOut,
+            duration: const Duration(milliseconds: 1000),
+            curve: Curves.easeInOutQuart,
           );
         }
       }
@@ -196,16 +194,9 @@ class _StoreHomePageState extends State<StoreHomePage> {
               child: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
-                  // 1. شريط الإعلانات العلوي الصغير
                   SliverToBoxAdapter(child: _buildTopAnnouncement()),
-
-                  // 2. السلايدر الرئيسي (Hero)
                   SliverToBoxAdapter(child: _buildHeroSlider()),
-
-                  // 3. الأصناف
                   SliverToBoxAdapter(child: _buildCategoriesSection()),
-
-                  // 4. شبكة المنتجات
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     sliver: SliverGrid(
@@ -230,7 +221,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
     );
   }
 
-  // --- شريط الإعلانات العلوي ---
   Widget _buildTopAnnouncement() {
     return Container(
       height: 35,
@@ -251,34 +241,12 @@ class _StoreHomePageState extends State<StoreHomePage> {
               ),
             ),
           ),
-          _announcementArrow(Icons.chevron_left, isLeft: true),
-          _announcementArrow(Icons.chevron_right, isLeft: false),
         ],
       ),
     );
   }
 
-  Widget _announcementArrow(IconData icon, {required bool isLeft}) =>
-      Positioned(
-        left: isLeft ? 5 : null,
-        right: isLeft ? null : 5,
-        top: 0,
-        bottom: 0,
-        child: IconButton(
-          icon: Icon(icon, size: 16, color: Colors.black54),
-          onPressed: () => isLeft
-              ? _announcementController.previousPage(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.ease,
-                )
-              : _announcementController.nextPage(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.ease,
-                ),
-        ),
-      );
-
-  // --- السلايدر الرئيسي (Hero) ---
+  // --- السلايدر الرئيسي المطور بالأنيميشن ---
   Widget _buildHeroSlider() {
     if (banners.isEmpty) return const SizedBox();
     return SizedBox(
@@ -293,51 +261,10 @@ class _StoreHomePageState extends State<StoreHomePage> {
             onPageChanged: (index) =>
                 setState(() => _currentBannerIndex = index),
             itemBuilder: (context, index) {
-              final banner = banners[index];
-              return Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.network(banner.imageUrl, fit: BoxFit.cover),
-                  Container(color: Colors.black.withOpacity(0.2)),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        banner.title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Container(width: 50, height: 2, color: Colors.white),
-                      const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 25,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white, width: 1.5),
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: Text(
-                          banner.buttonText,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              );
+              // استدعاء الويجت المتحركة لكل إعلان
+              return _AnimatedBannerItem(banner: banners[index]);
             },
           ),
-          _sliderArrow(Icons.arrow_back_ios, isLeft: true),
-          _sliderArrow(Icons.arrow_forward_ios, isLeft: false),
           Positioned(
             bottom: 20,
             child: Row(
@@ -352,27 +279,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
     );
   }
 
-  Widget _sliderArrow(IconData icon, {required bool isLeft}) => Positioned(
-    left: isLeft ? 15 : null,
-    right: isLeft ? null : 15,
-    child: IconButton(
-      icon: Icon(icon, color: Colors.white70, size: 28),
-      onPressed: () {
-        _autoScrollTimer?.cancel(); // إيقاف المؤقت عند التحكم اليدوي مؤقتاً
-        isLeft
-            ? _heroController.previousPage(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.ease,
-              )
-            : _heroController.nextPage(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.ease,
-              );
-        _startAutoScroll(); // إعادة تشغيل المؤقت
-      },
-    ),
-  );
-
   Widget _dot(bool active) => Container(
     margin: const EdgeInsets.symmetric(horizontal: 4),
     width: 8,
@@ -384,7 +290,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
     ),
   );
 
-  // --- بقية العناصر (Categories, Products, Nav) ---
   Widget _buildCategoriesSection() => Column(
     children: [
       const SizedBox(height: 35),
@@ -439,43 +344,20 @@ class _StoreHomePageState extends State<StoreHomePage> {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Expanded(
-        child: Stack(
-          children: [
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9F9F9),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: Image.network(
-                  product.imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (c, e, s) => const Icon(Icons.broken_image),
-                ),
-              ),
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF9F9F9),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: Image.network(
+              product.imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (c, e, s) => const Icon(Icons.broken_image),
             ),
-            if (product.isSoldOut)
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  color: Colors.white.withOpacity(0.9),
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: const Text(
-                    "SOLD OUT",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-          ],
+          ),
         ),
       ),
       const SizedBox(height: 12),
@@ -542,4 +424,127 @@ class _StoreHomePageState extends State<StoreHomePage> {
           Text(label, style: TextStyle(color: color, fontSize: 10)),
         ],
       );
+}
+
+// ==========================================
+// === الويجت الجديدة: إعلان متحرك احترافي ===
+// ==========================================
+class _AnimatedBannerItem extends StatefulWidget {
+  final BannerModel banner;
+  const _AnimatedBannerItem({required this.banner});
+
+  @override
+  State<_AnimatedBannerItem> createState() => _AnimatedBannerItemState();
+}
+
+class _AnimatedBannerItemState extends State<_AnimatedBannerItem>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    // مدة الأنيميشن ثانية ونصف ليعطي شعور الهدوء والفخامة
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+
+    // 1. أنيميشن الصورة: "زوم" من 1.1 لـ 1.0
+    _scaleAnimation = Tween<double>(
+      begin: 1.15,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
+    // 2. أنيميشن النص: يبدأ بعد 30% من الوقت (Interval)
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.4, 1.0, curve: Curves.easeIn),
+      ),
+    );
+
+    // 3. أنيميشن الصعود: من الأسفل للأعلى
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: const Interval(0.4, 1.0, curve: Curves.easeOutQuart),
+          ),
+        );
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // الصورة مع الزوم
+        ScaleTransition(
+          scale: _scaleAnimation,
+          child: Image.network(widget.banner.imageUrl, fit: BoxFit.cover),
+        ),
+        Container(color: Colors.black.withOpacity(0.25)), // تعتيم
+        // النص مع الصعود والظهور التدريجي
+        FadeTransition(
+          opacity: _fadeAnimation,
+          child: SlideTransition(
+            position: _slideAnimation,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  widget.banner.title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 10,
+                        color: Colors.black38,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Container(width: 50, height: 2, color: Colors.white),
+                const SizedBox(height: 25),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 30,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.white, width: 1.5),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Text(
+                    widget.banner.buttonText,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
