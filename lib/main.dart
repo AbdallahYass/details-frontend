@@ -90,10 +90,13 @@ class _StoreHomePageState extends State<StoreHomePage> {
   List<BannerModel> banners = [];
   bool isLoading = true;
 
+  // التحكم في السلايدرات والمؤقتات
   int _currentBannerIndex = 0;
+  int _currentAnnouncementIndex = 0;
   final PageController _heroController = PageController();
   final PageController _announcementController = PageController();
-  Timer? _autoScrollTimer;
+  Timer? _heroTimer;
+  Timer? _announcementTimer;
 
   final List<String> _topAnnouncements = [
     "توصيل مجاني للطلبات فوق 500 شيكل",
@@ -109,7 +112,8 @@ class _StoreHomePageState extends State<StoreHomePage> {
 
   @override
   void dispose() {
-    _autoScrollTimer?.cancel();
+    _heroTimer?.cancel();
+    _announcementTimer?.cancel();
     _heroController.dispose();
     _announcementController.dispose();
     super.dispose();
@@ -119,12 +123,14 @@ class _StoreHomePageState extends State<StoreHomePage> {
     await Future.wait([fetchProducts(), fetchBanners()]);
     if (mounted) {
       setState(() => isLoading = false);
-      _startAutoScroll();
+      _startHeroScroll();
+      _startAnnouncementScroll();
     }
   }
 
-  void _startAutoScroll() {
-    _autoScrollTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+  // تمرير تلقائي للسلايدر الرئيسي
+  void _startHeroScroll() {
+    _heroTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
       if (banners.isNotEmpty) {
         _currentBannerIndex = (_currentBannerIndex + 1) % banners.length;
         if (_heroController.hasClients) {
@@ -132,6 +138,23 @@ class _StoreHomePageState extends State<StoreHomePage> {
             _currentBannerIndex,
             duration: const Duration(milliseconds: 1000),
             curve: Curves.easeInOutQuart,
+          );
+        }
+      }
+    });
+  }
+
+  // تمرير تلقائي للشريط العلوي
+  void _startAnnouncementScroll() {
+    _announcementTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (_topAnnouncements.isNotEmpty) {
+        _currentAnnouncementIndex =
+            (_currentAnnouncementIndex + 1) % _topAnnouncements.length;
+        if (_announcementController.hasClients) {
+          _announcementController.animateToPage(
+            _currentAnnouncementIndex,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOut,
           );
         }
       }
@@ -225,28 +248,23 @@ class _StoreHomePageState extends State<StoreHomePage> {
     return Container(
       height: 35,
       color: const Color(0xFFF7F7F7),
-      child: Stack(
-        children: [
-          PageView.builder(
-            controller: _announcementController,
-            itemCount: _topAnnouncements.length,
-            itemBuilder: (context, index) => Center(
-              child: Text(
-                _topAnnouncements[index],
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.5,
-                ),
-              ),
+      child: PageView.builder(
+        controller: _announcementController,
+        itemCount: _topAnnouncements.length,
+        itemBuilder: (context, index) => Center(
+          child: Text(
+            _topAnnouncements[index],
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.5,
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
-  // --- السلايدر الرئيسي المطور بالأنيميشن ---
   Widget _buildHeroSlider() {
     if (banners.isEmpty) return const SizedBox();
     return SizedBox(
@@ -260,10 +278,8 @@ class _StoreHomePageState extends State<StoreHomePage> {
             itemCount: banners.length,
             onPageChanged: (index) =>
                 setState(() => _currentBannerIndex = index),
-            itemBuilder: (context, index) {
-              // استدعاء الويجت المتحركة لكل إعلان
-              return _AnimatedBannerItem(banner: banners[index]);
-            },
+            itemBuilder: (context, index) =>
+                _AnimatedBannerItem(banner: banners[index]),
           ),
           Positioned(
             bottom: 20,
@@ -426,13 +442,10 @@ class _StoreHomePageState extends State<StoreHomePage> {
       );
 }
 
-// ==========================================
-// === الويجت الجديدة: إعلان متحرك احترافي ===
-// ==========================================
+// --- الويجت المتحركة للبانر (كما هي) ---
 class _AnimatedBannerItem extends StatefulWidget {
   final BannerModel banner;
   const _AnimatedBannerItem({required this.banner});
-
   @override
   State<_AnimatedBannerItem> createState() => _AnimatedBannerItemState();
 }
@@ -447,27 +460,20 @@ class _AnimatedBannerItemState extends State<_AnimatedBannerItem>
   @override
   void initState() {
     super.initState();
-    // مدة الأنيميشن ثانية ونصف ليعطي شعور الهدوء والفخامة
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
-
-    // 1. أنيميشن الصورة: "زوم" من 1.1 لـ 1.0
     _scaleAnimation = Tween<double>(
       begin: 1.15,
       end: 1.0,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-
-    // 2. أنيميشن النص: يبدأ بعد 30% من الوقت (Interval)
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: const Interval(0.4, 1.0, curve: Curves.easeIn),
       ),
     );
-
-    // 3. أنيميشن الصعود: من الأسفل للأعلى
     _slideAnimation =
         Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
           CurvedAnimation(
@@ -475,7 +481,6 @@ class _AnimatedBannerItemState extends State<_AnimatedBannerItem>
             curve: const Interval(0.4, 1.0, curve: Curves.easeOutQuart),
           ),
         );
-
     _controller.forward();
   }
 
@@ -490,13 +495,11 @@ class _AnimatedBannerItemState extends State<_AnimatedBannerItem>
     return Stack(
       fit: StackFit.expand,
       children: [
-        // الصورة مع الزوم
         ScaleTransition(
           scale: _scaleAnimation,
           child: Image.network(widget.banner.imageUrl, fit: BoxFit.cover),
         ),
-        Container(color: Colors.black.withOpacity(0.25)), // تعتيم
-        // النص مع الصعود والظهور التدريجي
+        Container(color: Colors.black.withOpacity(0.25)),
         FadeTransition(
           opacity: _fadeAnimation,
           child: SlideTransition(
@@ -511,13 +514,6 @@ class _AnimatedBannerItemState extends State<_AnimatedBannerItem>
                     color: Colors.white,
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
-                    shadows: [
-                      Shadow(
-                        blurRadius: 10,
-                        color: Colors.black38,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
                   ),
                 ),
                 const SizedBox(height: 10),
