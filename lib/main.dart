@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
+import 'package:visibility_detector/visibility_detector.dart'; // مكتبة اكتشاف الرؤية
 
 void main() => runApp(const DetailsStoreApp());
 
@@ -94,8 +95,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
   int _currentAnnouncementIndex = 0;
   final PageController _heroController = PageController();
   final PageController _announcementController = PageController();
-  Timer? _heroTimer;
-  Timer? _announcementTimer;
+  Timer? _heroTimer, _announcementTimer;
 
   final List<String> _topAnnouncements = [
     "توصيل مجاني للطلبات فوق 500 شيكل",
@@ -163,11 +163,10 @@ class _StoreHomePageState extends State<StoreHomePage> {
       final res = await http.get(
         Uri.parse('https://api.details-store.com/api/products'),
       );
-      if (res.statusCode == 200) {
+      if (res.statusCode == 200)
         products = (json.decode(res.body) as List)
             .map((j) => Product.fromJson(j))
             .toList();
-      }
     } catch (e) {
       debugPrint("Error products: $e");
     }
@@ -178,11 +177,10 @@ class _StoreHomePageState extends State<StoreHomePage> {
       final res = await http.get(
         Uri.parse('https://api.details-store.com/api/banners'),
       );
-      if (res.statusCode == 200) {
+      if (res.statusCode == 200)
         banners = (json.decode(res.body) as List)
             .map((j) => BannerModel.fromJson(j))
             .toList();
-      }
     } catch (e) {
       debugPrint("Error banners: $e");
     }
@@ -234,82 +232,74 @@ class _StoreHomePageState extends State<StoreHomePage> {
                     ),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 50)),
-                  // --- قسم الـ Footer الجديد ---
-                  SliverToBoxAdapter(child: _buildFooter()),
+                  // --- تطبيق ويجت الأنيميشن على الفوتر ---
+                  SliverToBoxAdapter(
+                    child: RevealOnScroll(child: _buildFooter()),
+                  ),
                 ],
               ),
             ),
       bottomNavigationBar: _buildBottomNav(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
-        backgroundColor: const Color(0xFF25D366), // لون واتساب
+        backgroundColor: const Color(0xFF25D366),
         child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
       ),
     );
   }
 
-  Widget _buildTopAnnouncement() {
-    return Container(
-      height: 35,
-      color: const Color(0xFFF7F7F7),
-      child: PageView.builder(
-        controller: _announcementController,
-        itemCount: _topAnnouncements.length,
-        itemBuilder: (context, index) => Center(
-          child: Text(
-            _topAnnouncements[index],
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.5,
-            ),
-          ),
+  // --- شريط الإعلانات والسلايدر ---
+  Widget _buildTopAnnouncement() => Container(
+    height: 35,
+    color: const Color(0xFFF7F7F7),
+    child: PageView.builder(
+      controller: _announcementController,
+      itemCount: _topAnnouncements.length,
+      itemBuilder: (c, i) => Center(
+        child: Text(
+          _topAnnouncements[i],
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
         ),
       ),
-    );
-  }
-
-  Widget _buildHeroSlider() {
-    if (banners.isEmpty) return const SizedBox();
-    return SizedBox(
-      height: 400,
-      width: double.infinity,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          PageView.builder(
-            controller: _heroController,
-            itemCount: banners.length,
-            onPageChanged: (index) =>
-                setState(() => _currentBannerIndex = index),
-            itemBuilder: (context, index) =>
-                _AnimatedBannerItem(banner: banners[index]),
-          ),
-          Positioned(
-            bottom: 20,
-            child: Row(
-              children: List.generate(
-                banners.length,
-                (i) => _dot(i == _currentBannerIndex),
+    ),
+  );
+  Widget _buildHeroSlider() => banners.isEmpty
+      ? const SizedBox()
+      : SizedBox(
+          height: 400,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              PageView.builder(
+                controller: _heroController,
+                itemCount: banners.length,
+                onPageChanged: (i) => setState(() => _currentBannerIndex = i),
+                itemBuilder: (c, i) => _AnimatedBannerItem(banner: banners[i]),
               ),
-            ),
+              Positioned(
+                bottom: 20,
+                child: Row(
+                  children: List.generate(
+                    banners.length,
+                    (i) => _dot(i == _currentBannerIndex),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _dot(bool active) => Container(
+        );
+  Widget _dot(bool a) => Container(
     margin: const EdgeInsets.symmetric(horizontal: 4),
     width: 8,
     height: 8,
     decoration: BoxDecoration(
-      color: active ? Colors.white : Colors.white.withOpacity(0.5),
+      color: a ? Colors.white : Colors.white.withOpacity(0.5),
       shape: BoxShape.circle,
       border: Border.all(color: Colors.white),
     ),
   );
 
+  // --- الأصناف والمنتجات ---
   Widget _buildCategoriesSection() => Column(
     children: [
       const SizedBox(height: 35),
@@ -339,8 +329,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
       const SizedBox(height: 35),
     ],
   );
-
-  Widget _categoryCircle(String label) => Column(
+  Widget _categoryCircle(String l) => Column(
     children: [
       Container(
         width: 80,
@@ -354,13 +343,12 @@ class _StoreHomePageState extends State<StoreHomePage> {
       ),
       const SizedBox(height: 8),
       Text(
-        label,
+        l,
         style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
       ),
     ],
   );
-
-  Widget _buildProductCard(Product product) => Column(
+  Widget _buildProductCard(Product p) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Expanded(
@@ -373,7 +361,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: Image.network(
-              product.imageUrl,
+              p.imageUrl,
               fit: BoxFit.cover,
               errorBuilder: (c, e, s) => const Icon(Icons.broken_image),
             ),
@@ -382,7 +370,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
       ),
       const SizedBox(height: 12),
       Text(
-        product.brand.toUpperCase(),
+        p.brand.toUpperCase(),
         style: const TextStyle(
           fontSize: 10,
           color: Colors.grey,
@@ -390,7 +378,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
         ),
       ),
       Text(
-        product.name,
+        p.name,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(fontSize: 14),
@@ -398,13 +386,13 @@ class _StoreHomePageState extends State<StoreHomePage> {
       Row(
         children: [
           Text(
-            "\$${product.price}",
+            "\$${p.price}",
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          if (product.oldPrice != null) ...[
+          if (p.oldPrice != null) ...[
             const SizedBox(width: 8),
             Text(
-              "\$${product.oldPrice}",
+              "\$${p.oldPrice}",
               style: const TextStyle(
                 fontSize: 12,
                 color: Colors.grey,
@@ -417,41 +405,33 @@ class _StoreHomePageState extends State<StoreHomePage> {
     ],
   );
 
-  // --- برمجة الـ Footer الجديد ---
+  // --- الفوتر الفخم (Footer) ---
   Widget _buildFooter() {
     return Container(
       width: double.infinity,
-      color: Colors.black, // اللون الأسود الفخم كما في ليدي 90
+      color: Colors.black,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
       child: Column(
         children: [
           Wrap(
             spacing: 40,
             runSpacing: 40,
-            alignment: WrapAlignment.start,
-            textDirection: TextDirection.rtl, // ليدعم اللغة العربية
+            textDirection: TextDirection.rtl,
             children: [
-              // 1. من نحن
               _footerColumn("من نحن ؟", [
                 "ديتيلز انطلق ليكون الوجهة الأولى للحقائب والساعات الفاخرة، نهتم بأدق التفاصيل لنقدم لكم قطعاً تعكس ذوقكم الرفيع.",
               ], isText: true),
-
-              // 2. اختصارات
               _footerColumn("اختصارات", [
                 "النساء",
                 "الرجال",
                 "المحافظ",
                 "ساعات",
               ]),
-
-              // 3. سياساتنا
               _footerColumn("سياساتنا", [
                 "سياسة إلغاء الطلب",
                 "سياسة الإرجاع",
                 "سياسة الشحن",
               ]),
-
-              // 4. ابق على إطلاع (البريد الإلكتروني)
               _footerEmailSection(),
             ],
           ),
@@ -467,98 +447,87 @@ class _StoreHomePageState extends State<StoreHomePage> {
     );
   }
 
-  Widget _footerColumn(
-    String title,
-    List<String> items, {
-    bool isText = false,
-  }) {
-    return SizedBox(
-      width: 180,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 20),
-          ...items
-              .map(
-                (item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(
-                    item,
-                    style: TextStyle(
-                      color: isText ? Colors.white70 : Colors.white54,
-                      fontSize: 13,
-                      height: 1.6,
-                    ),
-                  ),
-                ),
-              )
-              .toList(),
-        ],
-      ),
-    );
-  }
-
-  Widget _footerEmailSection() {
-    return SizedBox(
-      width: 280,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "ابقى على إطلاع",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 15),
-          const Text(
-            "اشترك لتصلك آخر العروض والمنتجات عبر بريدك الإلكتروني",
-            style: TextStyle(color: Colors.white54, fontSize: 12),
-          ),
-          const SizedBox(height: 20),
-          TextField(
-            style: const TextStyle(color: Colors.white, fontSize: 13),
-            decoration: InputDecoration(
-              hintText: "بريدك الإلكتروني",
-              hintStyle: const TextStyle(color: Colors.white24),
-              filled: true,
-              fillColor: Colors.white.withOpacity(0.05),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 15),
-              enabledBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Colors.white10),
-                borderRadius: BorderRadius.circular(5),
+  Widget _footerColumn(String t, List<String> items, {bool isText = false}) =>
+      SizedBox(
+        width: 180,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              t,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
               ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: const BorderSide(color: Colors.white30),
-                borderRadius: BorderRadius.circular(5),
-              ),
-              suffixIcon: TextButton(
-                onPressed: () {},
-                child: const Text(
-                  "إشتراك",
+            ),
+            const SizedBox(height: 20),
+            ...items.map(
+              (i) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(
+                  i,
                   style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                    color: isText ? Colors.white70 : Colors.white54,
+                    fontSize: 13,
+                    height: 1.6,
                   ),
                 ),
               ),
             ),
+          ],
+        ),
+      );
+  Widget _footerEmailSection() => SizedBox(
+    width: 280,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "ابقى على إطلاع",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
           ),
-        ],
-      ),
-    );
-  }
-
+        ),
+        const SizedBox(height: 15),
+        const Text(
+          "اشترك لتصلك آخر العروض والمنتجات عبر بريدك الإلكتروني",
+          style: TextStyle(color: Colors.white54, fontSize: 12),
+        ),
+        const SizedBox(height: 20),
+        TextField(
+          style: const TextStyle(color: Colors.white, fontSize: 13),
+          decoration: InputDecoration(
+            hintText: "بريدك الإلكتروني",
+            hintStyle: const TextStyle(color: Colors.white24),
+            filled: true,
+            fillColor: Colors.white.withOpacity(0.05),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 15),
+            enabledBorder: OutlineInputBorder(
+              borderSide: const BorderSide(color: Colors.white10),
+              borderRadius: BorderRadius.circular(5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: const BorderSide(color: Colors.white30),
+              borderRadius: BorderRadius.circular(5),
+            ),
+            suffixIcon: TextButton(
+              onPressed: () {},
+              child: const Text(
+                "إشتراك",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
   Widget _buildBottomNav() => Container(
     height: 70,
     decoration: BoxDecoration(
@@ -576,16 +545,76 @@ class _StoreHomePageState extends State<StoreHomePage> {
       ],
     ),
   );
+  Widget _navIcon(
+    IconData i,
+    String l, {
+    Color c = Colors.black,
+    required MaterialColor color,
+  }) => Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Icon(i, color: c, size: 24),
+      const SizedBox(height: 4),
+      Text(l, style: TextStyle(color: c, fontSize: 10)),
+    ],
+  );
+}
 
-  Widget _navIcon(IconData icon, String label, {Color color = Colors.black}) =>
-      Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 4),
-          Text(label, style: TextStyle(color: color, fontSize: 10)),
-        ],
-      );
+// --- ويجت الأنيميشن عند السكرول (Reveal On Scroll) ---
+class RevealOnScroll extends StatefulWidget {
+  final Widget child;
+  const RevealOnScroll({super.key, required this.child});
+  @override
+  State<RevealOnScroll> createState() => _RevealOnScrollState();
+}
+
+class _RevealOnScrollState extends State<RevealOnScroll>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _c;
+  late Animation<double> _f;
+  late Animation<Offset> _s;
+  bool _revealed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+    _f = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _c, curve: Curves.easeOut));
+    _s = Tween<Offset>(
+      begin: const Offset(0, 0.2),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _c, curve: Curves.easeOutQuart));
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return VisibilityDetector(
+      key: Key('reveal-${widget.child.hashCode}'),
+      onVisibilityChanged: (info) {
+        // إذا ظهر أكثر من 10% من العنصر ولم يتم تشغيل الحركة من قبل
+        if (info.visibleFraction > 0.1 && !_revealed) {
+          _c.forward();
+          _revealed = true;
+        }
+      },
+      child: FadeTransition(
+        opacity: _f,
+        child: SlideTransition(position: _s, child: widget.child),
+      ),
+    );
+  }
 }
 
 // --- الويجت المتحركة للبانر ---
@@ -598,41 +627,38 @@ class _AnimatedBannerItem extends StatefulWidget {
 
 class _AnimatedBannerItemState extends State<_AnimatedBannerItem>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-
+  late AnimationController _c;
+  late Animation<double> _sc, _f;
+  late Animation<Offset> _sl;
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _c = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
-    _scaleAnimation = Tween<double>(
+    _sc = Tween<double>(
       begin: 1.15,
       end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+    ).animate(CurvedAnimation(parent: _c, curve: Curves.easeOut));
+    _f = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
-        parent: _controller,
+        parent: _c,
         curve: const Interval(0.4, 1.0, curve: Curves.easeIn),
       ),
     );
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
-          CurvedAnimation(
-            parent: _controller,
-            curve: const Interval(0.4, 1.0, curve: Curves.easeOutQuart),
-          ),
-        );
-    _controller.forward();
+    _sl = Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+      CurvedAnimation(
+        parent: _c,
+        curve: const Interval(0.4, 1.0, curve: Curves.easeOutQuart),
+      ),
+    );
+    _c.forward();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _c.dispose();
     super.dispose();
   }
 
@@ -642,14 +668,14 @@ class _AnimatedBannerItemState extends State<_AnimatedBannerItem>
       fit: StackFit.expand,
       children: [
         ScaleTransition(
-          scale: _scaleAnimation,
+          scale: _sc,
           child: Image.network(widget.banner.imageUrl, fit: BoxFit.cover),
         ),
         Container(color: Colors.black.withOpacity(0.25)),
         FadeTransition(
-          opacity: _fadeAnimation,
+          opacity: _f,
           child: SlideTransition(
-            position: _slideAnimation,
+            position: _sl,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
