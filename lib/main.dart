@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'dart:async';
 
 void main() => runApp(const DetailsStoreApp());
 
@@ -31,10 +32,9 @@ class DetailsStoreApp extends StatelessWidget {
   }
 }
 
-// 1. موديل المنتجات
+// --- النماذج (Models) ---
 class Product {
-  final String id;
-  final String name, brand, imageUrl;
+  final String id, name, brand, imageUrl;
   final double price;
   final double? oldPrice;
   final bool isSoldOut;
@@ -62,7 +62,6 @@ class Product {
   );
 }
 
-// 2. موديل الإعلانات (Banners)
 class BannerModel {
   final String title, imageUrl, buttonText;
   BannerModel({
@@ -78,6 +77,7 @@ class BannerModel {
   );
 }
 
+// --- الصفحة الرئيسية ---
 class StoreHomePage extends StatefulWidget {
   const StoreHomePage({super.key});
 
@@ -89,8 +89,19 @@ class _StoreHomePageState extends State<StoreHomePage> {
   List<Product> products = [];
   List<BannerModel> banners = [];
   bool isLoading = true;
+
+  // التحكم في السلايدرات
   int _currentBannerIndex = 0;
   final PageController _heroController = PageController();
+  final PageController _announcementController = PageController();
+  Timer? _autoScrollTimer;
+
+  // إعلانات الشريط العلوي (يمكنك جلبها لاحقاً من الـ API)
+  final List<String> _topAnnouncements = [
+    "توصيل مجاني للطلبات فوق 500 ريال",
+    "خصم 20% على تشكيلة الساعات الجديدة",
+    "سياسة استبدال مرنة خلال 14 يوماً",
+  ];
 
   @override
   void initState() {
@@ -98,19 +109,49 @@ class _StoreHomePageState extends State<StoreHomePage> {
     _loadAllData();
   }
 
+  @override
+  void dispose() {
+    _autoScrollTimer?.cancel(); // إيقاف المؤقت عند إغلاق التطبيق
+    _heroController.dispose();
+    _announcementController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadAllData() async {
     await Future.wait([fetchProducts(), fetchBanners()]);
-    if (mounted) setState(() => isLoading = false);
+    if (mounted) {
+      setState(() => isLoading = false);
+      _startAutoScroll(); // بدء التمرير التلقائي بعد تحميل البيانات
+    }
+  }
+
+  void _startAutoScroll() {
+    _autoScrollTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (banners.isNotEmpty) {
+        _currentBannerIndex = (_currentBannerIndex + 1) % banners.length;
+        if (_heroController.hasClients) {
+          _heroController.animateToPage(
+            _currentBannerIndex,
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.easeInOut,
+          );
+        }
+      }
+    });
   }
 
   Future<void> fetchProducts() async {
-    final res = await http.get(
-      Uri.parse('https://api.details-store.com/api/products'),
-    );
-    if (res.statusCode == 200) {
-      products = (json.decode(res.body) as List)
-          .map((j) => Product.fromJson(j))
-          .toList();
+    try {
+      final res = await http.get(
+        Uri.parse('https://api.details-store.com/api/products'),
+      );
+      if (res.statusCode == 200) {
+        products = (json.decode(res.body) as List)
+            .map((j) => Product.fromJson(j))
+            .toList();
+      }
+    } catch (e) {
+      debugPrint("Error products: $e");
     }
   }
 
@@ -125,7 +166,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
             .toList();
       }
     } catch (e) {
-      print("Error banners: $e");
+      debugPrint("Error banners: $e");
     }
   }
 
@@ -155,8 +196,16 @@ class _StoreHomePageState extends State<StoreHomePage> {
               child: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
+                  // 1. شريط الإعلانات العلوي الصغير
+                  SliverToBoxAdapter(child: _buildTopAnnouncement()),
+
+                  // 2. السلايدر الرئيسي (Hero)
                   SliverToBoxAdapter(child: _buildHeroSlider()),
+
+                  // 3. الأصناف
                   SliverToBoxAdapter(child: _buildCategoriesSection()),
+
+                  // 4. شبكة المنتجات
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     sliver: SliverGrid(
@@ -181,10 +230,57 @@ class _StoreHomePageState extends State<StoreHomePage> {
     );
   }
 
-  // --- السلايدر الديناميكي المطور ---
+  // --- شريط الإعلانات العلوي ---
+  Widget _buildTopAnnouncement() {
+    return Container(
+      height: 35,
+      color: const Color(0xFFF7F7F7),
+      child: Stack(
+        children: [
+          PageView.builder(
+            controller: _announcementController,
+            itemCount: _topAnnouncements.length,
+            itemBuilder: (context, index) => Center(
+              child: Text(
+                _topAnnouncements[index],
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ),
+          _announcementArrow(Icons.chevron_left, isLeft: true),
+          _announcementArrow(Icons.chevron_right, isLeft: false),
+        ],
+      ),
+    );
+  }
+
+  Widget _announcementArrow(IconData icon, {required bool isLeft}) =>
+      Positioned(
+        left: isLeft ? 5 : null,
+        right: isLeft ? null : 5,
+        top: 0,
+        bottom: 0,
+        child: IconButton(
+          icon: Icon(icon, size: 16, color: Colors.black54),
+          onPressed: () => isLeft
+              ? _announcementController.previousPage(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.ease,
+                )
+              : _announcementController.nextPage(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.ease,
+                ),
+        ),
+      );
+
+  // --- السلايدر الرئيسي (Hero) ---
   Widget _buildHeroSlider() {
     if (banners.isEmpty) return const SizedBox();
-
     return SizedBox(
       height: 400,
       width: double.infinity,
@@ -240,16 +336,14 @@ class _StoreHomePageState extends State<StoreHomePage> {
               );
             },
           ),
-          // أسهم التنقل
           _sliderArrow(Icons.arrow_back_ios, isLeft: true),
           _sliderArrow(Icons.arrow_forward_ios, isLeft: false),
-          // نقاط الترقيم
           Positioned(
             bottom: 20,
             child: Row(
               children: List.generate(
                 banners.length,
-                (index) => _dot(index == _currentBannerIndex),
+                (i) => _dot(i == _currentBannerIndex),
               ),
             ),
           ),
@@ -259,11 +353,12 @@ class _StoreHomePageState extends State<StoreHomePage> {
   }
 
   Widget _sliderArrow(IconData icon, {required bool isLeft}) => Positioned(
-    left: isLeft ? 10 : null,
-    right: isLeft ? null : 10,
+    left: isLeft ? 15 : null,
+    right: isLeft ? null : 15,
     child: IconButton(
       icon: Icon(icon, color: Colors.white70, size: 28),
       onPressed: () {
+        _autoScrollTimer?.cancel(); // إيقاف المؤقت عند التحكم اليدوي مؤقتاً
         isLeft
             ? _heroController.previousPage(
                 duration: const Duration(milliseconds: 300),
@@ -273,6 +368,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.ease,
               );
+        _startAutoScroll(); // إعادة تشغيل المؤقت
       },
     ),
   );
@@ -288,7 +384,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
     ),
   );
 
-  // بقية الـ Widgets (Categories, ProductCard, Nav)
+  // --- بقية العناصر (Categories, Products, Nav) ---
   Widget _buildCategoriesSection() => Column(
     children: [
       const SizedBox(height: 35),
