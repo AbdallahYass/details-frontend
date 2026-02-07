@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
-import 'package:visibility_detector/visibility_detector.dart'; // مكتبة اكتشاف الرؤية
+import 'package:visibility_detector/visibility_detector.dart';
 
 void main() => runApp(const DetailsStoreApp());
 
@@ -33,9 +33,10 @@ class DetailsStoreApp extends StatelessWidget {
   }
 }
 
-// --- النماذج (Models) ---
+// --- النماذج (Models) المحدثة لدعم الصور المتعددة ---
 class Product {
-  final String id, name, brand, imageUrl;
+  final String id, name, brand;
+  final List<String> images; // تم التغيير لمصفوفة صور لدعم الـ Hover
   final double price;
   final double? oldPrice;
   final bool isSoldOut;
@@ -44,23 +45,33 @@ class Product {
     required this.id,
     required this.name,
     required this.brand,
+    required this.images,
     required this.price,
     this.oldPrice,
-    required this.imageUrl,
     this.isSoldOut = false,
   });
 
-  factory Product.fromJson(Map<String, dynamic> json) => Product(
-    id: json['_id'] ?? '',
-    name: json['name'] ?? '',
-    brand: json['brand'] ?? 'DETAILS',
-    price: (json['price'] as num).toDouble(),
-    oldPrice: json['oldPrice'] != null
-        ? (json['oldPrice'] as num).toDouble()
-        : null,
-    imageUrl: json['imageUrl'] ?? '',
-    isSoldOut: json['isSoldOut'] ?? false,
-  );
+  factory Product.fromJson(Map<String, dynamic> json) {
+    // معالجة الصور لضمان التوافق مع الباك-أند
+    List<String> imgs = [];
+    if (json['images'] != null) {
+      imgs = List<String>.from(json['images']);
+    } else if (json['imageUrl'] != null) {
+      imgs = [json['imageUrl']];
+    }
+
+    return Product(
+      id: json['_id'] ?? '',
+      name: json['name'] ?? '',
+      brand: json['brand'] ?? 'DETAILS',
+      images: imgs,
+      price: (json['price'] as num).toDouble(),
+      oldPrice: json['oldPrice'] != null
+          ? (json['oldPrice'] as num).toDouble()
+          : null,
+      isSoldOut: json['isSoldOut'] ?? false,
+    );
+  }
 }
 
 class BannerModel {
@@ -70,7 +81,6 @@ class BannerModel {
     required this.imageUrl,
     required this.buttonText,
   });
-
   factory BannerModel.fromJson(Map<String, dynamic> json) => BannerModel(
     title: json['title'] ?? '',
     imageUrl: json['imageUrl'] ?? '',
@@ -81,7 +91,6 @@ class BannerModel {
 // --- الصفحة الرئيسية ---
 class StoreHomePage extends StatefulWidget {
   const StoreHomePage({super.key});
-
   @override
   State<StoreHomePage> createState() => _StoreHomePageState();
 }
@@ -128,32 +137,28 @@ class _StoreHomePageState extends State<StoreHomePage> {
   }
 
   void _startHeroScroll() {
-    _heroTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      if (banners.isNotEmpty) {
+    _heroTimer = Timer.periodic(const Duration(seconds: 5), (t) {
+      if (banners.isNotEmpty && _heroController.hasClients) {
         _currentBannerIndex = (_currentBannerIndex + 1) % banners.length;
-        if (_heroController.hasClients) {
-          _heroController.animateToPage(
-            _currentBannerIndex,
-            duration: const Duration(milliseconds: 1000),
-            curve: Curves.easeInOutQuart,
-          );
-        }
+        _heroController.animateToPage(
+          _currentBannerIndex,
+          duration: const Duration(milliseconds: 1000),
+          curve: Curves.easeInOutQuart,
+        );
       }
     });
   }
 
   void _startAnnouncementScroll() {
-    _announcementTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
-      if (_topAnnouncements.isNotEmpty) {
+    _announcementTimer = Timer.periodic(const Duration(seconds: 4), (t) {
+      if (_topAnnouncements.isNotEmpty && _announcementController.hasClients) {
         _currentAnnouncementIndex =
             (_currentAnnouncementIndex + 1) % _topAnnouncements.length;
-        if (_announcementController.hasClients) {
-          _announcementController.animateToPage(
-            _currentAnnouncementIndex,
-            duration: const Duration(milliseconds: 600),
-            curve: Curves.easeInOut,
-          );
-        }
+        _announcementController.animateToPage(
+          _currentAnnouncementIndex,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+        );
       }
     });
   }
@@ -168,7 +173,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
             .map((j) => Product.fromJson(j))
             .toList();
     } catch (e) {
-      debugPrint("Error products: $e");
+      debugPrint("Error: $e");
     }
   }
 
@@ -182,7 +187,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
             .map((j) => BannerModel.fromJson(j))
             .toList();
     } catch (e) {
-      debugPrint("Error banners: $e");
+      debugPrint("Error: $e");
     }
   }
 
@@ -232,7 +237,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
                     ),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 50)),
-                  // --- تطبيق ويجت الأنيميشن على الفوتر ---
                   SliverToBoxAdapter(
                     child: RevealOnScroll(child: _buildFooter()),
                   ),
@@ -248,7 +252,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
     );
   }
 
-  // --- شريط الإعلانات والسلايدر ---
   Widget _buildTopAnnouncement() => Container(
     height: 35,
     color: const Color(0xFFF7F7F7),
@@ -299,7 +302,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
     ),
   );
 
-  // --- الأصناف والمنتجات ---
   Widget _buildCategoriesSection() => Column(
     children: [
       const SizedBox(height: 35),
@@ -348,6 +350,8 @@ class _StoreHomePageState extends State<StoreHomePage> {
       ),
     ],
   );
+
+  // --- كارت المنتج المحدث بتبديل الصور ---
   Widget _buildProductCard(Product p) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -360,10 +364,31 @@ class _StoreHomePageState extends State<StoreHomePage> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(4),
-            child: Image.network(
-              p.imageUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (c, e, s) => const Icon(Icons.broken_image),
+            child: Stack(
+              children: [
+                // 👇 استدعاء ويجت تبديل الصور عند الحوام
+                _AnimatedProductImage(images: p.images),
+
+                if (p.isSoldOut)
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      color: Colors.white.withOpacity(0.9),
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: const Text(
+                        "SOLD OUT",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
@@ -405,126 +430,184 @@ class _StoreHomePageState extends State<StoreHomePage> {
     ],
   );
 
-  // --- الفوتر الفخم (Footer) ---
-  Widget _buildFooter() {
-    return Container(
-      width: double.infinity,
-      color: Colors.black,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
-      child: Column(
-        children: [
-          Wrap(
-            spacing: 40,
-            runSpacing: 40,
-            textDirection: TextDirection.rtl,
-            children: [
-              _footerColumn("من نحن ؟", [
-                "ديتيلز انطلق ليكون الوجهة الأولى للحقائب والساعات الفاخرة، نهتم بأدق التفاصيل لنقدم لكم قطعاً تعكس ذوقكم الرفيع.",
-              ], isText: true),
-              _footerColumn("اختصارات", [
-                "النساء",
-                "الرجال",
-                "المحافظ",
-                "ساعات",
-              ]),
-              _footerColumn("سياساتنا", [
-                "سياسة إلغاء الطلب",
-                "سياسة الإرجاع",
-                "سياسة الشحن",
-              ]),
-              _footerEmailSection(),
-            ],
+  // --- الفوتر (كما هو) ---
+  Widget _buildFooter() => Container(
+    width: double.infinity,
+    color: Colors.black,
+    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+    child: Column(
+      children: [
+        _buildFooterAbout(),
+        const SizedBox(height: 30),
+        _footerAccordion("اختصارات", ["النساء", "الرجال", "المحافظ", "ساعات"]),
+        const Divider(color: Colors.white12, height: 1),
+        _footerAccordion("سياساتنا", [
+          "سياسة إلغاء الطلب",
+          "سياسة الإرجاع",
+          "سياسة الشحن",
+        ]),
+        const Divider(color: Colors.white12, height: 1),
+        _footerAccordion("ابق على إطلاع", [], isSubscribe: true),
+        const SizedBox(height: 40),
+        const Divider(color: Colors.white12),
+        const SizedBox(height: 20),
+        const Text(
+          "تصميم و تطوير رواد || لخدمات وحلول الويب المتكاملة",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Color(0xFFC5A059),
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(height: 50),
-          const Divider(color: Colors.white12),
-          const SizedBox(height: 20),
-          const Text(
-            "Copyright all rights reserved © 2026 Details",
-            style: TextStyle(color: Colors.white54, fontSize: 11),
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          "Copyright all rights reserved © 2026 Details",
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.white54, fontSize: 11),
+        ),
+      ],
+    ),
+  );
+  Widget _buildFooterAbout() => Column(
+    crossAxisAlignment: CrossAxisAlignment.end,
+    children: [
+      const Text(
+        "من نحن ؟",
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      const SizedBox(height: 15),
+      const Text(
+        "ديتيلز انطلق ليكون الوجهة الأولى للحقائب والساعات الفاخرة، نهتم بأدق التفاصيل لنقدم لكم قطعاً تعكس ذوقكم الرفيع.",
+        textAlign: TextAlign.right,
+        style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.6),
+      ),
+      const SizedBox(height: 20),
+      _contactRow(Icons.email_outlined, "support@details-store.com"),
+      _contactRow(Icons.phone_android, "+970-599477317"),
+      const SizedBox(height: 15),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(
+              Icons.install_mobile,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(
+              Icons.camera_alt_outlined,
+              color: Colors.white,
+              size: 20,
+            ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _footerColumn(String t, List<String> items, {bool isText = false}) =>
-      SizedBox(
-        width: 180,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    ],
+  );
+  Widget _footerAccordion(
+    String t,
+    List<String> i, {
+    bool isSubscribe = false,
+  }) => Theme(
+    data: ThemeData().copyWith(dividerColor: Colors.transparent),
+    child: ExpansionTile(
+      title: Text(
+        t,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 15,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      trailing: const Icon(Icons.add, color: Colors.white, size: 20),
+      childrenPadding: const EdgeInsets.only(bottom: 20, right: 16, left: 16),
+      expandedCrossAxisAlignment: CrossAxisAlignment.end,
+      children: isSubscribe
+          ? [_buildSubscribeField()]
+          : i
+                .map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    child: Text(
+                      item,
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+    ),
+  );
+  Widget _buildSubscribeField() => Column(
+    crossAxisAlignment: CrossAxisAlignment.end,
+    children: [
+      const Text(
+        "إشترك لتصل آخر العروض والمنتجات عبر بريدك الإلكتروني",
+        textAlign: TextAlign.right,
+        style: TextStyle(color: Colors.white54, fontSize: 12),
+      ),
+      const SizedBox(height: 15),
+      Container(
+        height: 50,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.white24),
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Row(
           children: [
-            Text(
-              t,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+            Container(
+              margin: const EdgeInsets.all(4),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                color: Colors.white10,
+                borderRadius: BorderRadius.circular(25),
+              ),
+              child: const Center(
+                child: Text(
+                  "إشتراك",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 20),
-            ...items.map(
-              (i) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Text(
-                  i,
-                  style: TextStyle(
-                    color: isText ? Colors.white70 : Colors.white54,
-                    fontSize: 13,
-                    height: 1.6,
-                  ),
+            const Expanded(
+              child: TextField(
+                textAlign: TextAlign.right,
+                style: TextStyle(color: Colors.white, fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: "بريدك الإلكتروني",
+                  hintStyle: TextStyle(color: Colors.white24),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 20),
                 ),
               ),
             ),
           ],
         ),
-      );
-  Widget _footerEmailSection() => SizedBox(
-    width: 280,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      ),
+    ],
+  );
+  Widget _contactRow(IconData i, String t) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 5),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        const Text(
-          "ابقى على إطلاع",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 15),
-        const Text(
-          "اشترك لتصلك آخر العروض والمنتجات عبر بريدك الإلكتروني",
-          style: TextStyle(color: Colors.white54, fontSize: 12),
-        ),
-        const SizedBox(height: 20),
-        TextField(
-          style: const TextStyle(color: Colors.white, fontSize: 13),
-          decoration: InputDecoration(
-            hintText: "بريدك الإلكتروني",
-            hintStyle: const TextStyle(color: Colors.white24),
-            filled: true,
-            fillColor: Colors.white.withOpacity(0.05),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 15),
-            enabledBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Colors.white10),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Colors.white30),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            suffixIcon: TextButton(
-              onPressed: () {},
-              child: const Text(
-                "إشتراك",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ),
+        Text(t, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        const SizedBox(width: 10),
+        Icon(i, color: Colors.white, size: 16),
       ],
     ),
   );
@@ -555,7 +638,63 @@ class _StoreHomePageState extends State<StoreHomePage> {
   );
 }
 
-// --- ويجت الأنيميشن عند السكرول (Reveal On Scroll) ---
+// ==========================================
+// === الويجت الجديدة: تبديل صور المنتج عند الـ Hover ===
+// ==========================================
+class _AnimatedProductImage extends StatefulWidget {
+  final List<String> images;
+  const _AnimatedProductImage({required this.images});
+
+  @override
+  State<_AnimatedProductImage> createState() => _AnimatedProductImageState();
+}
+
+class _AnimatedProductImageState extends State<_AnimatedProductImage> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.images.isEmpty)
+      return const Center(child: Icon(Icons.broken_image));
+
+    // اختيار الصورة بناءً على حالة الحوام (Hover)
+    String currentImage = (_isHovered && widget.images.length > 1)
+        ? widget.images[1]
+        : widget.images[0];
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 600),
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          // دمج أنيميشن التلاشي مع زووم خفيف (مثل الإعلانات) لرفع الفخامة
+          return FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.95, end: 1.0).animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeOut),
+              ),
+              child: child,
+            ),
+          );
+        },
+        child: Image.network(
+          currentImage,
+          key: ValueKey<String>(
+            currentImage,
+          ), // ضروري لإخبار الويجت أن الصورة تغيرت
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (c, e, s) => const Icon(Icons.broken_image),
+        ),
+      ),
+    );
+  }
+}
+
+// --- بقية الويجت (RevealOnScroll, AnimatedBannerItem) ---
 class RevealOnScroll extends StatefulWidget {
   final Widget child;
   const RevealOnScroll({super.key, required this.child});
@@ -569,7 +708,6 @@ class _RevealOnScrollState extends State<RevealOnScroll>
   late Animation<double> _f;
   late Animation<Offset> _s;
   bool _revealed = false;
-
   @override
   void initState() {
     super.initState();
@@ -598,7 +736,6 @@ class _RevealOnScrollState extends State<RevealOnScroll>
     return VisibilityDetector(
       key: Key('reveal-${widget.child.hashCode}'),
       onVisibilityChanged: (info) {
-        // إذا ظهر أكثر من 10% من العنصر ولم يتم تشغيل الحركة من قبل
         if (info.visibleFraction > 0.1 && !_revealed) {
           _c.forward();
           _revealed = true;
@@ -612,7 +749,6 @@ class _RevealOnScrollState extends State<RevealOnScroll>
   }
 }
 
-// --- الويجت المتحركة للبانر ---
 class _AnimatedBannerItem extends StatefulWidget {
   final BannerModel banner;
   const _AnimatedBannerItem({required this.banner});
