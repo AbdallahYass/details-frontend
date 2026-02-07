@@ -1,24 +1,29 @@
 name: Deploy Frontend
 on:
   push:
-    branches: [ main ]
+    branches: [ main ] # تأكد أن هذا هو اسم الفرع الرئيسي عندك
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
+      # 1. تجهيز بيئة Flutter
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
       
+      # 2. بناء نسخة الويب
       - name: Build Web
         run: |
           flutter config --enable-web
           flutter build web --release
-          # نسخ ملف الإعدادات لمجلد البناء عشان Vercel يشوفه
+          
+          # 👇 هذه الخطوة تنقل ملف الإعدادات الذي أنشأته لمجلد البناء
           cp vercel.json build/web/
 
+      # 3. الرفع المباشر لـ Vercel
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v20
         with:
@@ -26,4 +31,4 @@ jobs:
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: '--prod'
-          working-directory: build/web
+          working-directory: build/web # الرفع من مجلد الويب الصافي فقط
