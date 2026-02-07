@@ -9,28 +9,34 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # 1. بناء نسخة الويب (نفس اللي عملته بإيدك)
+      # 1. تجهيز Flutter مع تفعيل الـ Cache للـ SDK
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          cache: true # 👈 تفعيل الكاش الخاص بالـ SDK
+
+      # 2. كاش لمجلد الـ Pub Packages (لتسريع تحميل المكتبات)
+      - name: Cache Pub Packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      # 3. بناء نسخة الويب
       - run: |
           flutter config --enable-web
+          flutter pub get
           flutter build web --release
-# 2. الرفع المباشر (نفس أوامرك اليدوية بالملي)
+
+      # 4. الرفع السريع لـ Vercel
       - name: Deploy to Vercel
         run: |
           npm install -g vercel
-          
-          # تأكد إنك جوا المجلد
           cd build/web
-          
-          # نسخ ملف الإعدادات من المجلد الرئيسي لهون (مهم جداً للـ Routing)
           cp ../../vercel.json . || true
-          
-          # أمر الرفع اللي رح يطبع لنا الرابط اللي رفعه
-          vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }} --yes > deploy_url.txt
-          echo "الموقع اترفع هون:"
-          cat deploy_url.txt
+          vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
