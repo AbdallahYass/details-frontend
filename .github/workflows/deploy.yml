@@ -1,4 +1,4 @@
-name: Debug and Deploy
+name: Production Deploy
 on:
   push:
     branches: [ main ]
@@ -8,25 +8,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
+      # 1. بناء نسخة الويب (نفس اللي عملته بإيدك)
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-
-      - name: Build & Inspect
-        run: |
+      - run: |
           flutter config --enable-web
           flutter build web --release
-          # نسخ ملف الإعدادات للمجلد
-          cp vercel.json build/web/
-          
-          echo "--- فحص محتويات المجلد النهائي ---"
-          ls -R build/web  # هاد السطر رح يحكيلنا لو index.html موجود فعلاً
 
+      # 2. الرفع المباشر (نفس أوامرك اليدوية بالملي)
       - name: Deploy to Vercel
         run: |
           npm install -g vercel
+          # نسخ ملف vercel.json لداخل المجلد قبل الرفع
+          cp vercel.json build/web/
+          # الدخول للمجلد والرفع المباشر
           cd build/web
-          # الرفع باستخدام الـ CLI المباشر
           vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
