@@ -90,7 +90,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
   List<BannerModel> banners = [];
   bool isLoading = true;
 
-  // التحكم في السلايدرات والمؤقتات
   int _currentBannerIndex = 0;
   int _currentAnnouncementIndex = 0;
   final PageController _heroController = PageController();
@@ -128,7 +127,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
     }
   }
 
-  // تمرير تلقائي للسلايدر الرئيسي
   void _startHeroScroll() {
     _heroTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
       if (banners.isNotEmpty) {
@@ -144,7 +142,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
     });
   }
 
-  // تمرير تلقائي للشريط العلوي
   void _startAnnouncementScroll() {
     _announcementTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
       if (_topAnnouncements.isNotEmpty) {
@@ -237,10 +234,17 @@ class _StoreHomePageState extends State<StoreHomePage> {
                     ),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 50)),
+                  // --- قسم الـ Footer الجديد ---
+                  SliverToBoxAdapter(child: _buildFooter()),
                 ],
               ),
             ),
       bottomNavigationBar: _buildBottomNav(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {},
+        backgroundColor: const Color(0xFF25D366), // لون واتساب
+        child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+      ),
     );
   }
 
@@ -413,6 +417,148 @@ class _StoreHomePageState extends State<StoreHomePage> {
     ],
   );
 
+  // --- برمجة الـ Footer الجديد ---
+  Widget _buildFooter() {
+    return Container(
+      width: double.infinity,
+      color: Colors.black, // اللون الأسود الفخم كما في ليدي 90
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
+      child: Column(
+        children: [
+          Wrap(
+            spacing: 40,
+            runSpacing: 40,
+            alignment: WrapAlignment.start,
+            textDirection: TextDirection.rtl, // ليدعم اللغة العربية
+            children: [
+              // 1. من نحن
+              _footerColumn("من نحن ؟", [
+                "ديتيلز انطلق ليكون الوجهة الأولى للحقائب والساعات الفاخرة، نهتم بأدق التفاصيل لنقدم لكم قطعاً تعكس ذوقكم الرفيع.",
+              ], isText: true),
+
+              // 2. اختصارات
+              _footerColumn("اختصارات", [
+                "النساء",
+                "الرجال",
+                "المحافظ",
+                "ساعات",
+              ]),
+
+              // 3. سياساتنا
+              _footerColumn("سياساتنا", [
+                "سياسة إلغاء الطلب",
+                "سياسة الإرجاع",
+                "سياسة الشحن",
+              ]),
+
+              // 4. ابق على إطلاع (البريد الإلكتروني)
+              _footerEmailSection(),
+            ],
+          ),
+          const SizedBox(height: 50),
+          const Divider(color: Colors.white12),
+          const SizedBox(height: 20),
+          const Text(
+            "Copyright all rights reserved © 2026 Details",
+            style: TextStyle(color: Colors.white54, fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _footerColumn(
+    String title,
+    List<String> items, {
+    bool isText = false,
+  }) {
+    return SizedBox(
+      width: 180,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 20),
+          ...items
+              .map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    item,
+                    style: TextStyle(
+                      color: isText ? Colors.white70 : Colors.white54,
+                      fontSize: 13,
+                      height: 1.6,
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _footerEmailSection() {
+    return SizedBox(
+      width: 280,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "ابقى على إطلاع",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 15),
+          const Text(
+            "اشترك لتصلك آخر العروض والمنتجات عبر بريدك الإلكتروني",
+            style: TextStyle(color: Colors.white54, fontSize: 12),
+          ),
+          const SizedBox(height: 20),
+          TextField(
+            style: const TextStyle(color: Colors.white, fontSize: 13),
+            decoration: InputDecoration(
+              hintText: "بريدك الإلكتروني",
+              hintStyle: const TextStyle(color: Colors.white24),
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.05),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 15),
+              enabledBorder: OutlineInputBorder(
+                borderSide: const BorderSide(color: Colors.white10),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: const BorderSide(color: Colors.white30),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              suffixIcon: TextButton(
+                onPressed: () {},
+                child: const Text(
+                  "إشتراك",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildBottomNav() => Container(
     height: 70,
     decoration: BoxDecoration(
@@ -442,7 +588,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
       );
 }
 
-// --- الويجت المتحركة للبانر (كما هي) ---
+// --- الويجت المتحركة للبانر ---
 class _AnimatedBannerItem extends StatefulWidget {
   final BannerModel banner;
   const _AnimatedBannerItem({required this.banner});
