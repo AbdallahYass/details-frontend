@@ -649,8 +649,7 @@ class _AnimatedProductImageState extends State<_AnimatedProductImage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // 👇 الخطوة الأهم: تحميل الصورة الثانية مسبقاً في ذاكرة التطبيق
-    // لضمان استجابة الأنيميشن فور لمس الشاشة بدون تأخير
+    // تحميل الصورة الثانية مسبقاً لضمان عدم وجود تأخير (Lag) عند أول لمسة
     if (widget.images.length > 1) {
       precacheImage(NetworkImage(widget.images[1]), context);
     }
@@ -668,13 +667,11 @@ class _AnimatedProductImageState extends State<_AnimatedProductImage> {
     return MouseRegion(
       onEnter: (_) => setState(() => _active = true),
       onExit: (_) => setState(() => _active = false),
-      child: GestureDetector(
-        // 👇 تعديل أحداث اللمس لتكون أكثر استجابة في الموبايل
-        onTapDown: (_) => setState(() => _active = true),
-        onTapUp: (_) => setState(() => _active = false),
-        onTapCancel: () => setState(() => _active = false),
-        onLongPressStart: (_) => setState(() => _active = true),
-        onLongPressEnd: (_) => setState(() => _active = false),
+      child: Listener(
+        // Listener بضمن استجابة فورية وقوية للمس في الموبايل
+        onPointerDown: (_) => setState(() => _active = true),
+        onPointerUp: (_) => setState(() => _active = false),
+        onPointerCancel: (_) => setState(() => _active = false),
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),
           reverseDuration: const Duration(milliseconds: 500),
@@ -695,10 +692,11 @@ class _AnimatedProductImageState extends State<_AnimatedProductImage> {
             fit: BoxFit.cover,
             width: double.infinity,
             height: double.infinity,
-            // تحسين تجربة المستخدم أثناء تحميل الصور من سيرفرك
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) return child;
-              return Container(color: const Color(0xFFF2F2F2));
+              return Container(
+                color: const Color(0xFFF5F5F5),
+              ); // خلفية هادئة أثناء التحميل
             },
             errorBuilder: (c, e, s) => const Icon(Icons.broken_image),
           ),
