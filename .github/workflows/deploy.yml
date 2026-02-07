@@ -1,41 +1,37 @@
-name: Deployment
+name: Final Production Deploy
 on:
   push:
     branches: [ main ]
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      # 1. نزل الكود
-      - uses: actions/checkout@v2
-
-      # 2. نزل Flutter
+      - uses: actions/checkout@v3
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
       
-      # 3. ابني الموقع
-      - name: Build Flutter Web
+      - name: Build Web
         run: |
           flutter config --enable-web
           flutter build web --release
-
-      # 4. الخطوة الحاسمة: ادخل المجلد وارفع يدوياً
-      - name: Manual Deploy to Vercel
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          
+      - name: Clean & Prepare Root
         run: |
-          # نزل أداة Vercel الرسمية
-          npm install -g vercel
-          
-          # ادخل على المجلد الجاهز (زي ما كنت تعمل بجهازك)
-          cd build/web
-          
-          # صنع ملف صغير عشان ما يعطي 404 لما تعمل Refresh
+          # حذف كل ملفات المشروع والاحتفاظ بملفات الويب فقط في المجلد الرئيسي
+          mkdir temp_web
+          cp -r build/web/* temp_web/
+          rm -rf *
+          cp -r temp_web/* .
+          rm -rf temp_web
+          # إنشاء ملف التوجيه لمنع الـ 404
           echo '{"rewrites": [{"source": "/(.*)", "destination": "/index.html"}]}' > vercel.json
-          
-          # أمر الرفع المباشر (بدون فلسفة)
-          vercel deploy --prod --token $VERCEL_TOKEN --yes
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v20
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./
