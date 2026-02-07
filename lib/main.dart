@@ -152,11 +152,13 @@ class _StoreHomePageState extends State<StoreHomePage> {
       if (_topAnnouncements.isNotEmpty && _announcementController.hasClients) {
         _currentAnnouncementIndex =
             (_currentAnnouncementIndex + 1) % _topAnnouncements.length;
-        _announcementController.animateToPage(
-          _currentAnnouncementIndex,
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.easeInOut,
-        );
+        if (_announcementController.hasClients) {
+          _announcementController.animateToPage(
+            _currentAnnouncementIndex,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOut,
+          );
+        }
       }
     });
   }
@@ -171,7 +173,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
             .map((j) => Product.fromJson(j))
             .toList();
     } catch (e) {
-      debugPrint("Error products: $e");
+      debugPrint("Error: $e");
     }
   }
 
@@ -185,7 +187,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
             .map((j) => BannerModel.fromJson(j))
             .toList();
     } catch (e) {
-      debugPrint("Error banners: $e");
+      debugPrint("Error: $e");
     }
   }
 
@@ -358,7 +360,9 @@ class _StoreHomePageState extends State<StoreHomePage> {
             borderRadius: BorderRadius.circular(4),
             child: Stack(
               children: [
-                _AnimatedProductImage(images: p.images),
+                // 👇 ويجت الصور المحدثة بالأزرار التفاعلية
+                _AnimatedProductImage(product: p),
+
                 if (p.isSoldOut)
                   Positioned(
                     bottom: 0,
@@ -420,52 +424,44 @@ class _StoreHomePageState extends State<StoreHomePage> {
     ],
   );
 
-  Widget _buildFooter() {
-    return Container(
-      width: double.infinity,
-      color: Colors.black,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-      child: Column(
-        children: [
-          _buildFooterAbout(),
-          const SizedBox(height: 30),
-          _footerAccordion("اختصارات", [
-            "النساء",
-            "الرجال",
-            "المحافظ",
-            "ساعات",
-          ]),
-          const Divider(color: Colors.white12, height: 1),
-          _footerAccordion("سياساتنا", [
-            "سياسة إلغاء الطلب",
-            "سياسة الإرجاع",
-            "سياسة الشحن",
-          ]),
-          const Divider(color: Colors.white12, height: 1),
-          _footerAccordion("ابق على إطلاع", [], isSubscribe: true),
-          const SizedBox(height: 40),
-          const Divider(color: Colors.white12),
-          const SizedBox(height: 20),
-          const Text(
-            "تصميم و تطوير رواد || لخدمات وحلول الويب المتكاملة",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Color(0xFFC5A059),
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-            ),
+  Widget _buildFooter() => Container(
+    width: double.infinity,
+    color: Colors.black,
+    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+    child: Column(
+      children: [
+        _buildFooterAbout(),
+        const SizedBox(height: 30),
+        _footerAccordion("اختصارات", ["النساء", "الرجال", "المحافظ", "ساعات"]),
+        const Divider(color: Colors.white12, height: 1),
+        _footerAccordion("سياساتنا", [
+          "سياسة إلغاء الطلب",
+          "سياسة الإرجاع",
+          "سياسة الشحن",
+        ]),
+        const Divider(color: Colors.white12, height: 1),
+        _footerAccordion("ابق على إطلاع", [], isSubscribe: true),
+        const SizedBox(height: 40),
+        const Divider(color: Colors.white12),
+        const SizedBox(height: 20),
+        const Text(
+          "تصميم و تطوير رواد || لخدمات وحلول الويب المتكاملة",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Color(0xFFC5A059),
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(height: 10),
-          const Text(
-            "Copyright all rights reserved © 2026 Details",
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white54, fontSize: 11),
-          ),
-        ],
-      ),
-    );
-  }
-
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          "Copyright all rights reserved © 2026 Details",
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.white54, fontSize: 11),
+        ),
+      ],
+    ),
+  );
   Widget _buildFooterAbout() => Column(
     crossAxisAlignment: CrossAxisAlignment.end,
     children: [
@@ -636,12 +632,11 @@ class _StoreHomePageState extends State<StoreHomePage> {
 }
 
 // ==========================================
-// === الويجت المطورة: تبديل صور المنتج (Hover & Touch) ===
+// === الويجت المطورة: تبديل صور وأزرار تفاعلية ===
 // ==========================================
 class _AnimatedProductImage extends StatefulWidget {
-  final List<String> images;
-  const _AnimatedProductImage({required this.images});
-
+  final Product product;
+  const _AnimatedProductImage({required this.product});
   @override
   State<_AnimatedProductImage> createState() => _AnimatedProductImageState();
 }
@@ -652,64 +647,142 @@ class _AnimatedProductImageState extends State<_AnimatedProductImage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // تحميل الصورة الثانية مسبقاً في الذاكرة لضمان الاستجابة الفورية
-    if (widget.images.length > 1) {
-      precacheImage(NetworkImage(widget.images[1]), context);
+    if (widget.product.images.length > 1) {
+      precacheImage(NetworkImage(widget.product.images[1]), context);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.images.isEmpty)
+    if (widget.product.images.isEmpty)
       return const Center(child: Icon(Icons.broken_image));
 
-    String currentImage = (_active && widget.images.length > 1)
-        ? widget.images[1]
-        : widget.images[0];
+    String currentImage = (_active && widget.product.images.length > 1)
+        ? widget.product.images[1]
+        : widget.product.images[0];
 
     return MouseRegion(
       onEnter: (_) => setState(() => _active = true),
       onExit: (_) => setState(() => _active = false),
       child: Listener(
-        // استخدام Listener لضمان استجابة "خارقة" للمس الموبايل فوراً وبدون تداخل
         behavior: HitTestBehavior.opaque,
         onPointerDown: (_) => setState(() => _active = true),
         onPointerUp: (_) => setState(() => _active = false),
         onPointerCancel: (_) => setState(() => _active = false),
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 500),
-          reverseDuration: const Duration(milliseconds: 500),
-          switchInCurve: Curves.easeInOut,
-          switchOutCurve: Curves.easeInOut,
-          transitionBuilder: (Widget child, Animation<double> animation) {
-            // تأثير Fade + Scale ناعم جداً للتبديل (روحة ورجعة)
-            return FadeTransition(
-              opacity: animation,
-              child: ScaleTransition(
-                scale: Tween<double>(begin: 0.96, end: 1.0).animate(animation),
-                child: child,
+        child: Stack(
+          children: [
+            // 1. الجزء الخاص بالصورة المتحركة
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              reverseDuration: const Duration(milliseconds: 500),
+              switchInCurve: Curves.easeInOut,
+              switchOutCurve: Curves.easeInOut,
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: ScaleTransition(
+                    scale: Tween<double>(
+                      begin: 0.96,
+                      end: 1.0,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: Image.network(
+                currentImage,
+                key: ValueKey<String>(currentImage),
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                errorBuilder: (c, e, s) => const Icon(Icons.broken_image),
               ),
-            );
-          },
-          child: Image.network(
-            currentImage,
-            key: ValueKey<String>(currentImage),
-            fit: BoxFit.cover,
-            width: double.infinity,
-            height: double.infinity,
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return Container(color: const Color(0xFFF5F5F5));
-            },
-            errorBuilder: (c, e, s) => const Icon(Icons.broken_image),
-          ),
+            ),
+
+            // 2. طبقة الأزرار التفاعلية (تظهر عند اللمس/الحوام)
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutCubic,
+              bottom: _active ? 0 : -60, // تصعد من الأسفل
+              left: 0,
+              right: 0,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 300),
+                opacity: _active ? 1.0 : 0.0,
+                child: Container(
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.95),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      // زر إضافة للسلة
+                      _quickActionButton(
+                        Icons.shopping_bag_outlined,
+                        "إضافة للسلة",
+                        isPrimary: true,
+                      ),
+                      const VerticalDivider(
+                        width: 1,
+                        color: Colors.black12,
+                        indent: 10,
+                        endIndent: 10,
+                      ),
+                      // زر رؤية المزيد
+                      _quickActionButton(
+                        Icons.remove_red_eye_outlined,
+                        "رؤية المزيد",
+                        isPrimary: false,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _quickActionButton(
+    IconData icon,
+    String label, {
+    required bool isPrimary,
+  }) {
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          debugPrint("Clicked $label");
+        },
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: Colors.black),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-// --- ويجت الأنيميشن عند السكرول (Reveal On Scroll) ---
+// --- ويجت الأنيميشن (Reveal On Scroll) ---
 class RevealOnScroll extends StatefulWidget {
   final Widget child;
   const RevealOnScroll({super.key, required this.child});
