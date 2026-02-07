@@ -8,18 +8,17 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # 1. تنزيل Flutter
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
       
-      # 2. بناء نسخة الويب
       - name: Build Web
         run: |
           flutter config --enable-web
           flutter build web --release
+          # نسخ ملف الإعدادات لمجلد البناء عشان Vercel يشوفه
+          cp vercel.json build/web/
 
-      # 3. الرفع لـ Vercel من المجلد الجاهز مباشرة
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v20
         with:
@@ -27,4 +26,4 @@ jobs:
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           vercel-args: '--prod'
-          working-directory: build/web # 👈 هذا هو السطر السحري
+          working-directory: build/web
