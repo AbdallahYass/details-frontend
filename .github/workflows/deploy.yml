@@ -9,33 +9,25 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # 1. تجهيز Flutter مع تفعيل الـ Cache للـ SDK
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          cache: true # 👈 تفعيل الكاش الخاص بالـ SDK
+          cache: true
 
-      # 2. كاش لمجلد الـ Pub Packages (لتسريع تحميل المكتبات)
-      - name: Cache Pub Packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.pub-cache
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pub-
-
-      # 3. بناء نسخة الويب
-      - run: |
+      - name: Build Web
+        run: |
           flutter config --enable-web
           flutter pub get
           flutter build web --release
 
-      # 4. الرفع السريع لـ Vercel
       - name: Deploy to Vercel
         run: |
           npm install -g vercel
+          # الدخول لمجلد الويب اللي انصنع
           cd build/web
+          # نسخ ملف الإعدادات من المجلد الرئيسي عشان الروابط تشتغل
           cp ../../vercel.json . || true
+          # الرفع النهائي لـ Vercel
           vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
