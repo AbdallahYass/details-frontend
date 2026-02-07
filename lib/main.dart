@@ -36,7 +36,7 @@ class DetailsStoreApp extends StatelessWidget {
 // --- النماذج (Models) ---
 class Product {
   final String id, name, brand;
-  final List<String> images; // دعم مصفوفة الصور للـ Hover واللمس
+  final List<String> images;
   final double price;
   final double? oldPrice;
   final bool isSoldOut;
@@ -171,7 +171,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
             .map((j) => Product.fromJson(j))
             .toList();
     } catch (e) {
-      debugPrint("Error: $e");
+      debugPrint("Error products: $e");
     }
   }
 
@@ -185,7 +185,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
             .map((j) => BannerModel.fromJson(j))
             .toList();
     } catch (e) {
-      debugPrint("Error: $e");
+      debugPrint("Error banners: $e");
     }
   }
 
@@ -294,6 +294,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
       border: Border.all(color: Colors.white),
     ),
   );
+
   Widget _buildCategoriesSection() => Column(
     children: [
       const SizedBox(height: 35),
@@ -634,7 +635,9 @@ class _StoreHomePageState extends State<StoreHomePage> {
   );
 }
 
-// --- ويجت تبديل الصور (دعم اللمس والماوس) ---
+// ==========================================
+// === الويجت المطورة: تبديل صور المنتج (Hover & Touch) ===
+// ==========================================
 class _AnimatedProductImage extends StatefulWidget {
   final List<String> images;
   const _AnimatedProductImage({required this.images});
@@ -649,7 +652,7 @@ class _AnimatedProductImageState extends State<_AnimatedProductImage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // تحميل الصورة الثانية مسبقاً لضمان عدم وجود تأخير (Lag) عند أول لمسة
+    // تحميل الصورة الثانية مسبقاً في الذاكرة لضمان الاستجابة الفورية
     if (widget.images.length > 1) {
       precacheImage(NetworkImage(widget.images[1]), context);
     }
@@ -668,7 +671,8 @@ class _AnimatedProductImageState extends State<_AnimatedProductImage> {
       onEnter: (_) => setState(() => _active = true),
       onExit: (_) => setState(() => _active = false),
       child: Listener(
-        // Listener بضمن استجابة فورية وقوية للمس في الموبايل
+        // استخدام Listener لضمان استجابة "خارقة" للمس الموبايل فوراً وبدون تداخل
+        behavior: HitTestBehavior.opaque,
         onPointerDown: (_) => setState(() => _active = true),
         onPointerUp: (_) => setState(() => _active = false),
         onPointerCancel: (_) => setState(() => _active = false),
@@ -678,10 +682,11 @@ class _AnimatedProductImageState extends State<_AnimatedProductImage> {
           switchInCurve: Curves.easeInOut,
           switchOutCurve: Curves.easeInOut,
           transitionBuilder: (Widget child, Animation<double> animation) {
+            // تأثير Fade + Scale ناعم جداً للتبديل (روحة ورجعة)
             return FadeTransition(
               opacity: animation,
               child: ScaleTransition(
-                scale: Tween<double>(begin: 0.95, end: 1.0).animate(animation),
+                scale: Tween<double>(begin: 0.96, end: 1.0).animate(animation),
                 child: child,
               ),
             );
@@ -694,9 +699,7 @@ class _AnimatedProductImageState extends State<_AnimatedProductImage> {
             height: double.infinity,
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) return child;
-              return Container(
-                color: const Color(0xFFF5F5F5),
-              ); // خلفية هادئة أثناء التحميل
+              return Container(color: const Color(0xFFF5F5F5));
             },
             errorBuilder: (c, e, s) => const Icon(Icons.broken_image),
           ),
@@ -706,7 +709,7 @@ class _AnimatedProductImageState extends State<_AnimatedProductImage> {
   }
 }
 
-// --- بقية الويجت (RevealOnScroll, AnimatedBannerItem) ---
+// --- ويجت الأنيميشن عند السكرول (Reveal On Scroll) ---
 class RevealOnScroll extends StatefulWidget {
   final Widget child;
   const RevealOnScroll({super.key, required this.child});
@@ -761,6 +764,7 @@ class _RevealOnScrollState extends State<RevealOnScroll>
   }
 }
 
+// --- السلايدر الرئيسي المتحرك ---
 class _AnimatedBannerItem extends StatefulWidget {
   final BannerModel banner;
   const _AnimatedBannerItem({required this.banner});
