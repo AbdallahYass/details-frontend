@@ -16,16 +16,21 @@ jobs:
       - run: |
           flutter config --enable-web
           flutter build web --release
-
-      # 2. الرفع المباشر (نفس أوامرك اليدوية بالملي)
+# 2. الرفع المباشر (نفس أوامرك اليدوية بالملي)
       - name: Deploy to Vercel
         run: |
           npm install -g vercel
-          # نسخ ملف vercel.json لداخل المجلد قبل الرفع
-          cp vercel.json build/web/
-          # الدخول للمجلد والرفع المباشر
+          
+          # تأكد إنك جوا المجلد
           cd build/web
-          vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
+          
+          # نسخ ملف الإعدادات من المجلد الرئيسي لهون (مهم جداً للـ Routing)
+          cp ../../vercel.json . || true
+          
+          # أمر الرفع اللي رح يطبع لنا الرابط اللي رفعه
+          vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }} --yes > deploy_url.txt
+          echo "الموقع اترفع هون:"
+          cat deploy_url.txt
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
