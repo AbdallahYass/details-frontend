@@ -119,7 +119,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
           onPressed: () {},
           icon: const Icon(Icons.menu),
         ), // زر القائمة
-        title: const Text("DETAILS"), // اللوجو
+        title: const Text("DETAILS1"), // اللوجو
         actions: [
           IconButton(onPressed: () {}, icon: const Icon(Icons.search)),
           IconButton(
