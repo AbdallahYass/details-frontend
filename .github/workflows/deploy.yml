@@ -21,12 +21,24 @@ jobs:
           flutter config --enable-web
           flutter build web --release
 
-      # 4. الرفع باستخدام Vercel CLI (نفس الطريقة اليدوية)
-      - name: Deploy to Vercel
+      # 4. التجهيز للنشر (الخطوة السحرية) ✨
+      - name: Prepare Deployment Folder
         run: |
-          npm install -g vercel
-          # الأمر التالي يقول لـ Vercel: ارفع مجلد build/web فقط
-          vercel deploy build/web --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          # إنشاء مجلد نظيف للنشر
+          mkdir deploy_folder
+          
+          # نسخ ملفات الموقع فقط إلى هذا المجلد
+          cp -r build/web/* deploy_folder/
+          
+          # إنشاء ملف إعدادات عشان Vercel يفهم إنه تطبيق Flutter (يمنع مشاكل التحديث)
+          echo '{"routes": [{"src": "/[^.]+", "dest": "/", "status": 200}]}' > deploy_folder/vercel.json
+
+      # 5. الرفع لـ Vercel (من المجلد النظيف)
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v20
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: deploy_folder
