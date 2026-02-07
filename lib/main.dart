@@ -638,45 +638,68 @@ class _StoreHomePageState extends State<StoreHomePage> {
 class _AnimatedProductImage extends StatefulWidget {
   final List<String> images;
   const _AnimatedProductImage({required this.images});
+
   @override
   State<_AnimatedProductImage> createState() => _AnimatedProductImageState();
 }
 
 class _AnimatedProductImageState extends State<_AnimatedProductImage> {
   bool _active = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 👇 الخطوة الأهم: تحميل الصورة الثانية مسبقاً في ذاكرة التطبيق
+    // لضمان استجابة الأنيميشن فور لمس الشاشة بدون تأخير
+    if (widget.images.length > 1) {
+      precacheImage(NetworkImage(widget.images[1]), context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.images.isEmpty)
       return const Center(child: Icon(Icons.broken_image));
+
     String currentImage = (_active && widget.images.length > 1)
         ? widget.images[1]
         : widget.images[0];
+
     return MouseRegion(
       onEnter: (_) => setState(() => _active = true),
       onExit: (_) => setState(() => _active = false),
       child: GestureDetector(
-        onTapDown: (_) =>
-            setState(() => _active = true), // لمس الموبايل (البدء)
-        onTapUp: (_) =>
-            setState(() => _active = false), // لمس الموبايل (الانتهاء)
-        onTapCancel: () =>
-            setState(() => _active = false), // في حال تم إلغاء اللمس
+        // 👇 تعديل أحداث اللمس لتكون أكثر استجابة في الموبايل
+        onTapDown: (_) => setState(() => _active = true),
+        onTapUp: (_) => setState(() => _active = false),
+        onTapCancel: () => setState(() => _active = false),
+        onLongPressStart: (_) => setState(() => _active = true),
+        onLongPressEnd: (_) => setState(() => _active = false),
         child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 600),
-          reverseDuration: const Duration(milliseconds: 600),
-          transitionBuilder: (child, animation) => FadeTransition(
-            opacity: animation,
-            child: ScaleTransition(
-              scale: Tween<double>(begin: 0.95, end: 1.0).animate(animation),
-              child: child,
-            ),
-          ),
+          duration: const Duration(milliseconds: 500),
+          reverseDuration: const Duration(milliseconds: 500),
+          switchInCurve: Curves.easeInOut,
+          switchOutCurve: Curves.easeInOut,
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.95, end: 1.0).animate(animation),
+                child: child,
+              ),
+            );
+          },
           child: Image.network(
             currentImage,
-            key: ValueKey(currentImage),
+            key: ValueKey<String>(currentImage),
             fit: BoxFit.cover,
             width: double.infinity,
             height: double.infinity,
+            // تحسين تجربة المستخدم أثناء تحميل الصور من سيرفرك
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Container(color: const Color(0xFFF2F2F2));
+            },
             errorBuilder: (c, e, s) => const Icon(Icons.broken_image),
           ),
         ),
