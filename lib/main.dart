@@ -13,7 +13,7 @@ class DetailsStoreApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Details Store1', // اسم التبويب
+      title: 'Details Store11', // اسم التبويب
       theme: ThemeData(
         // 1. سر التصميم: الخلفية البيضاء النقية
         scaffoldBackgroundColor: const Color(0xFFFFFFFF),
