@@ -33,10 +33,10 @@ class DetailsStoreApp extends StatelessWidget {
   }
 }
 
-// --- النماذج (Models) المحدثة لدعم الصور المتعددة ---
+// --- النماذج (Models) ---
 class Product {
   final String id, name, brand;
-  final List<String> images; // تم التغيير لمصفوفة صور لدعم الـ Hover
+  final List<String> images; // دعم مصفوفة الصور للـ Hover واللمس
   final double price;
   final double? oldPrice;
   final bool isSoldOut;
@@ -52,14 +52,12 @@ class Product {
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
-    // معالجة الصور لضمان التوافق مع الباك-أند
     List<String> imgs = [];
     if (json['images'] != null) {
       imgs = List<String>.from(json['images']);
     } else if (json['imageUrl'] != null) {
       imgs = [json['imageUrl']];
     }
-
     return Product(
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
@@ -244,11 +242,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
               ),
             ),
       bottomNavigationBar: _buildBottomNav(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: const Color(0xFF25D366),
-        child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
-      ),
     );
   }
 
@@ -301,7 +294,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
       border: Border.all(color: Colors.white),
     ),
   );
-
   Widget _buildCategoriesSection() => Column(
     children: [
       const SizedBox(height: 35),
@@ -351,7 +343,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
     ],
   );
 
-  // --- كارت المنتج المحدث بتبديل الصور ---
   Widget _buildProductCard(Product p) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -366,9 +357,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
             borderRadius: BorderRadius.circular(4),
             child: Stack(
               children: [
-                // 👇 استدعاء ويجت تبديل الصور عند الحوام
                 _AnimatedProductImage(images: p.images),
-
                 if (p.isSoldOut)
                   Positioned(
                     bottom: 0,
@@ -430,45 +419,52 @@ class _StoreHomePageState extends State<StoreHomePage> {
     ],
   );
 
-  // --- الفوتر (كما هو) ---
-  Widget _buildFooter() => Container(
-    width: double.infinity,
-    color: Colors.black,
-    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-    child: Column(
-      children: [
-        _buildFooterAbout(),
-        const SizedBox(height: 30),
-        _footerAccordion("اختصارات", ["النساء", "الرجال", "المحافظ", "ساعات"]),
-        const Divider(color: Colors.white12, height: 1),
-        _footerAccordion("سياساتنا", [
-          "سياسة إلغاء الطلب",
-          "سياسة الإرجاع",
-          "سياسة الشحن",
-        ]),
-        const Divider(color: Colors.white12, height: 1),
-        _footerAccordion("ابق على إطلاع", [], isSubscribe: true),
-        const SizedBox(height: 40),
-        const Divider(color: Colors.white12),
-        const SizedBox(height: 20),
-        const Text(
-          "تصميم و تطوير رواد || لخدمات وحلول الويب المتكاملة",
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Color(0xFFC5A059),
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
+  Widget _buildFooter() {
+    return Container(
+      width: double.infinity,
+      color: Colors.black,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+      child: Column(
+        children: [
+          _buildFooterAbout(),
+          const SizedBox(height: 30),
+          _footerAccordion("اختصارات", [
+            "النساء",
+            "الرجال",
+            "المحافظ",
+            "ساعات",
+          ]),
+          const Divider(color: Colors.white12, height: 1),
+          _footerAccordion("سياساتنا", [
+            "سياسة إلغاء الطلب",
+            "سياسة الإرجاع",
+            "سياسة الشحن",
+          ]),
+          const Divider(color: Colors.white12, height: 1),
+          _footerAccordion("ابق على إطلاع", [], isSubscribe: true),
+          const SizedBox(height: 40),
+          const Divider(color: Colors.white12),
+          const SizedBox(height: 20),
+          const Text(
+            "تصميم و تطوير رواد || لخدمات وحلول الويب المتكاملة",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Color(0xFFC5A059),
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-        const SizedBox(height: 10),
-        const Text(
-          "Copyright all rights reserved © 2026 Details",
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.white54, fontSize: 11),
-        ),
-      ],
-    ),
-  );
+          const SizedBox(height: 10),
+          const Text(
+            "Copyright all rights reserved © 2026 Details",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white54, fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFooterAbout() => Column(
     crossAxisAlignment: CrossAxisAlignment.end,
     children: [
@@ -638,56 +634,51 @@ class _StoreHomePageState extends State<StoreHomePage> {
   );
 }
 
-// ==========================================
-// === الويجت الجديدة: تبديل صور المنتج عند الـ Hover ===
-// ==========================================
+// --- ويجت تبديل الصور (دعم اللمس والماوس) ---
 class _AnimatedProductImage extends StatefulWidget {
   final List<String> images;
   const _AnimatedProductImage({required this.images});
-
   @override
   State<_AnimatedProductImage> createState() => _AnimatedProductImageState();
 }
 
 class _AnimatedProductImageState extends State<_AnimatedProductImage> {
-  bool _isHovered = false;
-
+  bool _active = false;
   @override
   Widget build(BuildContext context) {
     if (widget.images.isEmpty)
       return const Center(child: Icon(Icons.broken_image));
-
-    // اختيار الصورة بناءً على حالة الحوام (Hover)
-    String currentImage = (_isHovered && widget.images.length > 1)
+    String currentImage = (_active && widget.images.length > 1)
         ? widget.images[1]
         : widget.images[0];
-
     return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 600),
-        transitionBuilder: (Widget child, Animation<double> animation) {
-          // دمج أنيميشن التلاشي مع زووم خفيف (مثل الإعلانات) لرفع الفخامة
-          return FadeTransition(
+      onEnter: (_) => setState(() => _active = true),
+      onExit: (_) => setState(() => _active = false),
+      child: GestureDetector(
+        onTapDown: (_) =>
+            setState(() => _active = true), // لمس الموبايل (البدء)
+        onTapUp: (_) =>
+            setState(() => _active = false), // لمس الموبايل (الانتهاء)
+        onTapCancel: () =>
+            setState(() => _active = false), // في حال تم إلغاء اللمس
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 600),
+          reverseDuration: const Duration(milliseconds: 600),
+          transitionBuilder: (child, animation) => FadeTransition(
             opacity: animation,
             child: ScaleTransition(
-              scale: Tween<double>(begin: 0.95, end: 1.0).animate(
-                CurvedAnimation(parent: animation, curve: Curves.easeOut),
-              ),
+              scale: Tween<double>(begin: 0.95, end: 1.0).animate(animation),
               child: child,
             ),
-          );
-        },
-        child: Image.network(
-          currentImage,
-          key: ValueKey<String>(
+          ),
+          child: Image.network(
             currentImage,
-          ), // ضروري لإخبار الويجت أن الصورة تغيرت
-          fit: BoxFit.cover,
-          width: double.infinity,
-          height: double.infinity,
-          errorBuilder: (c, e, s) => const Icon(Icons.broken_image),
+            key: ValueKey(currentImage),
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            errorBuilder: (c, e, s) => const Icon(Icons.broken_image),
+          ),
         ),
       ),
     );
