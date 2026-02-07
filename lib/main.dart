@@ -96,7 +96,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
   Timer? _autoScrollTimer;
 
   final List<String> _topAnnouncements = [
-    "توصيل مجاني للطلبات فوق 500 ريال",
+    "توصيل مجاني للطلبات فوق 500 شيكل",
     "خصم 20% على تشكيلة الساعات الجديدة",
     "سياسة استبدال مرنة خلال 14 يوماً",
   ];
