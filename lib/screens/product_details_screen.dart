@@ -163,8 +163,35 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           color: isFav ? AppColors.red : AppColors.grey,
                           size: 28,
                         ),
-                        onPressed: () =>
-                            wishlistProvider.toggleWishlist(_product!),
+                        onPressed: () async {
+                          bool added = await wishlistProvider.toggleWishlist(
+                            _product!,
+                          );
+                          if (!context.mounted) return;
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                added
+                                    ? AppLocalizations.of(
+                                        context,
+                                      )!.translate('added_to_wishlist')
+                                    : AppLocalizations.of(
+                                        context,
+                                      )!.translate('removed_from_wishlist'),
+                              ),
+                              backgroundColor: added
+                                  ? AppColors.primary
+                                  : AppColors.red,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        },
                       ),
                       Text(
                         _product!.brand,

@@ -58,6 +58,8 @@ class AppLocalizations {
       'no_desc': 'No description available.',
       'discover_details': 'Discover Details',
       'you_might_like': 'You might also like',
+      'added_to_wishlist': 'Added to wishlist',
+      'removed_from_wishlist': 'Removed from wishlist',
     },
     'ar': {
       'app_title': 'DETAILS',
@@ -103,6 +105,8 @@ class AppLocalizations {
       'no_desc': 'لا يوجد وصف متاح حالياً.',
       'discover_details': 'اكتشف ديتيلز',
       'you_might_like': 'قد يعجبك أيضاً',
+      'added_to_wishlist': 'تمت الإضافة للمفضلة',
+      'removed_from_wishlist': 'تم الحذف من المفضلة',
     },
   };
 

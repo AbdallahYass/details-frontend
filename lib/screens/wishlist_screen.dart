@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:details_app/providers/wishlist_provider.dart';
 import 'package:details_app/constants/app_colors.dart';
+import 'package:details_app/l10n/app_localizations.dart';
 import 'package:details_app/widgets/custom_app_bar.dart';
 
 class WishlistScreen extends StatelessWidget {
@@ -70,7 +71,31 @@ class WishlistScreen extends StatelessWidget {
                     trailing: IconButton(
                       icon: const Icon(Icons.favorite, color: AppColors.red),
                       onPressed: () {
-                        wishlistProvider.toggleWishlist(product);
+                        wishlistProvider.toggleWishlist(product).then((added) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                added
+                                    ? AppLocalizations.of(
+                                        context,
+                                      )!.translate('added_to_wishlist')
+                                    : AppLocalizations.of(
+                                        context,
+                                      )!.translate('removed_from_wishlist'),
+                              ),
+                              backgroundColor: added
+                                  ? AppColors.primary
+                                  : AppColors.red,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        });
                       },
                     ),
                     onTap: () {

@@ -2,19 +2,13 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
 import 'package:details_app/models/product.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:details_app/models/banner_model.dart';
-import 'package:details_app/models/category_model.dart';
 import 'package:details_app/widgets/reveal_on_scroll.dart';
 import 'package:details_app/widgets/animated_banner_item.dart';
 import 'package:details_app/widgets/animated_product_image.dart';
-import 'package:details_app/constants/app_colors.dart';
-import 'package:details_app/l10n/app_localizations.dart';
-import 'package:details_app/widgets/custom_app_bar.dart';
-import 'package:details_app/providers/wishlist_provider.dart';
-import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:details_app/screens/product_details_screen.dart';
 
 class StoreHomePage extends StatefulWidget {
   const StoreHomePage({super.key});
@@ -25,7 +19,6 @@ class StoreHomePage extends StatefulWidget {
 class _StoreHomePageState extends State<StoreHomePage> {
   List<Product> products = [];
   List<BannerModel> banners = [];
-  List<CategoryModel> categories = [];
   bool isLoading = true;
 
   int _currentBannerIndex = 0;
@@ -34,26 +27,16 @@ class _StoreHomePageState extends State<StoreHomePage> {
   final PageController _announcementController = PageController();
   Timer? _heroTimer, _announcementTimer;
 
-  List<String> _topAnnouncements = [];
-  String? _selectedCategory;
+  final List<String> _topAnnouncements = [
+    "توصيل مجاني للطلبات فوق 500 شيكل",
+    "خصم 20% على تشكيلة الساعات الجديدة",
+    "سياسة استبدال مرنة خلال 14 يوماً",
+  ];
 
   @override
   void initState() {
     super.initState();
     _loadAllData();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final loc = AppLocalizations.of(context);
-    if (loc != null) {
-      _topAnnouncements = [
-        loc.translate('top_announcement_1'),
-        loc.translate('top_announcement_2'),
-        loc.translate('top_announcement_3'),
-      ];
-    }
   }
 
   @override
@@ -66,16 +49,15 @@ class _StoreHomePageState extends State<StoreHomePage> {
   }
 
   Future<void> _loadAllData() async {
-    await Future.wait([fetchProducts(), fetchBanners(), fetchCategories()]);
+    await Future.wait([fetchProducts(), fetchBanners()]);
     if (mounted) {
       setState(() => isLoading = false);
       _startHeroScroll();
-      _startAnnouncementScroll();
+      _startAnnouncementScroll(); // تفعيل التايمر الجديد
     }
   }
 
   void _startHeroScroll() {
-    _heroTimer?.cancel();
     _heroTimer = Timer.periodic(const Duration(seconds: 5), (t) {
       if (banners.isNotEmpty && _heroController.hasClients) {
         _currentBannerIndex = (_currentBannerIndex + 1) % banners.length;
@@ -88,96 +70,74 @@ class _StoreHomePageState extends State<StoreHomePage> {
     });
   }
 
+  // --- التحديث الجديد: تايمر الجمل لمدة 15 ثانية ---
   void _startAnnouncementScroll() {
-    _announcementTimer?.cancel();
     _announcementTimer = Timer.periodic(const Duration(seconds: 15), (t) {
       if (_topAnnouncements.isNotEmpty && _announcementController.hasClients) {
         _currentAnnouncementIndex =
             (_currentAnnouncementIndex + 1) % _topAnnouncements.length;
         _announcementController.animateToPage(
           _currentAnnouncementIndex,
-          duration: const Duration(milliseconds: 800),
+          duration: const Duration(milliseconds: 800), // أنيميشن ناعم للانتقال
           curve: Curves.easeInOut,
         );
       }
     });
   }
 
-  Future<void> fetchProducts({String? category}) async {
-    try {
-      String url = 'https://api.details-store.com/api/products';
-      if (category != null) {
-        url += '?category=$category';
-      }
-      final res = await http.get(Uri.parse(url));
-      if (res.statusCode == 200) {
-        setState(() {
-          products = (json.decode(res.body) as List)
-              .map((j) => Product.fromJson(j))
-              .toList();
-        });
-      }
-    } catch (e) {
-      debugPrint("Error: $e");
-    }
-  }
-
-  Future<void> fetchBanners({
-    String location = 'home',
-    String? category,
-  }) async {
-    try {
-      String url =
-          'https://api.details-store.com/api/banners?location=$location';
-      if (category != null) {
-        url += '&category=$category';
-      }
-      final res = await http.get(Uri.parse(url));
-      if (res.statusCode == 200) {
-        setState(() {
-          banners = (json.decode(res.body) as List)
-              .map((j) => BannerModel.fromJson(j))
-              .toList();
-          _currentBannerIndex = 0;
-          if (_heroController.hasClients) {
-            _heroController.jumpToPage(0);
-          }
-        });
-      }
-    } catch (e) {
-      debugPrint("Error: $e");
-    }
-  }
-
-  Future<void> fetchCategories() async {
+  Future<void> fetchProducts() async {
     try {
       final res = await http.get(
-        Uri.parse('https://api.details-store.com/api/categories'),
+        Uri.parse('https://api.details-store.com/api/products'),
       );
       if (res.statusCode == 200) {
-        categories = (json.decode(res.body) as List)
-            .map((j) => CategoryModel.fromJson(j))
+        products = (json.decode(res.body) as List)
+            .map((j) => Product.fromJson(j))
             .toList();
       }
     } catch (e) {
-      debugPrint("Error fetching categories: $e");
+      debugPrint("Error: $e");
+    }
+  }
+
+  Future<void> fetchBanners() async {
+    try {
+      final res = await http.get(
+        Uri.parse('https://api.details-store.com/api/banners'),
+      );
+      if (res.statusCode == 200) {
+        banners = (json.decode(res.body) as List)
+            .map((j) => BannerModel.fromJson(j))
+            .toList();
+      }
+    } catch (e) {
+      debugPrint("Error: $e");
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(),
+      appBar: AppBar(
+        leading: const Icon(Icons.menu, color: Colors.black),
+        title: const Text("DETAILS"),
+        actions: const [
+          Icon(Icons.search, color: Colors.black),
+          SizedBox(width: 15),
+          Icon(Icons.shopping_cart_outlined, color: Colors.black),
+          SizedBox(width: 15),
+        ],
+      ),
       body: isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                color: AppColors.primary,
+                color: Colors.black,
                 strokeWidth: 1,
               ),
             )
           : RefreshIndicator(
               onRefresh: _loadAllData,
-              color: AppColors.primary,
+              color: Colors.black,
               child: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
@@ -186,10 +146,8 @@ class _StoreHomePageState extends State<StoreHomePage> {
                   SliverToBoxAdapter(child: _buildCategoriesSection()),
                   SliverToBoxAdapter(
                     child: _buildSectionHeader(
-                      AppLocalizations.of(context)!.translate('most_popular'),
-                      AppLocalizations.of(
-                        context,
-                      )!.translate('best_seller_week'),
+                      "الأكثر شيوعاً",
+                      "الأكثر مبيعاً هذا الأسبوع",
                     ),
                   ),
                   SliverPadding(
@@ -222,7 +180,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
   Widget _buildTopAnnouncement() {
     return Container(
       height: 35,
-      color: AppColors.lightGrey,
+      color: const Color(0xFFF7F7F7),
       child: PageView.builder(
         controller: _announcementController,
         itemCount: _topAnnouncements.length,
@@ -245,7 +203,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(width: 30, height: 1.5, color: AppColors.primary),
+              Container(width: 30, height: 1.5, color: Colors.black),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: Text(
@@ -256,27 +214,27 @@ class _StoreHomePageState extends State<StoreHomePage> {
                   ),
                 ),
               ),
-              Container(width: 30, height: 1.5, color: AppColors.primary),
+              Container(width: 30, height: 1.5, color: Colors.black),
             ],
           ),
           const SizedBox(height: 5),
           Text(
             subtitle,
-            style: const TextStyle(color: AppColors.grey, fontSize: 12),
+            style: const TextStyle(color: Colors.grey, fontSize: 12),
           ),
           const SizedBox(height: 15),
           ElevatedButton(
             onPressed: () {},
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.secondary,
+              backgroundColor: const Color(0xFF222222),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(25),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 35, vertical: 12),
             ),
-            child: Text(
-              AppLocalizations.of(context)!.translate('view_all'),
-              style: const TextStyle(color: AppColors.white, fontSize: 13),
+            child: const Text(
+              "عرض الكل",
+              style: TextStyle(color: Colors.white, fontSize: 13),
             ),
           ),
         ],
@@ -285,9 +243,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
   }
 
   Widget _buildProductCard(Product p) {
-    final wishlistProvider = Provider.of<WishlistProvider>(context);
-    final isFav = wishlistProvider.isInWishlist(p.id);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -295,7 +250,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              color: AppColors.cardBackground,
+              color: const Color(0xFFF9F9F9),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
@@ -305,40 +260,14 @@ class _StoreHomePageState extends State<StoreHomePage> {
                   Positioned(
                     top: 10,
                     right: 10,
-                    child: _circleIcon(
-                      isFav ? Icons.favorite : Icons.favorite_border,
-                      size: 20,
-                      color: isFav ? AppColors.red : AppColors.secondary,
-                      onTap: () async {
-                        bool added = await wishlistProvider.toggleWishlist(p);
-                        if (!mounted) return;
-                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              added
-                                  ? AppLocalizations.of(context)!
-                                      .translate('added_to_wishlist')
-                                  : AppLocalizations.of(context)!
-                                      .translate('removed_from_wishlist'),
-                            ),
-                            backgroundColor:
-                                added ? AppColors.primary : AppColors.red,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                            duration: const Duration(seconds: 1),
-                          ),
-                        );
-                      },
-                    ),
+                    child: _circleIcon(Icons.favorite_border, size: 20),
                   ),
                   const Positioned(
                     top: 10,
                     left: 10,
                     child: Icon(
                       Icons.fullscreen,
-                      color: AppColors.white,
+                      color: Colors.white,
                       size: 24,
                     ),
                   ),
@@ -350,8 +279,15 @@ class _StoreHomePageState extends State<StoreHomePage> {
                         _circleIcon(
                           Icons.visibility_outlined,
                           isWhite: true,
-                          onTap: () =>
-                              context.push('/product/${p.id}', extra: p),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (c) =>
+                                    ProductDetailsScreen(product: p),
+                              ),
+                            );
+                          },
                         ),
                         const SizedBox(height: 8),
                         _circleIcon(Icons.link, isWhite: true),
@@ -368,16 +304,16 @@ class _StoreHomePageState extends State<StoreHomePage> {
                           vertical: 6,
                         ),
                         decoration: const BoxDecoration(
-                          color: AppColors.red,
+                          color: Color(0xFFE32F2F),
                           borderRadius: BorderRadius.only(
                             topRight: Radius.circular(20),
                             bottomRight: Radius.circular(20),
                           ),
                         ),
-                        child: Text(
-                          AppLocalizations.of(context)!.translate('sold_out'),
-                          style: const TextStyle(
-                            color: AppColors.white,
+                        child: const Text(
+                          "بيعت كلها",
+                          style: TextStyle(
+                            color: Colors.white,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -405,9 +341,9 @@ class _StoreHomePageState extends State<StoreHomePage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Text(
-              AppLocalizations.of(context)!.translate('currency'),
-              style: const TextStyle(fontSize: 12, color: AppColors.grey),
+            const Text(
+              "شيكل",
+              style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
             const SizedBox(width: 4),
             Text(
@@ -415,7 +351,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
               style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
-                color: AppColors.primary,
+                color: Colors.black87,
               ),
             ),
           ],
@@ -429,31 +365,24 @@ class _StoreHomePageState extends State<StoreHomePage> {
     bool isWhite = false,
     double size = 18,
     VoidCallback? onTap,
-    Color? color,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: isWhite
-              ? AppColors.white
-              : AppColors.primary.withValues(alpha: 0.05),
+          color: isWhite ? Colors.white : Colors.black.withValues(alpha: 0.05),
           shape: BoxShape.circle,
           boxShadow: isWhite
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 4,
                   ),
                 ]
               : [],
         ),
-        child: Icon(
-          icon,
-          color: color ?? AppColors.secondary,
-          size: size,
-        ),
+        child: Icon(icon, color: Colors.black54, size: size),
       ),
     );
   }
@@ -488,141 +417,93 @@ class _StoreHomePageState extends State<StoreHomePage> {
     width: 8,
     height: 8,
     decoration: BoxDecoration(
-      color: a ? AppColors.white : AppColors.white.withValues(alpha: 0.5),
+      color: a ? Colors.white : Colors.white.withValues(alpha: 0.5),
       shape: BoxShape.circle,
-      border: Border.all(color: AppColors.white),
+      border: Border.all(color: Colors.white),
     ),
   );
   Widget _buildCategoriesSection() => Column(
     children: [
       const SizedBox(height: 35),
-      Text(
-        AppLocalizations.of(context)!.translate('categories'),
-        style: const TextStyle(
+      const Text(
+        "أصنافنا",
+        style: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
-          color: AppColors.darkBlue,
+          color: Color(0xFF0D47A1),
         ),
       ),
       Container(
         margin: const EdgeInsets.only(top: 5),
         width: 40,
         height: 2,
-        color: AppColors.orange,
+        color: Colors.orange[300],
       ),
       const SizedBox(height: 25),
-      SizedBox(
-        height: 110,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          itemCount: categories.length,
-          itemBuilder: (c, i) => _categoryCircle(category: categories[i]),
-        ),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _categoryCircle("حقائب"),
+          _categoryCircle("ساعات"),
+          _categoryCircle("إكسسوارات"),
+        ],
       ),
       const SizedBox(height: 10),
     ],
   );
-  Widget _categoryCircle({required CategoryModel category}) {
-    bool isSelected = _selectedCategory == category.slug;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          if (_selectedCategory == category.slug) {
-            _selectedCategory = null;
-          } else {
-            _selectedCategory = category.slug;
-          }
-          isLoading = true;
-        });
-        Future.wait([
-          fetchProducts(category: _selectedCategory),
-          fetchBanners(
-            location: _selectedCategory == null ? 'home' : 'category',
-            category: _selectedCategory,
-          ),
-        ]).then((_) {
-              if (mounted) {
-                setState(() => isLoading = false);
-              }
-        });
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: Column(
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isSelected
-                    ? AppColors.primary
-                    : AppColors.circleBackground,
-                border: Border.all(
-                  color: isSelected ? AppColors.primary : Colors.grey[200]!,
-                ),
-              ),
-              child: ClipOval(
-                child: Image.network(
-                  category.imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder:
-                      (c, e, s) => Icon(
-                        Icons.category_outlined,
-                        color: isSelected ? AppColors.white : AppColors.grey,
-                      ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              category.getName(context),
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? AppColors.primary : Colors.black,
-              ),
-            ),
-          ],
+  Widget _categoryCircle(String l) => Column(
+    children: [
+      Container(
+        width: 80,
+        height: 80,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: const Color(0xFFF5F5F5),
+          border: Border.all(color: Colors.grey[200]!),
         ),
+        child: const Icon(Icons.local_mall_outlined, color: Colors.grey),
       ),
-    );
-  }
-
+      const SizedBox(height: 8),
+      Text(
+        l,
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+      ),
+    ],
+  );
   Widget _buildFooter() => Container(
     width: double.infinity,
-    color: AppColors.primary,
+    color: Colors.black,
     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
     child: Column(
       children: [
         _buildFooterAbout(),
         const SizedBox(height: 30),
-        _footerAccordion(AppLocalizations.of(context)!.translate('shortcuts'), [
-          AppLocalizations.of(context)!.translate('women'),
-          AppLocalizations.of(context)!.translate('men'),
-          AppLocalizations.of(context)!.translate('wallets'),
-          AppLocalizations.of(context)!.translate('watches'),
+        _footerAccordion("اختصارات", ["النساء", "الرجال", "المحافظ", "ساعات"]),
+        const Divider(color: Colors.white12, height: 1),
+        _footerAccordion("سياساتنا", [
+          "سياسة إلغاء الطلب",
+          "سياسة الإرجاع",
+          "سياسة الشحن",
         ]),
         const Divider(color: Colors.white12, height: 1),
-        _footerAccordion(AppLocalizations.of(context)!.translate('policies'), [
-          AppLocalizations.of(context)!.translate('policy_cancel'),
-          AppLocalizations.of(context)!.translate('policy_return'),
-          AppLocalizations.of(context)!.translate('policy_shipping'),
-        ]),
-        const Divider(color: Colors.white12, height: 1),
-        _footerAccordion(
-          AppLocalizations.of(context)!.translate('stay_updated'),
-          [],
-          isSubscribe: true,
-        ),
+        _footerAccordion("ابق على إطلاع", [], isSubscribe: true),
         const SizedBox(height: 40),
         const Divider(color: Colors.white12),
         const SizedBox(height: 20),
-        Text(
-          AppLocalizations.of(context)!.translate('copyright'),
+        const Text(
+          "تصميم و تطوير رواد || لخدمات وحلول الويب المتكاملة",
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.white54, fontSize: 11),
+          style: TextStyle(
+            color: Color(0xFFC5A059),
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          "Copyright all rights reserved © 2026 Details",
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.white54, fontSize: 11),
         ),
       ],
     ),
@@ -630,27 +511,23 @@ class _StoreHomePageState extends State<StoreHomePage> {
   Widget _buildFooterAbout() => Column(
     crossAxisAlignment: CrossAxisAlignment.end,
     children: [
-      Text(
-        AppLocalizations.of(context)!.translate('footer_about_title'),
-        style: const TextStyle(
-          color: AppColors.white,
+      const Text(
+        "من نحن ؟",
+        style: TextStyle(
+          color: Colors.white,
           fontSize: 18,
           fontWeight: FontWeight.bold,
         ),
       ),
       const SizedBox(height: 15),
-      Text(
-        AppLocalizations.of(context)!.translate('footer_about_desc'),
+      const Text(
+        "ديتيلز انطلق ليكون الوجهة الأولى للحقائب والساعات الفاخرة، نهتم بأدق التفاصيل لنقدم لكم قطعاً تعكس ذوقكم الرفيع.",
         textAlign: TextAlign.right,
-        style: const TextStyle(
-          color: Colors.white70,
-          fontSize: 13,
-          height: 1.6,
-        ),
+        style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.6),
       ),
       const SizedBox(height: 20),
       _contactRow(Icons.email_outlined, "support@details-store.com"),
-      _contactRow(Icons.phone_android, "+972-598723438"),
+      _contactRow(Icons.phone_android, "+970-599477317"),
       const SizedBox(height: 15),
       Row(
         mainAxisAlignment: MainAxisAlignment.end,
@@ -659,7 +536,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
             onPressed: () {},
             icon: const Icon(
               Icons.install_mobile,
-              color: AppColors.white,
+              color: Colors.white,
               size: 20,
             ),
           ),
@@ -674,20 +551,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
             },
             icon: const Icon(
               Icons.camera_alt_outlined,
-              color: AppColors.white,
-              size: 20,
-            ),
-          ),
-          IconButton(
-            onPressed: () async {
-              final Uri url = Uri.parse('https://wa.me/972598723438');
-              if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-                debugPrint('Could not launch $url');
-              }
-            },
-            icon: const Icon(
-              Icons.chat,
-              color: AppColors.white,
+              color: Colors.white,
               size: 20,
             ),
           ),
@@ -705,12 +569,12 @@ class _StoreHomePageState extends State<StoreHomePage> {
       title: Text(
         t,
         style: const TextStyle(
-          color: AppColors.white,
+          color: Colors.white,
           fontSize: 15,
           fontWeight: FontWeight.bold,
         ),
       ),
-      trailing: const Icon(Icons.add, color: AppColors.white, size: 20),
+      trailing: const Icon(Icons.add, color: Colors.white, size: 20),
       childrenPadding: const EdgeInsets.only(bottom: 20, right: 16, left: 16),
       expandedCrossAxisAlignment: CrossAxisAlignment.end,
       children: isSubscribe
@@ -734,10 +598,10 @@ class _StoreHomePageState extends State<StoreHomePage> {
   Widget _buildSubscribeField() => Column(
     crossAxisAlignment: CrossAxisAlignment.end,
     children: [
-      Text(
-        AppLocalizations.of(context)!.translate('subscribe_text'),
+      const Text(
+        "إشترك لتصل آخر العروض والمنتجات عبر بريدك الإلكتروني",
         textAlign: TextAlign.right,
-        style: const TextStyle(color: Colors.white54, fontSize: 12),
+        style: TextStyle(color: Colors.white54, fontSize: 12),
       ),
       const SizedBox(height: 15),
       Container(
@@ -757,25 +621,23 @@ class _StoreHomePageState extends State<StoreHomePage> {
               ),
               child: const Center(
                 child: Text(
-                  "Subscribe",
+                  "إشتراك",
                   style: TextStyle(
-                    color: AppColors.white,
+                    color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
-            Expanded(
+            const Expanded(
               child: TextField(
                 textAlign: TextAlign.right,
-                style: const TextStyle(color: AppColors.white, fontSize: 13),
+                style: TextStyle(color: Colors.white, fontSize: 13),
                 decoration: InputDecoration(
-                  hintText: AppLocalizations.of(
-                    context,
-                  )!.translate('email_hint'),
-                  hintStyle: const TextStyle(color: Colors.white24),
+                  hintText: "بريدك الإلكتروني",
+                  hintStyle: TextStyle(color: Colors.white24),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 20),
                 ),
               ),
             ),
@@ -791,58 +653,33 @@ class _StoreHomePageState extends State<StoreHomePage> {
       children: [
         Text(t, style: const TextStyle(color: Colors.white70, fontSize: 12)),
         const SizedBox(width: 10),
-        Icon(i, color: AppColors.white, size: 16),
+        Icon(i, color: Colors.white, size: 16),
       ],
     ),
   );
   Widget _buildBottomNav() => Container(
     height: 70,
     decoration: BoxDecoration(
-      color: AppColors.white,
+      color: Colors.white,
       border: Border(top: BorderSide(color: Colors.grey[100]!)),
     ),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _navIcon(
-          Icons.search,
-          AppLocalizations.of(context)!.translate('nav_search'),
-        ),
-        _navIcon(
-          Icons.person_outline,
-          AppLocalizations.of(context)!.translate('nav_account'),
-        ),
-        _navIcon(
-          Icons.shopping_bag_outlined,
-          AppLocalizations.of(context)!.translate('nav_cart'),
-        ),
-        _navIcon(
-          Icons.favorite_border,
-          AppLocalizations.of(context)!.translate('nav_wishlist'),
-          onTap: () => context.push('/wishlist'),
-        ),
-        _navIcon(
-          Icons.chat_bubble_outline,
-          AppLocalizations.of(context)!.translate('nav_shop'),
-          c: Colors.green,
-        ),
+        _navIcon(Icons.search, "بحث"),
+        _navIcon(Icons.person_outline, "الحساب"),
+        _navIcon(Icons.shopping_bag_outlined, "السلة"),
+        _navIcon(Icons.favorite_border, "الأمنيات"),
+        _navIcon(Icons.chat_bubble_outline, "تسوق", c: Colors.green),
       ],
     ),
   );
-  Widget _navIcon(
-    IconData i,
-    String l, {
-    Color c = Colors.black,
-    VoidCallback? onTap,
-  }) => GestureDetector(
-    onTap: onTap,
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(i, color: c, size: 24),
-        const SizedBox(height: 4),
-        Text(l, style: TextStyle(color: c, fontSize: 10)),
-      ],
-    ),
+  Widget _navIcon(IconData i, String l, {Color c = Colors.black}) => Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Icon(i, color: c, size: 24),
+      const SizedBox(height: 4),
+      Text(l, style: TextStyle(color: c, fontSize: 10)),
+    ],
   );
 }
