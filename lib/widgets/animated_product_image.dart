@@ -13,14 +13,16 @@ class _AnimatedProductImageState extends State<AnimatedProductImage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (widget.product.images.length > 1)
+    if (widget.product.images.length > 1) {
       precacheImage(NetworkImage(widget.product.images[1]), context);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.product.images.isEmpty)
+    if (widget.product.images.isEmpty) {
       return const Center(child: Icon(Icons.broken_image));
+    }
     String currentImg = (_active && widget.product.images.length > 1)
         ? widget.product.images[1]
         : widget.product.images[0];

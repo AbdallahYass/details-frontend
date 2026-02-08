@@ -47,8 +47,6 @@ class AppLocalizations {
       'subscribe_button': 'Subscribe',
       'email_hint': 'Your Email',
       'copyright': 'Copyright all rights reserved © 2026 Details',
-      'dev_credit':
-          'Designed and Developed by Rowad || Integrated Web Solutions',
       'nav_search': 'Search',
       'nav_account': 'Account',
       'nav_cart': 'Cart',
@@ -94,7 +92,6 @@ class AppLocalizations {
       'subscribe_button': 'إشتراك',
       'email_hint': 'بريدك الإلكتروني',
       'copyright': 'Copyright all rights reserved © 2026 Details',
-      'dev_credit': 'تصميم و تطوير رواد || لخدمات وحلول الويب المتكاملة',
       'nav_search': 'بحث',
       'nav_account': 'الحساب',
       'nav_cart': 'السلة',

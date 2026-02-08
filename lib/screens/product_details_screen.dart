@@ -5,16 +5,20 @@ import 'package:details_app/models/product.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/l10n/app_localizations.dart';
 import 'package:details_app/widgets/language_button.dart';
+import 'package:go_router/go_router.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
-  final Product product;
-  const ProductDetailsScreen({super.key, required this.product});
+  final Product? product;
+  final String? productId;
+  const ProductDetailsScreen({super.key, this.product, this.productId});
 
   @override
   State<ProductDetailsScreen> createState() => _ProductDetailsScreenState();
 }
 
 class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
+  Product? _product;
+  bool _isLoadingProduct = true;
   int _currentImageIndex = 0;
   List<Product> relatedProducts = [];
   bool isLoadingRelated = true;
@@ -22,10 +26,37 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchRelatedProducts();
+    if (widget.product != null) {
+      _product = widget.product;
+      _isLoadingProduct = false;
+      _fetchRelatedProducts();
+    } else if (widget.productId != null) {
+      _fetchProductById(widget.productId!);
+    }
+  }
+
+  Future<void> _fetchProductById(String id) async {
+    try {
+      final res = await http.get(
+        Uri.parse('https://api.details-store.com/api/products/$id'),
+      );
+      if (res.statusCode == 200) {
+        if (mounted) {
+          setState(() {
+            _product = Product.fromJson(json.decode(res.body));
+            _isLoadingProduct = false;
+          });
+          _fetchRelatedProducts();
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching product details: $e");
+      if (mounted) setState(() => _isLoadingProduct = false);
+    }
   }
 
   Future<void> _fetchRelatedProducts() async {
+    if (_product == null) return;
     try {
       final res = await http.get(
         Uri.parse('https://api.details-store.com/api/products'),
@@ -36,9 +67,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           setState(() {
             relatedProducts = data
                 .map((j) => Product.fromJson(j))
-                .where(
-                  (p) => p.id != widget.product.id,
-                ) // استثناء المنتج الحالي
+                .where((p) => p.id != _product!.id) // استثناء المنتج الحالي
                 .take(5) // عرض 5 منتجات فقط
                 .toList();
             isLoadingRelated = false;
@@ -53,10 +82,24 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingProduct) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+    if (_product == null) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(child: Text("Product not found")),
+      );
+    }
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(widget.product.getName(context)),
+        title: Text(_product!.getName(context)),
         elevation: 0.5,
         actions: const [LanguageButton(), SizedBox(width: 10)],
       ),
@@ -69,25 +112,23 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 SizedBox(
                   height: 500,
                   child: PageView.builder(
-                    itemCount: widget.product.images.length,
+                    itemCount: _product!.images.length,
                     onPageChanged: (index) {
                       setState(() {
                         _currentImageIndex = index;
                       });
                     },
-                    itemBuilder: (c, i) => Image.network(
-                      widget.product.images[i],
-                      fit: BoxFit.cover,
-                    ),
+                    itemBuilder: (c, i) =>
+                        Image.network(_product!.images[i], fit: BoxFit.cover),
                   ),
                 ),
-                if (widget.product.images.length > 1)
+                if (_product!.images.length > 1)
                   Positioned(
                     bottom: 20,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
-                        widget.product.images.length,
+                        _product!.images.length,
                         (index) => AnimatedContainer(
                           duration: const Duration(milliseconds: 300),
                           margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -112,7 +153,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    widget.product.brand,
+                    _product!.brand,
                     style: const TextStyle(
                       color: AppColors.grey,
                       fontSize: 14,
@@ -121,7 +162,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    widget.product.getName(context),
+                    _product!.getName(context),
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -129,7 +170,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   ),
                   const SizedBox(height: 15),
                   Text(
-                    "\$${widget.product.price}",
+                    "\$${_product!.price}",
                     style: const TextStyle(
                       fontSize: 22,
                       color: AppColors.gold,
@@ -146,7 +187,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    widget.product.getDescription(context),
+                    _product!.getDescription(context),
                     textAlign: TextAlign.right,
                     style: const TextStyle(
                       fontSize: 15,
@@ -155,7 +196,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     ),
                   ),
                   const SizedBox(height: 30),
-                  if (widget.product.dimensions.isNotEmpty) ...[
+                  if (_product!.dimensions.isNotEmpty) ...[
                     Text(
                       AppLocalizations.of(context)!.translate('dimensions'),
                       style: TextStyle(
@@ -165,7 +206,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      widget.product.dimensions,
+                      _product!.dimensions,
                       style: const TextStyle(
                         fontSize: 15,
                         color: AppColors.grey,
@@ -231,10 +272,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   Widget _buildRelatedProductCard(Product p) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (c) => ProductDetailsScreen(product: p)),
-        );
+        context.push('/product/${p.id}', extra: p);
       },
       child: Container(
         width: 160,

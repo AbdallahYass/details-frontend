@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:details_app/models/product.dart';
 import 'package:details_app/models/banner_model.dart';
+import 'package:details_app/models/category_model.dart';
 import 'package:details_app/widgets/reveal_on_scroll.dart';
 import 'package:details_app/widgets/animated_banner_item.dart';
 import 'package:details_app/widgets/animated_product_image.dart';
-import 'package:details_app/screens/product_details_screen.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/l10n/app_localizations.dart';
 import 'package:details_app/widgets/language_button.dart';
+import 'package:go_router/go_router.dart';
 
 class StoreHomePage extends StatefulWidget {
   const StoreHomePage({super.key});
@@ -21,6 +22,7 @@ class StoreHomePage extends StatefulWidget {
 class _StoreHomePageState extends State<StoreHomePage> {
   List<Product> products = [];
   List<BannerModel> banners = [];
+  List<CategoryModel> categories = [];
   bool isLoading = true;
 
   int _currentBannerIndex = 0;
@@ -30,6 +32,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
   Timer? _heroTimer, _announcementTimer;
 
   List<String> _topAnnouncements = [];
+  String? _selectedCategory;
 
   @override
   void initState() {
@@ -60,7 +63,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
   }
 
   Future<void> _loadAllData() async {
-    await Future.wait([fetchProducts(), fetchBanners()]);
+    await Future.wait([fetchProducts(), fetchBanners(), fetchCategories()]);
     if (mounted) {
       setState(() => isLoading = false);
       _startHeroScroll();
@@ -96,15 +99,19 @@ class _StoreHomePageState extends State<StoreHomePage> {
     });
   }
 
-  Future<void> fetchProducts() async {
+  Future<void> fetchProducts({String? category}) async {
     try {
-      final res = await http.get(
-        Uri.parse('https://api.details-store.com/api/products'),
-      );
+      String url = 'https://api.details-store.com/api/products';
+      if (category != null) {
+        url += '?category=$category';
+      }
+      final res = await http.get(Uri.parse(url));
       if (res.statusCode == 200) {
-        products = (json.decode(res.body) as List)
-            .map((j) => Product.fromJson(j))
-            .toList();
+        setState(() {
+          products = (json.decode(res.body) as List)
+              .map((j) => Product.fromJson(j))
+              .toList();
+        });
       }
     } catch (e) {
       debugPrint("Error: $e");
@@ -126,13 +133,28 @@ class _StoreHomePageState extends State<StoreHomePage> {
     }
   }
 
+  Future<void> fetchCategories() async {
+    try {
+      final res = await http.get(
+        Uri.parse('https://api.details-store.com/api/categories'),
+      );
+      if (res.statusCode == 200) {
+        categories = (json.decode(res.body) as List)
+            .map((j) => CategoryModel.fromJson(j))
+            .toList();
+      }
+    } catch (e) {
+      debugPrint("Error fetching categories: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: const Icon(Icons.menu, color: AppColors.primary),
         title: GestureDetector(
-          onTap: () => Navigator.of(context).popUntil((route) => route.isFirst),
+          onTap: () => context.go('/'),
           child: Image.asset(
             'assets/images/logo.png',
             height: 35,
@@ -301,12 +323,8 @@ class _StoreHomePageState extends State<StoreHomePage> {
                         _circleIcon(
                           Icons.visibility_outlined,
                           isWhite: true,
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (c) => ProductDetailsScreen(product: p),
-                            ),
-                          ),
+                          onTap: () =>
+                              context.push('/product/${p.id}', extra: p),
                         ),
                         const SizedBox(height: 8),
                         _circleIcon(Icons.link, isWhite: true),
@@ -461,40 +479,77 @@ class _StoreHomePageState extends State<StoreHomePage> {
         color: AppColors.orange,
       ),
       const SizedBox(height: 25),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _categoryCircle(AppLocalizations.of(context)!.translate('bags')),
-          _categoryCircle(AppLocalizations.of(context)!.translate('watches')),
-          _categoryCircle(
-            AppLocalizations.of(context)!.translate('accessories'),
-          ),
-        ],
+      SizedBox(
+        height: 110,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: categories.length,
+          itemBuilder: (c, i) => _categoryCircle(category: categories[i]),
+        ),
       ),
       const SizedBox(height: 10),
     ],
   );
-  Widget _categoryCircle(String l) => Column(
-    children: [
-      Container(
-        width: 80,
-        height: 80,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: AppColors.circleBackground,
-          border: Border.all(
-            color: Colors.grey[200]!,
-          ), // يمكن إضافته للثوابت إذا أردت
+  Widget _categoryCircle({required CategoryModel category}) {
+    bool isSelected = _selectedCategory == category.slug;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          if (_selectedCategory == category.slug) {
+            _selectedCategory = null; // إلغاء التحديد إذا ضغط مرة أخرى
+          } else {
+            _selectedCategory = category.slug;
+          }
+          isLoading = true;
+        });
+        fetchProducts(category: _selectedCategory).then((_) {
+          setState(() => isLoading = false);
+        });
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: Column(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected
+                    ? AppColors.primary
+                    : AppColors.circleBackground,
+                border: Border.all(
+                  color: isSelected ? AppColors.primary : Colors.grey[200]!,
+                ),
+              ),
+              child: ClipOval(
+                child: Image.network(
+                  category.imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder:
+                      (c, e, s) => Icon(
+                        Icons.category_outlined,
+                        color: isSelected ? AppColors.white : AppColors.grey,
+                      ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              category.getName(context),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected ? AppColors.primary : Colors.black,
+              ),
+            ),
+          ],
         ),
-        child: const Icon(Icons.local_mall_outlined, color: AppColors.grey),
       ),
-      const SizedBox(height: 8),
-      Text(
-        l,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-      ),
-    ],
-  );
+    );
+  }
+
   Widget _buildFooter() => Container(
     width: double.infinity,
     color: AppColors.primary,
@@ -524,16 +579,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
         const SizedBox(height: 40),
         const Divider(color: Colors.white12),
         const SizedBox(height: 20),
-        Text(
-          AppLocalizations.of(context)!.translate('dev_credit'),
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AppColors.gold,
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 10),
         Text(
           AppLocalizations.of(context)!.translate('copyright'),
           textAlign: TextAlign.center,

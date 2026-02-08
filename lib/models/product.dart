@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:details_app/models/category_model.dart';
 
 class Product {
   final String id, brand, dimensions;
@@ -7,6 +8,7 @@ class Product {
   final double price;
   final double? oldPrice;
   final bool isSoldOut;
+  final CategoryModel? category;
 
   Product({
     required this.id,
@@ -18,6 +20,7 @@ class Product {
     required this.price,
     this.oldPrice,
     this.isSoldOut = false,
+    this.category,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -37,6 +40,9 @@ class Product {
           ? (json['oldPrice'] as num).toDouble()
           : null,
       isSoldOut: json['isSoldOut'] ?? false,
+      category: json['category'] is Map
+          ? CategoryModel.fromJson(json['category'])
+          : null,
     );
   }
 
