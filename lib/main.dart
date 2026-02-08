@@ -169,7 +169,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
             .map((j) => Product.fromJson(j))
             .toList();
     } catch (e) {
-      debugPrint("Error: $e");
+      debugPrint("Error products: $e");
     }
   }
 
@@ -183,7 +183,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
             .map((j) => BannerModel.fromJson(j))
             .toList();
     } catch (e) {
-      debugPrint("Error: $e");
+      debugPrint("Error banners: $e");
     }
   }
 
@@ -216,7 +216,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
                   SliverToBoxAdapter(child: _buildTopAnnouncement()),
                   SliverToBoxAdapter(child: _buildHeroSlider()),
                   SliverToBoxAdapter(child: _buildCategoriesSection()),
-                  // --- قسم الأكثر شيوعاً ---
+                  // --- قسم الأكثر شيوعاً الجديد ---
                   SliverToBoxAdapter(
                     child: _buildSectionHeader(
                       "الأكثر شيوعاً",
@@ -299,7 +299,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
       border: Border.all(color: Colors.white),
     ),
   );
-
   Widget _buildCategoriesSection() => Column(
     children: [
       const SizedBox(height: 35),
@@ -349,6 +348,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
     ],
   );
 
+  // --- عنوان القسم وزر عرض الكل الجديد ---
   Widget _buildSectionHeader(String title, String subtitle) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 25),
@@ -396,10 +396,10 @@ class _StoreHomePageState extends State<StoreHomePage> {
     );
   }
 
-  // --- كارت المنتج بتصميم Lady90s الكامل ---
+  // --- كارت المنتج بتصميم Lady90s (تم إزالة الأزرار التفاعلية من هنا) ---
   Widget _buildProductCard(Product p) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.end, // محاذاة لليمين لدعم العربية
       children: [
         Expanded(
           child: Container(
@@ -411,7 +411,10 @@ class _StoreHomePageState extends State<StoreHomePage> {
               borderRadius: BorderRadius.circular(8),
               child: Stack(
                 children: [
+                  // ويجت تبديل الصور (بدون الأزرار)
                   _AnimatedProductImage(product: p),
+
+                  // أيقونات تفاعلية فوق الصورة
                   Positioned(
                     top: 10,
                     right: 10,
@@ -437,6 +440,8 @@ class _StoreHomePageState extends State<StoreHomePage> {
                       ],
                     ),
                   ),
+
+                  // شارة "بيعت كلها"
                   if (p.isSoldOut)
                     Positioned(
                       top: 15,
@@ -469,6 +474,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
           ),
         ),
         const SizedBox(height: 12),
+        // تفاصيل المنتج (الاسم والسعر)
         Text(
           p.name,
           textAlign: TextAlign.right,
@@ -725,7 +731,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
   );
 }
 
-// --- ويجت تبديل الصور + أزرار تفاعلية (دعم اللمس والماوس) ---
+// --- ويجت تبديل الصور (تم إزالة الأزرار التفاعلية منها) ---
 class _AnimatedProductImage extends StatefulWidget {
   final Product product;
   const _AnimatedProductImage({required this.product});
@@ -759,102 +765,24 @@ class _AnimatedProductImageState extends State<_AnimatedProductImage> {
         onPointerDown: (_) => setState(() => _active = true),
         onPointerUp: (_) => setState(() => _active = false),
         onPointerCancel: (_) => setState(() => _active = false),
-        child: Stack(
-          children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 500),
-              reverseDuration: const Duration(milliseconds: 500),
-              transitionBuilder: (child, anim) => FadeTransition(
-                opacity: anim,
-                child: ScaleTransition(
-                  scale: Tween<double>(begin: 0.96, end: 1.0).animate(anim),
-                  child: child,
-                ),
-              ),
-              child: Image.network(
-                currentImg,
-                key: ValueKey(currentImg),
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
-                errorBuilder: (c, e, s) => const Icon(Icons.broken_image),
-              ),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 500),
+          reverseDuration: const Duration(milliseconds: 500),
+          transitionBuilder: (child, anim) => FadeTransition(
+            opacity: anim,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.96, end: 1.0).animate(anim),
+              child: child,
             ),
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeOutCubic,
-              bottom: _active ? 0 : -60,
-              left: 0,
-              right: 0,
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 300),
-                opacity: _active ? 1.0 : 0.0,
-                child: Container(
-                  height: 50,
-                  color: Colors.white.withOpacity(0.95),
-                  child: Row(
-                    children: [
-                      _quickActionButton(
-                        Icons.shopping_bag_outlined,
-                        "إضافة للسلة",
-                        onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              "${widget.product.name} تمت إضافتها للسلة",
-                            ),
-                          ),
-                        ),
-                      ),
-                      const VerticalDivider(
-                        width: 1,
-                        color: Colors.black12,
-                        indent: 10,
-                        endIndent: 10,
-                      ),
-                      _quickActionButton(
-                        Icons.remove_red_eye_outlined,
-                        "رؤية المزيد",
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (c) =>
-                                ProductDetailsScreen(product: widget.product),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _quickActionButton(
-    IconData icon,
-    String label, {
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16, color: Colors.black),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-          ],
+          ),
+          child: Image.network(
+            currentImg,
+            key: ValueKey(currentImg),
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            errorBuilder: (c, e, s) => const Icon(Icons.broken_image),
+          ),
         ),
       ),
     );
