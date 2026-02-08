@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:details_app/models/product.dart';
 import 'package:details_app/screens/home_page.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/l10n/app_localizations.dart';
 import 'package:details_app/screens/product_details_screen.dart';
+import 'package:details_app/providers/wishlist_provider.dart';
+import 'package:details_app/screens/wishlist_screen.dart';
 
-void main() => runApp(const DetailsStoreApp());
+void main() => runApp(
+  ChangeNotifierProvider(
+    create: (_) => WishlistProvider()..fetchWishlist(),
+    child: const DetailsStoreApp(),
+  ),
+);
 
 class DetailsStoreApp extends StatefulWidget {
   const DetailsStoreApp({super.key});
@@ -35,6 +43,10 @@ class _DetailsStoreAppState extends State<DetailsStoreApp> {
           final product = state.extra as Product?;
           return ProductDetailsScreen(productId: productId, product: product);
         },
+      ),
+      GoRoute(
+        path: '/wishlist',
+        builder: (context, state) => const WishlistScreen(),
       ),
     ],
   );

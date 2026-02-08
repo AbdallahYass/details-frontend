@@ -23,6 +23,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             )
           : const Icon(Icons.menu, color: AppColors.primary),
       title: GestureDetector(
+        behavior: HitTestBehavior.translucent,
         onTap: () => context.go('/'),
         child: Image.asset(
           'assets/images/logo.png',

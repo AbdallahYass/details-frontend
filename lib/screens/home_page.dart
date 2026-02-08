@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import 'package:details_app/models/product.dart';
 import 'package:details_app/models/banner_model.dart';
 import 'package:details_app/models/category_model.dart';
@@ -11,6 +12,7 @@ import 'package:details_app/widgets/animated_product_image.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/l10n/app_localizations.dart';
 import 'package:details_app/widgets/custom_app_bar.dart';
+import 'package:details_app/providers/wishlist_provider.dart';
 import 'package:go_router/go_router.dart';
 
 class StoreHomePage extends StatefulWidget {
@@ -280,6 +282,9 @@ class _StoreHomePageState extends State<StoreHomePage> {
   }
 
   Widget _buildProductCard(Product p) {
+    final wishlistProvider = Provider.of<WishlistProvider>(context);
+    final isFav = wishlistProvider.isInWishlist(p.id);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -297,7 +302,12 @@ class _StoreHomePageState extends State<StoreHomePage> {
                   Positioned(
                     top: 10,
                     right: 10,
-                    child: _circleIcon(Icons.favorite_border, size: 20),
+                    child: _circleIcon(
+                      isFav ? Icons.favorite : Icons.favorite_border,
+                      size: 20,
+                      color: isFav ? AppColors.red : AppColors.secondary,
+                      onTap: () => wishlistProvider.toggleWishlist(p),
+                    ),
                   ),
                   const Positioned(
                     top: 10,
@@ -395,6 +405,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
     bool isWhite = false,
     double size = 18,
     VoidCallback? onTap,
+    Color? color,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -414,7 +425,11 @@ class _StoreHomePageState extends State<StoreHomePage> {
                 ]
               : [],
         ),
-        child: Icon(icon, color: AppColors.secondary, size: size),
+        child: Icon(
+          icon,
+          color: color ?? AppColors.secondary,
+          size: size,
+        ),
       ),
     );
   }
@@ -759,6 +774,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
         _navIcon(
           Icons.favorite_border,
           AppLocalizations.of(context)!.translate('nav_wishlist'),
+          onTap: () => context.push('/wishlist'),
         ),
         _navIcon(
           Icons.chat_bubble_outline,
@@ -768,12 +784,20 @@ class _StoreHomePageState extends State<StoreHomePage> {
       ],
     ),
   );
-  Widget _navIcon(IconData i, String l, {Color c = Colors.black}) => Column(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      Icon(i, color: c, size: 24),
-      const SizedBox(height: 4),
-      Text(l, style: TextStyle(color: c, fontSize: 10)),
-    ],
+  Widget _navIcon(
+    IconData i,
+    String l, {
+    Color c = Colors.black,
+    VoidCallback? onTap,
+  }) => GestureDetector(
+    onTap: onTap,
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(i, color: c, size: 24),
+        const SizedBox(height: 4),
+        Text(l, style: TextStyle(color: c, fontSize: 10)),
+      ],
+    ),
   );
 }

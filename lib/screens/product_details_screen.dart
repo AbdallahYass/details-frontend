@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import 'package:details_app/models/product.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/l10n/app_localizations.dart';
 import 'package:details_app/widgets/custom_app_bar.dart';
+import 'package:details_app/providers/wishlist_provider.dart';
 import 'package:go_router/go_router.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
@@ -82,6 +84,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final wishlistProvider = Provider.of<WishlistProvider>(context);
+    final isFav =
+        _product != null && wishlistProvider.isInWishlist(_product!.id);
+
     if (_isLoadingProduct) {
       return const Scaffold(
         backgroundColor: AppColors.background,
@@ -148,13 +154,27 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    _product!.brand,
-                    style: const TextStyle(
-                      color: AppColors.grey,
-                      fontSize: 14,
-                      letterSpacing: 1.5,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          isFav ? Icons.favorite : Icons.favorite_border,
+                          color: isFav ? AppColors.red : AppColors.grey,
+                          size: 28,
+                        ),
+                        onPressed: () =>
+                            wishlistProvider.toggleWishlist(_product!),
+                      ),
+                      Text(
+                        _product!.brand,
+                        style: const TextStyle(
+                          color: AppColors.grey,
+                          fontSize: 14,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 10),
                   Text(
