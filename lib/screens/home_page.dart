@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:details_app/models/product.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:details_app/models/banner_model.dart';
 import 'package:details_app/models/category_model.dart';
 import 'package:details_app/widgets/reveal_on_scroll.dart';
@@ -672,8 +673,8 @@ class _StoreHomePageState extends State<StoreHomePage> {
                 debugPrint('Could not launch $url');
               }
             },
-            icon: const Icon(
-              Icons.camera_alt_outlined,
+            icon: const FaIcon(
+              FontAwesomeIcons.instagram,
               color: AppColors.white,
               size: 20,
             ),
@@ -685,8 +686,8 @@ class _StoreHomePageState extends State<StoreHomePage> {
                 debugPrint('Could not launch $url');
               }
             },
-            icon: const Icon(
-              Icons.chat,
+            icon: const FaIcon(
+              FontAwesomeIcons.whatsapp,
               color: AppColors.white,
               size: 20,
             ),
