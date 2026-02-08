@@ -33,7 +33,7 @@ class DetailsStoreApp extends StatelessWidget {
   }
 }
 
-// --- النماذج (Models) المحدثة ببيانات السيرفر ---
+// --- النماذج (Models) ---
 class Product {
   final String id, name, brand, description, dimensions;
   final List<String> images;
@@ -169,7 +169,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
             .map((j) => Product.fromJson(j))
             .toList();
     } catch (e) {
-      debugPrint("Error products: $e");
+      debugPrint("Error: $e");
     }
   }
 
@@ -183,7 +183,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
             .map((j) => BannerModel.fromJson(j))
             .toList();
     } catch (e) {
-      debugPrint("Error banners: $e");
+      debugPrint("Error: $e");
     }
   }
 
@@ -216,7 +216,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
                   SliverToBoxAdapter(child: _buildTopAnnouncement()),
                   SliverToBoxAdapter(child: _buildHeroSlider()),
                   SliverToBoxAdapter(child: _buildCategoriesSection()),
-                  // --- قسم الأكثر شيوعاً الجديد ---
                   SliverToBoxAdapter(
                     child: _buildSectionHeader(
                       "الأكثر شيوعاً",
@@ -250,20 +249,209 @@ class _StoreHomePageState extends State<StoreHomePage> {
     );
   }
 
-  Widget _buildTopAnnouncement() => Container(
-    height: 35,
-    color: const Color(0xFFF7F7F7),
-    child: PageView.builder(
-      controller: _announcementController,
-      itemCount: _topAnnouncements.length,
-      itemBuilder: (c, i) => Center(
-        child: Text(
-          _topAnnouncements[i],
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+  // --- دوال بناء الواجهة ---
+
+  Widget _buildTopAnnouncement() {
+    return Container(
+      height: 35,
+      color: const Color(0xFFF7F7F7),
+      child: PageView.builder(
+        controller: _announcementController,
+        itemCount: _topAnnouncements.length,
+        itemBuilder: (c, i) => Center(
+          child: Text(
+            _topAnnouncements[i],
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
+
+  Widget _buildSectionHeader(String title, String subtitle) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 25),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(width: 30, height: 1.5, color: Colors.black),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Container(width: 30, height: 1.5, color: Colors.black),
+            ],
+          ),
+          const SizedBox(height: 5),
+          Text(
+            subtitle,
+            style: const TextStyle(color: Colors.grey, fontSize: 12),
+          ),
+          const SizedBox(height: 15),
+          ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF222222),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(25),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 35, vertical: 12),
+            ),
+            child: const Text(
+              "عرض الكل",
+              style: TextStyle(color: Colors.white, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductCard(Product p) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: const Color(0xFFF9F9F9),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Stack(
+                children: [
+                  _AnimatedProductImage(product: p),
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: _circleIcon(Icons.favorite_border, size: 20),
+                  ),
+                  const Positioned(
+                    top: 10,
+                    left: 10,
+                    child: Icon(
+                      Icons.fullscreen,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 15,
+                    left: 10,
+                    child: Column(
+                      children: [
+                        _circleIcon(
+                          Icons.visibility_outlined,
+                          isWhite: true,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (c) => ProductDetailsScreen(product: p),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        _circleIcon(Icons.link, isWhite: true),
+                      ],
+                    ),
+                  ),
+                  if (p.isSoldOut)
+                    Positioned(
+                      top: 15,
+                      left: 0,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFE32F2F),
+                          borderRadius: BorderRadius.only(
+                            topRight: Radius.circular(20),
+                            bottomRight: Radius.circular(20),
+                          ),
+                        ),
+                        child: const Text(
+                          "بيعت كلها",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          p.name,
+          textAlign: TextAlign.right,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            const Text(
+              "شيكل",
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              p.price.toStringAsFixed(2),
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _circleIcon(
+    IconData icon, {
+    bool isWhite = false,
+    double size = 18,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isWhite ? Colors.white : Colors.black.withOpacity(0.05),
+          shape: BoxShape.circle,
+          boxShadow: isWhite
+              ? [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)]
+              : [],
+        ),
+        child: Icon(icon, color: Colors.black54, size: size),
+      ),
+    );
+  }
+
   Widget _buildHeroSlider() => banners.isEmpty
       ? const SizedBox()
       : SizedBox(
@@ -347,183 +535,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
       ),
     ],
   );
-
-  // --- عنوان القسم وزر عرض الكل الجديد ---
-  Widget _buildSectionHeader(String title, String subtitle) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 25),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(width: 30, height: 1.5, color: Colors.black),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              Container(width: 30, height: 1.5, color: Colors.black),
-            ],
-          ),
-          const SizedBox(height: 5),
-          Text(
-            subtitle,
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
-          ),
-          const SizedBox(height: 15),
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF222222),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 35, vertical: 12),
-            ),
-            child: const Text(
-              "عرض الكل",
-              style: TextStyle(color: Colors.white, fontSize: 13),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // --- كارت المنتج بتصميم Lady90s (تم إزالة الأزرار التفاعلية من هنا) ---
-  Widget _buildProductCard(Product p) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end, // محاذاة لليمين لدعم العربية
-      children: [
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: const Color(0xFFF9F9F9),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Stack(
-                children: [
-                  // ويجت تبديل الصور (بدون الأزرار)
-                  _AnimatedProductImage(product: p),
-
-                  // أيقونات تفاعلية فوق الصورة
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: _circleIcon(Icons.favorite_border, size: 20),
-                  ),
-                  const Positioned(
-                    top: 10,
-                    left: 10,
-                    child: Icon(
-                      Icons.fullscreen,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 15,
-                    left: 10,
-                    child: Column(
-                      children: [
-                        _circleIcon(Icons.visibility_outlined, isWhite: true),
-                        const SizedBox(height: 8),
-                        _circleIcon(Icons.link, isWhite: true),
-                      ],
-                    ),
-                  ),
-
-                  // شارة "بيعت كلها"
-                  if (p.isSoldOut)
-                    Positioned(
-                      top: 15,
-                      left: 0,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFE32F2F),
-                          borderRadius: BorderRadius.only(
-                            topRight: Radius.circular(20),
-                            bottomRight: Radius.circular(20),
-                          ),
-                        ),
-                        child: const Text(
-                          "بيعت كلها",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        // تفاصيل المنتج (الاسم والسعر)
-        Text(
-          p.name,
-          textAlign: TextAlign.right,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            height: 1.4,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            const Text(
-              "شيكل",
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              p.price.toStringAsFixed(2),
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _circleIcon(IconData icon, {bool isWhite = false, double size = 18}) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: isWhite ? Colors.white : Colors.black.withOpacity(0.05),
-        shape: BoxShape.circle,
-        boxShadow: isWhite
-            ? [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4)]
-            : [],
-      ),
-      child: Icon(icon, color: Colors.black54, size: size),
-    );
-  }
-
-  // --- الفوتر بتنسيق Lady90s ---
   Widget _buildFooter() => Container(
     width: double.infinity,
     color: Colors.black,
@@ -731,7 +742,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
   );
 }
 
-// --- ويجت تبديل الصور (تم إزالة الأزرار التفاعلية منها) ---
+// --- ويجت تبديل الصور النظيفة ---
 class _AnimatedProductImage extends StatefulWidget {
   final Product product;
   const _AnimatedProductImage({required this.product});
@@ -741,7 +752,6 @@ class _AnimatedProductImage extends StatefulWidget {
 
 class _AnimatedProductImageState extends State<_AnimatedProductImage> {
   bool _active = false;
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -756,7 +766,6 @@ class _AnimatedProductImageState extends State<_AnimatedProductImage> {
     String currentImg = (_active && widget.product.images.length > 1)
         ? widget.product.images[1]
         : widget.product.images[0];
-
     return MouseRegion(
       onEnter: (_) => setState(() => _active = true),
       onExit: (_) => setState(() => _active = false),
@@ -764,7 +773,6 @@ class _AnimatedProductImageState extends State<_AnimatedProductImage> {
         behavior: HitTestBehavior.opaque,
         onPointerDown: (_) => setState(() => _active = true),
         onPointerUp: (_) => setState(() => _active = false),
-        onPointerCancel: (_) => setState(() => _active = false),
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),
           reverseDuration: const Duration(milliseconds: 500),
@@ -789,11 +797,10 @@ class _AnimatedProductImageState extends State<_AnimatedProductImage> {
   }
 }
 
-// --- صفحة تفاصيل المنتج (Product Details Screen) ---
+// --- صفحة تفاصيل المنتج ---
 class ProductDetailsScreen extends StatelessWidget {
   final Product product;
   const ProductDetailsScreen({super.key, required this.product});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -909,7 +916,7 @@ class ProductDetailsScreen extends StatelessWidget {
   }
 }
 
-// --- بقية الويجت (RevealOnScroll, AnimatedBannerItem) ---
+// --- ويجت الأنيميشن والإعلانات ---
 class RevealOnScroll extends StatefulWidget {
   final Widget child;
   const RevealOnScroll({super.key, required this.child});
