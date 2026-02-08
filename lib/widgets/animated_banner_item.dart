@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:details_app/models/banner_model.dart';
-import 'package:details_app/l10n/app_localizations.dart';
 
 class AnimatedBannerItem extends StatefulWidget {
   final BannerModel banner;
@@ -64,7 +63,7 @@ class _AnimatedBannerItemState extends State<AnimatedBannerItem>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  widget.banner.title,
+                  widget.banner.getTitle(context),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: Colors.white,
@@ -85,9 +84,7 @@ class _AnimatedBannerItemState extends State<AnimatedBannerItem>
                     borderRadius: BorderRadius.circular(30),
                   ),
                   child: Text(
-                    AppLocalizations.of(
-                      context,
-                    )!.translate(widget.banner.buttonText),
+                    widget.banner.getButtonText(context),
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,

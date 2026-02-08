@@ -59,6 +59,7 @@ class AppLocalizations {
       'dimensions': 'Dimensions & Sizes',
       'no_desc': 'No description available.',
       'discover_details': 'Discover Details',
+      'you_might_like': 'You might also like',
     },
     'ar': {
       'app_title': 'DETAILS',
@@ -104,6 +105,7 @@ class AppLocalizations {
       'dimensions': 'الأبعاد والمقاسات',
       'no_desc': 'لا يوجد وصف متاح حالياً.',
       'discover_details': 'اكتشف ديتيلز',
+      'you_might_like': 'قد يعجبك أيضاً',
     },
   };
 

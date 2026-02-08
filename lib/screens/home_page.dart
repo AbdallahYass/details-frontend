@@ -131,7 +131,14 @@ class _StoreHomePageState extends State<StoreHomePage> {
     return Scaffold(
       appBar: AppBar(
         leading: const Icon(Icons.menu, color: AppColors.primary),
-        title: const Text("DETAILS"),
+        title: GestureDetector(
+          onTap: () => Navigator.of(context).popUntil((route) => route.isFirst),
+          child: Image.asset(
+            'assets/images/logo.png',
+            height: 35,
+            errorBuilder: (c, e, s) => const Text("DETAILS"),
+          ),
+        ),
         actions: const [
           LanguageButton(),
           SizedBox(width: 5),
@@ -339,7 +346,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
         ),
         const SizedBox(height: 12),
         Text(
-          p.name,
+          p.getName(context),
           textAlign: TextAlign.right,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
