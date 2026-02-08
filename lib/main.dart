@@ -33,9 +33,9 @@ class DetailsStoreApp extends StatelessWidget {
   }
 }
 
-// --- النماذج (Models) ---
+// --- النماذج (Models) المحدثة ببيانات السيرفر ---
 class Product {
-  final String id, name, brand;
+  final String id, name, brand, description, dimensions;
   final List<String> images;
   final double price;
   final double? oldPrice;
@@ -45,6 +45,8 @@ class Product {
     required this.id,
     required this.name,
     required this.brand,
+    required this.description,
+    required this.dimensions,
     required this.images,
     required this.price,
     this.oldPrice,
@@ -52,17 +54,13 @@ class Product {
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
-    List<String> imgs = [];
-    if (json['images'] != null) {
-      imgs = List<String>.from(json['images']);
-    } else if (json['imageUrl'] != null) {
-      imgs = [json['imageUrl']];
-    }
     return Product(
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
       brand: json['brand'] ?? 'DETAILS',
-      images: imgs,
+      description: json['description'] ?? 'لا يوجد وصف متاح حالياً.',
+      dimensions: json['dimensions'] ?? '',
+      images: List<String>.from(json['images'] ?? [json['imageUrl'] ?? '']),
       price: (json['price'] as num).toDouble(),
       oldPrice: json['oldPrice'] != null
           ? (json['oldPrice'] as num).toDouble()
@@ -152,13 +150,11 @@ class _StoreHomePageState extends State<StoreHomePage> {
       if (_topAnnouncements.isNotEmpty && _announcementController.hasClients) {
         _currentAnnouncementIndex =
             (_currentAnnouncementIndex + 1) % _topAnnouncements.length;
-        if (_announcementController.hasClients) {
-          _announcementController.animateToPage(
-            _currentAnnouncementIndex,
-            duration: const Duration(milliseconds: 600),
-            curve: Curves.easeInOut,
-          );
-        }
+        _announcementController.animateToPage(
+          _currentAnnouncementIndex,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+        );
       }
     });
   }
@@ -173,7 +169,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
             .map((j) => Product.fromJson(j))
             .toList();
     } catch (e) {
-      debugPrint("Error: $e");
+      debugPrint("Error products: $e");
     }
   }
 
@@ -187,7 +183,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
             .map((j) => BannerModel.fromJson(j))
             .toList();
     } catch (e) {
-      debugPrint("Error: $e");
+      debugPrint("Error banners: $e");
     }
   }
 
@@ -296,7 +292,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
       border: Border.all(color: Colors.white),
     ),
   );
-
   Widget _buildCategoriesSection() => Column(
     children: [
       const SizedBox(height: 35),
@@ -360,9 +355,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
             borderRadius: BorderRadius.circular(4),
             child: Stack(
               children: [
-                // 👇 ويجت الصور المحدثة بالأزرار التفاعلية
                 _AnimatedProductImage(product: p),
-
                 if (p.isSoldOut)
                   Positioned(
                     bottom: 0,
@@ -632,7 +625,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
 }
 
 // ==========================================
-// === الويجت المطورة: تبديل صور وأزرار تفاعلية ===
+// === الويجت المطورة: تبديل الصور + أزرار تفاعلية ===
 // ==========================================
 class _AnimatedProductImage extends StatefulWidget {
   final Product product;
@@ -656,8 +649,7 @@ class _AnimatedProductImageState extends State<_AnimatedProductImage> {
   Widget build(BuildContext context) {
     if (widget.product.images.isEmpty)
       return const Center(child: Icon(Icons.broken_image));
-
-    String currentImage = (_active && widget.product.images.length > 1)
+    String currentImg = (_active && widget.product.images.length > 1)
         ? widget.product.images[1]
         : widget.product.images[0];
 
@@ -671,27 +663,19 @@ class _AnimatedProductImageState extends State<_AnimatedProductImage> {
         onPointerCancel: (_) => setState(() => _active = false),
         child: Stack(
           children: [
-            // 1. الجزء الخاص بالصورة المتحركة
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 500),
               reverseDuration: const Duration(milliseconds: 500),
-              switchInCurve: Curves.easeInOut,
-              switchOutCurve: Curves.easeInOut,
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: ScaleTransition(
-                    scale: Tween<double>(
-                      begin: 0.96,
-                      end: 1.0,
-                    ).animate(animation),
-                    child: child,
-                  ),
-                );
-              },
+              transitionBuilder: (child, anim) => FadeTransition(
+                opacity: anim,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.96, end: 1.0).animate(anim),
+                  child: child,
+                ),
+              ),
               child: Image.network(
-                currentImage,
-                key: ValueKey<String>(currentImage),
+                currentImg,
+                key: ValueKey(currentImg),
                 fit: BoxFit.cover,
                 width: double.infinity,
                 height: double.infinity,
@@ -699,11 +683,11 @@ class _AnimatedProductImageState extends State<_AnimatedProductImage> {
               ),
             ),
 
-            // 2. طبقة الأزرار التفاعلية (تظهر عند اللمس/الحوام)
+            // طبقة الأزرار السريعة (تظهر عند التفاعل)
             AnimatedPositioned(
               duration: const Duration(milliseconds: 400),
               curve: Curves.easeOutCubic,
-              bottom: _active ? 0 : -60, // تصعد من الأسفل
+              bottom: _active ? 0 : -60, // تصعد من الأسفل للأعلى
               left: 0,
               right: 0,
               child: AnimatedOpacity(
@@ -723,11 +707,18 @@ class _AnimatedProductImageState extends State<_AnimatedProductImage> {
                   ),
                   child: Row(
                     children: [
-                      // زر إضافة للسلة
                       _quickActionButton(
                         Icons.shopping_bag_outlined,
                         "إضافة للسلة",
-                        isPrimary: true,
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                "${widget.product.name} تمت إضافتها للسلة",
+                              ),
+                            ),
+                          );
+                        },
                       ),
                       const VerticalDivider(
                         width: 1,
@@ -735,11 +726,18 @@ class _AnimatedProductImageState extends State<_AnimatedProductImage> {
                         indent: 10,
                         endIndent: 10,
                       ),
-                      // زر رؤية المزيد
                       _quickActionButton(
                         Icons.remove_red_eye_outlined,
                         "رؤية المزيد",
-                        isPrimary: false,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (c) =>
+                                  ProductDetailsScreen(product: widget.product),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -755,13 +753,11 @@ class _AnimatedProductImageState extends State<_AnimatedProductImage> {
   Widget _quickActionButton(
     IconData icon,
     String label, {
-    required bool isPrimary,
+    required VoidCallback onTap,
   }) {
     return Expanded(
       child: InkWell(
-        onTap: () {
-          debugPrint("Clicked $label");
-        },
+        onTap: onTap,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -782,7 +778,128 @@ class _AnimatedProductImageState extends State<_AnimatedProductImage> {
   }
 }
 
-// --- ويجت الأنيميشن (Reveal On Scroll) ---
+// --- صفحة تفاصيل المنتج (Product Details Screen) ---
+class ProductDetailsScreen extends StatelessWidget {
+  final Product product;
+  const ProductDetailsScreen({super.key, required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(title: Text(product.name), elevation: 0.5),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // معرض الصور العلوي
+            SizedBox(
+              height: 450,
+              child: PageView.builder(
+                itemCount: product.images.length,
+                itemBuilder: (c, i) =>
+                    Image.network(product.images[i], fit: BoxFit.cover),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(25),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    product.brand,
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 14,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    product.name,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  Text(
+                    "\$${product.price}",
+                    style: const TextStyle(
+                      fontSize: 22,
+                      color: Color(0xFFC5A059),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Divider(height: 50),
+                  const Text(
+                    "وصف المنتج",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    product.description,
+                    textAlign: TextAlign.right,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      height: 1.7,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  if (product.dimensions.isNotEmpty) ...[
+                    const Text(
+                      "الأبعاد والمقاسات",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      product.dimensions,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 100),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomSheet: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Colors.grey[100]!)),
+        ),
+        child: ElevatedButton(
+          onPressed: () {},
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.black,
+            minimumSize: const Size(double.infinity, 55),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(5),
+            ),
+          ),
+          child: const Text(
+            "إضافة إلى حقيبة التسوق",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// --- ويجت الأنيميشن عند السكرول ---
 class RevealOnScroll extends StatefulWidget {
   final Widget child;
   const RevealOnScroll({super.key, required this.child});
