@@ -10,7 +10,7 @@ import 'package:details_app/widgets/animated_banner_item.dart';
 import 'package:details_app/widgets/animated_product_image.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/l10n/app_localizations.dart';
-import 'package:details_app/widgets/language_button.dart';
+import 'package:details_app/widgets/custom_app_bar.dart';
 import 'package:go_router/go_router.dart';
 
 class StoreHomePage extends StatefulWidget {
@@ -72,6 +72,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
   }
 
   void _startHeroScroll() {
+    _heroTimer?.cancel();
     _heroTimer = Timer.periodic(const Duration(seconds: 5), (t) {
       if (banners.isNotEmpty && _heroController.hasClients) {
         _currentBannerIndex = (_currentBannerIndex + 1) % banners.length;
@@ -86,6 +87,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
 
   // --- التحديث الجديد: تايمر الجمل لمدة 15 ثانية ---
   void _startAnnouncementScroll() {
+    _announcementTimer?.cancel();
     _announcementTimer = Timer.periodic(const Duration(seconds: 15), (t) {
       if (_topAnnouncements.isNotEmpty && _announcementController.hasClients) {
         _currentAnnouncementIndex =
@@ -118,15 +120,24 @@ class _StoreHomePageState extends State<StoreHomePage> {
     }
   }
 
-  Future<void> fetchBanners() async {
+  Future<void> fetchBanners({String location = 'home', String? category}) async {
     try {
-      final res = await http.get(
-        Uri.parse('https://api.details-store.com/api/banners'),
-      );
+      String url = 'https://api.details-store.com/api/banners?location=$location';
+      if (category != null) {
+        url += '&category=$category';
+      }
+      final res = await http.get(Uri.parse(url));
       if (res.statusCode == 200) {
-        banners = (json.decode(res.body) as List)
-            .map((j) => BannerModel.fromJson(j))
-            .toList();
+        setState(() {
+          banners = (json.decode(res.body) as List)
+              .map((j) => BannerModel.fromJson(j))
+              .toList();
+          // إعادة تعيين المؤشر للبدء من الإعلان الأول عند تغيير القائمة
+          _currentBannerIndex = 0;
+          if (_heroController.hasClients) {
+            _heroController.jumpToPage(0);
+          }
+        });
       }
     } catch (e) {
       debugPrint("Error: $e");
@@ -151,25 +162,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: const Icon(Icons.menu, color: AppColors.primary),
-        title: GestureDetector(
-          onTap: () => context.go('/'),
-          child: Image.asset(
-            'assets/images/logo.png',
-            height: 35,
-            errorBuilder: (c, e, s) => const Text("DETAILS"),
-          ),
-        ),
-        actions: const [
-          LanguageButton(),
-          SizedBox(width: 5),
-          Icon(Icons.search, color: AppColors.primary),
-          SizedBox(width: 15),
-          Icon(Icons.shopping_cart_outlined, color: AppColors.primary),
-          SizedBox(width: 15),
-        ],
-      ),
+      appBar: const CustomAppBar(),
       body: isLoading
           ? const Center(
               child: CircularProgressIndicator(
@@ -502,7 +495,14 @@ class _StoreHomePageState extends State<StoreHomePage> {
           }
           isLoading = true;
         });
-        fetchProducts(category: _selectedCategory).then((_) {
+        // جلب المنتجات والإعلانات الخاصة بالقسم المختار (أو العودة للرئيسية)
+        Future.wait([
+          fetchProducts(category: _selectedCategory),
+          fetchBanners(
+            location: _selectedCategory == null ? 'home' : 'category',
+            category: _selectedCategory,
+          ),
+        ]).then((_) {
           setState(() => isLoading = false);
         });
       },

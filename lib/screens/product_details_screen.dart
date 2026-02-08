@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:details_app/models/product.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/l10n/app_localizations.dart';
-import 'package:details_app/widgets/language_button.dart';
+import 'package:details_app/widgets/custom_app_bar.dart';
 import 'package:go_router/go_router.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
@@ -98,11 +98,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     }
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(_product!.getName(context)),
-        elevation: 0.5,
-        actions: const [LanguageButton(), SizedBox(width: 10)],
-      ),
+      appBar: const CustomAppBar(),
       body: SingleChildScrollView(
         child: Column(
           children: [
