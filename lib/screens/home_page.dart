@@ -16,6 +16,7 @@ import 'package:details_app/widgets/custom_app_bar.dart';
 import 'package:details_app/providers/wishlist_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:details_app/main.dart';
 
 class StoreHomePage extends StatefulWidget {
   const StoreHomePage({super.key});
@@ -318,16 +319,20 @@ class _StoreHomePageState extends State<StoreHomePage> {
                           SnackBar(
                             content: Text(
                               added
-                                  ? AppLocalizations.of(context)!
-                                      .translate('added_to_wishlist')
-                                  : AppLocalizations.of(context)!
-                                      .translate('removed_from_wishlist'),
+                                  ? AppLocalizations.of(
+                                      context,
+                                    )!.translate('added_to_wishlist')
+                                  : AppLocalizations.of(
+                                      context,
+                                    )!.translate('removed_from_wishlist'),
                             ),
-                            backgroundColor:
-                                added ? AppColors.primary : AppColors.red,
+                            backgroundColor: added
+                                ? AppColors.primary
+                                : AppColors.red,
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                             duration: const Duration(seconds: 1),
                           ),
                         );
@@ -450,11 +455,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
                 ]
               : [],
         ),
-        child: Icon(
-          icon,
-          color: color ?? AppColors.secondary,
-          size: size,
-        ),
+        child: Icon(icon, color: color ?? AppColors.secondary, size: size),
       ),
     );
   }
@@ -542,9 +543,9 @@ class _StoreHomePageState extends State<StoreHomePage> {
             category: _selectedCategory,
           ),
         ]).then((_) {
-              if (mounted) {
-                setState(() => isLoading = false);
-              }
+          if (mounted) {
+            setState(() => isLoading = false);
+          }
         });
       },
       child: Padding(
@@ -568,11 +569,10 @@ class _StoreHomePageState extends State<StoreHomePage> {
                 child: Image.network(
                   category.imageUrl,
                   fit: BoxFit.cover,
-                  errorBuilder:
-                      (c, e, s) => Icon(
-                        Icons.category_outlined,
-                        color: isSelected ? AppColors.white : AppColors.grey,
-                      ),
+                  errorBuilder: (c, e, s) => Icon(
+                    Icons.category_outlined,
+                    color: isSelected ? AppColors.white : AppColors.grey,
+                  ),
                 ),
               ),
             ),
@@ -599,18 +599,24 @@ class _StoreHomePageState extends State<StoreHomePage> {
       children: [
         _buildFooterAbout(),
         const SizedBox(height: 30),
-        _footerAccordion(AppLocalizations.of(context)!.translate('shortcuts'), [
-          AppLocalizations.of(context)!.translate('women'),
-          AppLocalizations.of(context)!.translate('men'),
-          AppLocalizations.of(context)!.translate('wallets'),
-          AppLocalizations.of(context)!.translate('watches'),
-        ]),
+        _footerAccordion(
+          AppLocalizations.of(context)!.translate('language'),
+          [],
+          customChildren: [
+            _buildLanguageItem('العربية', const Locale('ar', '')),
+            _buildLanguageItem('English', const Locale('en', '')),
+          ],
+        ),
         const Divider(color: Colors.white12, height: 1),
-        _footerAccordion(AppLocalizations.of(context)!.translate('policies'), [
-          AppLocalizations.of(context)!.translate('policy_cancel'),
-          AppLocalizations.of(context)!.translate('policy_return'),
-          AppLocalizations.of(context)!.translate('policy_shipping'),
-        ]),
+        _footerAccordion(
+          AppLocalizations.of(context)!.translate('policies'),
+          [],
+          customChildren: [
+            _buildPolicyItem(AppLocalizations.of(context)!.translate('policy_cancel')),
+            _buildPolicyItem(AppLocalizations.of(context)!.translate('policy_return')),
+            _buildPolicyItem(AppLocalizations.of(context)!.translate('policy_shipping')),
+          ],
+        ),
         const Divider(color: Colors.white12, height: 1),
         _footerAccordion(
           AppLocalizations.of(context)!.translate('stay_updated'),
@@ -623,16 +629,21 @@ class _StoreHomePageState extends State<StoreHomePage> {
         Text(
           AppLocalizations.of(context)!.translate('copyright'),
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.white54, fontSize: 11),
+          style: const TextStyle(
+            color: Colors.white54,
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     ),
   );
   Widget _buildFooterAbout() => Column(
-    crossAxisAlignment: CrossAxisAlignment.end,
+    crossAxisAlignment: CrossAxisAlignment.center,
     children: [
       Text(
         AppLocalizations.of(context)!.translate('footer_about_title'),
+        textAlign: TextAlign.center,
         style: const TextStyle(
           color: AppColors.white,
           fontSize: 18,
@@ -642,11 +653,12 @@ class _StoreHomePageState extends State<StoreHomePage> {
       const SizedBox(height: 15),
       Text(
         AppLocalizations.of(context)!.translate('footer_about_desc'),
-        textAlign: TextAlign.right,
+        textAlign: TextAlign.center,
         style: const TextStyle(
           color: Colors.white70,
           fontSize: 13,
           height: 1.6,
+          fontWeight: FontWeight.bold,
         ),
       ),
       const SizedBox(height: 20),
@@ -654,16 +666,8 @@ class _StoreHomePageState extends State<StoreHomePage> {
       _contactRow(Icons.phone_android, "+972-598723438"),
       const SizedBox(height: 15),
       Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.install_mobile,
-              color: AppColors.white,
-              size: 20,
-            ),
-          ),
           IconButton(
             onPressed: () async {
               final Uri url = Uri.parse(
@@ -696,49 +700,114 @@ class _StoreHomePageState extends State<StoreHomePage> {
       ),
     ],
   );
+  Widget _buildLanguageItem(String label, Locale locale) {
+    return GestureDetector(
+      onTap: () {
+        DetailsStoreApp.setLocale(context, locale);
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.white54,
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPolicyItem(String title) {
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (c) => AlertDialog(
+            title: Text(title),
+            content: Text(title),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(c),
+                child: const Text("OK"),
+              ),
+            ],
+          ),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Text(
+          title,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.white54,
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _footerAccordion(
     String t,
     List<String> i, {
     bool isSubscribe = false,
+    List<Widget>? customChildren,
   }) => Theme(
     data: ThemeData().copyWith(dividerColor: Colors.transparent),
     child: ExpansionTile(
-      title: Text(
-        t,
-        style: const TextStyle(
-          color: AppColors.white,
-          fontSize: 15,
-          fontWeight: FontWeight.bold,
+      title: Center(
+        child: Text(
+          t,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: AppColors.white,
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       trailing: const Icon(Icons.add, color: AppColors.white, size: 20),
       childrenPadding: const EdgeInsets.only(bottom: 20, right: 16, left: 16),
-      expandedCrossAxisAlignment: CrossAxisAlignment.end,
+      expandedCrossAxisAlignment: CrossAxisAlignment.center,
       children: isSubscribe
           ? [_buildSubscribeField()]
-          : i
-                .map(
-                  (item) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 5),
-                    child: Text(
-                      item,
-                      style: const TextStyle(
-                        color: Colors.white54,
-                        fontSize: 13,
+          : customChildren ??
+                i
+                    .map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 5),
+                        child: Text(
+                          item,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                )
-                .toList(),
+                    )
+                    .toList(),
     ),
   );
   Widget _buildSubscribeField() => Column(
-    crossAxisAlignment: CrossAxisAlignment.end,
+    crossAxisAlignment: CrossAxisAlignment.center,
     children: [
       Text(
         AppLocalizations.of(context)!.translate('subscribe_text'),
-        textAlign: TextAlign.right,
-        style: const TextStyle(color: Colors.white54, fontSize: 12),
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: Colors.white54,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
       ),
       const SizedBox(height: 15),
       Container(
@@ -769,12 +838,19 @@ class _StoreHomePageState extends State<StoreHomePage> {
             Expanded(
               child: TextField(
                 textAlign: TextAlign.right,
-                style: const TextStyle(color: AppColors.white, fontSize: 13),
+                style: const TextStyle(
+                  color: AppColors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
                 decoration: InputDecoration(
                   hintText: AppLocalizations.of(
                     context,
                   )!.translate('email_hint'),
-                  hintStyle: const TextStyle(color: Colors.white24),
+                  hintStyle: const TextStyle(
+                    color: Colors.white24,
+                    fontWeight: FontWeight.bold,
+                  ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20),
                 ),
@@ -788,9 +864,16 @@ class _StoreHomePageState extends State<StoreHomePage> {
   Widget _contactRow(IconData i, String t) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 5),
     child: Row(
-      mainAxisAlignment: MainAxisAlignment.end,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(t, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        Text(
+          t,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         const SizedBox(width: 10),
         Icon(i, color: AppColors.white, size: 16),
       ],

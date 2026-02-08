@@ -34,6 +34,7 @@ class AppLocalizations {
       'footer_about_desc':
           'Details launched to be the premier destination for luxury bags and watches. We care about the finest details to offer pieces that reflect your refined taste.',
       'shortcuts': 'Shortcuts',
+      'language': 'Language',
       'women': 'Women',
       'men': 'Men',
       'wallets': 'Wallets',
@@ -82,6 +83,7 @@ class AppLocalizations {
       'footer_about_desc':
           'ديتيلز انطلق ليكون الوجهة الأولى للحقائب والساعات الفاخرة، نهتم بأدق التفاصيل لنقدم لكم قطعاً تعكس ذوقكم الرفيع.',
       'shortcuts': 'اختصارات',
+      'language': 'اللغة',
       'women': 'النساء',
       'men': 'الرجال',
       'wallets': 'المحافظ',
