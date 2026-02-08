@@ -10,6 +10,7 @@ import 'package:details_app/widgets/animated_product_image.dart';
 import 'package:details_app/screens/product_details_screen.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/l10n/app_localizations.dart';
+import 'package:details_app/widgets/language_button.dart';
 
 class StoreHomePage extends StatefulWidget {
   const StoreHomePage({super.key});
@@ -132,6 +133,8 @@ class _StoreHomePageState extends State<StoreHomePage> {
         leading: const Icon(Icons.menu, color: AppColors.primary),
         title: const Text("DETAILS"),
         actions: const [
+          LanguageButton(),
+          SizedBox(width: 5),
           Icon(Icons.search, color: AppColors.primary),
           SizedBox(width: 15),
           Icon(Icons.shopping_cart_outlined, color: AppColors.primary),

@@ -6,8 +6,25 @@ import 'package:details_app/l10n/app_localizations.dart';
 
 void main() => runApp(const DetailsStoreApp());
 
-class DetailsStoreApp extends StatelessWidget {
+class DetailsStoreApp extends StatefulWidget {
   const DetailsStoreApp({super.key});
+
+  @override
+  State<DetailsStoreApp> createState() => _DetailsStoreAppState();
+
+  static void setLocale(BuildContext context, Locale newLocale) {
+    _DetailsStoreAppState? state =
+        context.findAncestorStateOfType<_DetailsStoreAppState>();
+    state?.setLocale(newLocale);
+  }
+}
+
+class _DetailsStoreAppState extends State<DetailsStoreApp> {
+  Locale _locale = const Locale('ar', '');
+
+  void setLocale(Locale locale) {
+    setState(() => _locale = locale);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,10 +55,7 @@ class DetailsStoreApp extends StatelessWidget {
         Locale('ar', ''), // العربية
         Locale('en', ''), // الإنجليزية
       ],
-      locale: const Locale(
-        'ar',
-        '',
-      ), // اللغة الافتراضية (يمكن تغييرها ديناميكياً)
+      locale: _locale,
       home: const StoreHomePage(),
     );
   }

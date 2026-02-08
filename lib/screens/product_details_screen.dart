@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:details_app/models/product.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/l10n/app_localizations.dart';
+import 'package:details_app/widgets/language_button.dart';
 
 class ProductDetailsScreen extends StatelessWidget {
   final Product product;
@@ -10,7 +11,11 @@ class ProductDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: Text(product.name), elevation: 0.5),
+      appBar: AppBar(
+        title: Text(product.name),
+        elevation: 0.5,
+        actions: const [LanguageButton(), SizedBox(width: 10)],
+      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
