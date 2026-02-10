@@ -20,6 +20,7 @@ import 'package:details_app/providers/settings_provider.dart';
 import 'package:details_app/providers/auth_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
+//
 class StoreHomePage extends StatefulWidget {
   const StoreHomePage({super.key});
   @override
