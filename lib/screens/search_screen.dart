@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:go_router/go_router.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:details_app/models/product.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/l10n/app_localizations.dart';
@@ -36,7 +35,7 @@ class _SearchScreenState extends State<SearchScreen> {
   Future<void> _fetchAllProducts() async {
     try {
       final res = await http.get(
-        Uri.parse('${dotenv.env['API_URL']}/products'),
+        Uri.parse('https://api.details-store.com/api/products'),
       );
       if (res.statusCode == 200) {
         final List<dynamic> data = json.decode(res.body);

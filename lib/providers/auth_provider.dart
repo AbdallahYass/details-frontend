@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:details_app/models/user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AuthProvider with ChangeNotifier {
   User? _user;
@@ -25,7 +24,7 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final response = await http.post(
-        Uri.parse('${dotenv.env['API_URL']}/auth/login'),
+        Uri.parse('https://api.details-store.com/api/auth/login'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'email': email, 'password': password}),
       );
@@ -72,7 +71,7 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final response = await http.post(
-        Uri.parse('${dotenv.env['API_URL']}/auth/register'),
+        Uri.parse('https://api.details-store.com/api/auth/register'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'name': name,

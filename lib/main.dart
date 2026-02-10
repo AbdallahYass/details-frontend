@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -22,7 +21,6 @@ import 'package:details_app/screens/orders_screen.dart';
 import 'package:details_app/constants/app_theme.dart';
 
 Future<void> main() async {
-  await dotenv.load(fileName: ".env");
   runApp(
     MultiProvider(
       providers: [

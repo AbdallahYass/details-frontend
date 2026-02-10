@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:details_app/models/product.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:details_app/models/banner_model.dart';
@@ -110,7 +109,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
 
   Future<void> fetchProducts({String? category}) async {
     try {
-      String url = '${dotenv.env['API_URL']}/products';
+      String url = 'http://localhost:3000/products';
       if (category != null) {
         url += '?category=$category';
       }
@@ -132,7 +131,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
     String? category,
   }) async {
     try {
-      String url = '${dotenv.env['API_URL']}/banners?location=$location';
+      String url = 'http://localhost:3000/banners?location=$location';
       if (category != null) {
         url += '&category=$category';
       }
@@ -155,9 +154,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
 
   Future<void> fetchCategories() async {
     try {
-      final res = await http.get(
-        Uri.parse('${dotenv.env['API_URL']}/categories'),
-      );
+      final res = await http.get(Uri.parse('http://localhost:3000/categories'));
       if (res.statusCode == 200) {
         setState(() {
           categories = (json.decode(res.body) as List)
