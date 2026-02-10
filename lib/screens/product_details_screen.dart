@@ -106,7 +106,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     }
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const CustomAppBar(),
       body: SingleChildScrollView(
         child: Column(
           children: [

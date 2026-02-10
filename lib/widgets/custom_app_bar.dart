@@ -9,14 +9,21 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    // التحقق مما إذا كان يمكن الرجوع للصفحة السابقة
-    final bool canPop = Navigator.of(context).canPop();
+    // التحقق من المسار الحالي لتحديد زر الرجوع
+    final String location = GoRouterState.of(context).uri.path;
+    final bool isRoot = [
+      '/',
+      '/search',
+      '/cart',
+      '/wishlist',
+      '/profile',
+    ].contains(location);
+    final bool canPop = Navigator.of(context).canPop() || !isRoot;
 
     return AppBar(
       backgroundColor: AppColors.background,
       elevation: 0.5,
       centerTitle: true,
-      // إذا كان هناك صفحة سابقة، اعرض زر الرجوع، وإلا اعرض زر القائمة
       leading: canPop
           ? IconButton(
               icon: const Icon(Icons.arrow_back, color: AppColors.primary),

@@ -19,7 +19,6 @@ class WishlistScreen extends StatelessWidget {
 
     if (!authProvider.isAuthenticated) {
       return Scaffold(
-        appBar: const CustomAppBar(),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -68,7 +67,6 @@ class WishlistScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: const CustomAppBar(),
       body: wishlist.isEmpty
           ? Center(
               child: Column(

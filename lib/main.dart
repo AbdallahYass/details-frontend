@@ -65,6 +65,17 @@ class _DetailsStoreAppState extends State<DetailsStoreApp> {
                 path: '/',
                 builder: (context, state) => const StoreHomePage(),
               ),
+              GoRoute(
+                path: '/product/:id',
+                builder: (context, state) {
+                  final productId = state.pathParameters['id'];
+                  final product = state.extra as Product?;
+                  return ProductDetailsScreen(
+                    productId: productId,
+                    product: product,
+                  );
+                },
+              ),
             ],
           ),
           // Branch 1: Search
@@ -101,26 +112,21 @@ class _DetailsStoreAppState extends State<DetailsStoreApp> {
                 path: '/profile',
                 builder: (context, state) => const ProfileScreen(),
               ),
+              GoRoute(
+                path: '/orders',
+                builder: (context, state) => const OrdersScreen(),
+              ),
+              GoRoute(
+                path: '/login',
+                builder: (context, state) => const LoginScreen(),
+              ),
+              GoRoute(
+                path: '/register',
+                builder: (context, state) => const RegisterScreen(),
+              ),
             ],
           ),
         ],
-      ),
-      GoRoute(
-        path: '/product/:id',
-        builder: (context, state) {
-          final productId = state.pathParameters['id'];
-          final product = state.extra as Product?;
-          return ProductDetailsScreen(productId: productId, product: product);
-        },
-      ),
-      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-      GoRoute(
-        path: '/register',
-        builder: (context, state) => const RegisterScreen(),
-      ),
-      GoRoute(
-        path: '/orders',
-        builder: (context, state) => const OrdersScreen(),
       ),
     ],
   );

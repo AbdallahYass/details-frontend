@@ -4,6 +4,7 @@ import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:details_app/providers/auth_provider.dart';
+import 'package:details_app/widgets/custom_app_bar.dart';
 
 class MainScreen extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
@@ -13,6 +14,7 @@ class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: const CustomAppBar(),
       body: navigationShell,
       bottomNavigationBar: Container(
         height: 70,

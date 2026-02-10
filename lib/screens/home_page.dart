@@ -172,55 +172,57 @@ class _StoreHomePageState extends State<StoreHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const CustomAppBar(),
-      body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        body: isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.primary,
+                  strokeWidth: 1,
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: _loadAllData,
                 color: AppColors.primary,
-                strokeWidth: 1,
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: _loadAllData,
-              color: AppColors.primary,
-              child: CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  SliverToBoxAdapter(child: _buildTopAnnouncement()),
-                  SliverToBoxAdapter(child: _buildHeroSlider()),
-                  SliverToBoxAdapter(child: _buildCategoriesSection()),
-                  SliverToBoxAdapter(
-                    child: _buildSectionHeader(
-                      AppLocalizations.of(context)!.translate('most_popular'),
-                      AppLocalizations.of(
-                        context,
-                      )!.translate('best_seller_week'),
-                    ),
-                  ),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 0.65,
-                            crossAxisSpacing: 15,
-                            mainAxisSpacing: 25,
-                          ),
-                      delegate: SliverChildBuilderDelegate(
-                        (c, i) => _buildProductCard(products[i]),
-                        childCount: products.length,
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(child: _buildTopAnnouncement()),
+                    SliverToBoxAdapter(child: _buildHeroSlider()),
+                    SliverToBoxAdapter(child: _buildCategoriesSection()),
+                    SliverToBoxAdapter(
+                      child: _buildSectionHeader(
+                        AppLocalizations.of(context)!.translate('most_popular'),
+                        AppLocalizations.of(
+                          context,
+                        )!.translate('best_seller_week'),
                       ),
                     ),
-                  ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 50)),
-                  SliverToBoxAdapter(
-                    child: RevealOnScroll(child: _buildFooter()),
-                  ),
-                ],
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      sliver: SliverGrid(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 0.65,
+                              crossAxisSpacing: 15,
+                              mainAxisSpacing: 25,
+                            ),
+                        delegate: SliverChildBuilderDelegate(
+                          (c, i) => _buildProductCard(products[i]),
+                          childCount: products.length,
+                        ),
+                      ),
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 50)),
+                    SliverToBoxAdapter(
+                      child: RevealOnScroll(child: _buildFooter()),
+                    ),
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 
