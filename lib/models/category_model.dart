@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 class CategoryModel {
-  final String id, slug, imageUrl;
+  final String id;
   final Map<String, dynamic> name;
+  final String slug;
+  final String imageUrl;
 
   CategoryModel({
     required this.id,
@@ -11,17 +13,17 @@ class CategoryModel {
     required this.imageUrl,
   });
 
-  factory CategoryModel.fromJson(Map<String, dynamic> json) => CategoryModel(
-    id: json['_id'] ?? '',
-    name: json['name'] is Map
-        ? json['name']
-        : {'en': json['name'] ?? '', 'ar': json['name'] ?? ''},
-    slug: json['slug'] ?? '',
-    imageUrl: json['imageUrl'] ?? '',
-  );
+  factory CategoryModel.fromJson(Map<String, dynamic> json) {
+    return CategoryModel(
+      id: json['_id'] ?? json['id'] ?? '',
+      name: json['name'] ?? {},
+      slug: json['slug'] ?? '',
+      imageUrl: json['imageUrl'] ?? '',
+    );
+  }
 
   String getName(BuildContext context) {
-    String lang = Localizations.localeOf(context).languageCode;
-    return name[lang] ?? name['en'] ?? name['ar'] ?? '';
+    final locale = Localizations.localeOf(context).languageCode;
+    return name[locale] ?? name['en'] ?? '';
   }
 }

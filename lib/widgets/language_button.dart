@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:details_app/constants/app_colors.dart';
-import 'package:details_app/main.dart';
+import 'package:details_app/providers/settings_provider.dart';
 
 class LanguageButton extends StatelessWidget {
   const LanguageButton({super.key});
@@ -14,7 +15,10 @@ class LanguageButton extends StatelessWidget {
         Locale newLocale = currentLocale.languageCode == 'ar'
             ? const Locale('en', '')
             : const Locale('ar', '');
-        DetailsStoreApp.setLocale(context, newLocale);
+        Provider.of<SettingsProvider>(
+          context,
+          listen: false,
+        ).setLocale(newLocale);
       },
     );
   }

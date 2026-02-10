@@ -4,52 +4,52 @@ import 'package:visibility_detector/visibility_detector.dart';
 class RevealOnScroll extends StatefulWidget {
   final Widget child;
   const RevealOnScroll({super.key, required this.child});
+
   @override
   State<RevealOnScroll> createState() => _RevealOnScrollState();
 }
 
 class _RevealOnScrollState extends State<RevealOnScroll>
     with SingleTickerProviderStateMixin {
-  late AnimationController _c;
-  late Animation<double> _f;
-  late Animation<Offset> _s;
-  bool _revealed = false;
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  bool _isVisible = false;
+
   @override
   void initState() {
     super.initState();
-    _c = AnimationController(
+    _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 800),
     );
-    _f = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _c, curve: Curves.easeOut));
-    _s = Tween<Offset>(
-      begin: const Offset(0, 0.2),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _c, curve: Curves.easeOutQuart));
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
   }
 
   @override
   void dispose() {
-    _c.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return VisibilityDetector(
-      key: Key('reveal-${widget.child.hashCode}'),
+      key: const Key('reveal-on-scroll'),
       onVisibilityChanged: (info) {
-        if (info.visibleFraction > 0.1 && !_revealed) {
-          _c.forward();
-          _revealed = true;
+        if (info.visibleFraction > 0.1 && !_isVisible) {
+          _isVisible = true;
+          _controller.forward();
         }
       },
       child: FadeTransition(
-        opacity: _f,
-        child: SlideTransition(position: _s, child: widget.child),
+        opacity: _animation,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.2),
+            end: Offset.zero,
+          ).animate(_animation),
+          child: widget.child,
+        ),
       ),
     );
   }

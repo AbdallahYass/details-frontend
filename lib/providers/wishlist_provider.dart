@@ -2,22 +2,35 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:details_app/models/product.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class WishlistProvider with ChangeNotifier {
   List<Product> _wishlist = [];
-  // مؤقتاً نستخدم ID ثابت، في تطبيق حقيقي يجب أن يأتي من نظام المصادقة
-  final String _userId = "guest_user_123";
+  String? _token;
 
   List<Product> get wishlist => _wishlist;
+
+  void updateToken(String? token) {
+    if (_token == token) return;
+    _token = token;
+    if (_token != null) {
+      fetchWishlist();
+    } else {
+      _wishlist = [];
+      notifyListeners();
+    }
+  }
 
   bool isInWishlist(String productId) {
     return _wishlist.any((p) => p.id == productId);
   }
 
   Future<void> fetchWishlist() async {
+    if (_token == null) return;
     try {
       final res = await http.get(
-        Uri.parse('https://api.details-store.com/api/wishlist/$_userId'),
+        Uri.parse('${dotenv.env['API_URL']}/wishlist'),
+        headers: {'Authorization': 'Bearer $_token'},
       );
       if (res.statusCode == 200) {
         final List<dynamic> data = json.decode(res.body);
@@ -30,6 +43,8 @@ class WishlistProvider with ChangeNotifier {
   }
 
   Future<bool> toggleWishlist(Product product) async {
+    if (_token == null) return false;
+
     // تحديث الواجهة فوراً (Optimistic UI Update)
     bool exists = isInWishlist(product.id);
     if (exists) {
@@ -41,9 +56,12 @@ class WishlistProvider with ChangeNotifier {
 
     try {
       final res = await http.post(
-        Uri.parse('https://api.details-store.com/api/wishlist'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'userId': _userId, 'productId': product.id}),
+        Uri.parse('${dotenv.env['API_URL']}/wishlist'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_token',
+        },
+        body: json.encode({'productId': product.id}),
       );
 
       if (res.statusCode != 200) {

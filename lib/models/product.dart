@@ -1,58 +1,49 @@
 import 'package:flutter/material.dart';
-import 'package:details_app/models/category_model.dart';
 
 class Product {
-  final String id, brand, dimensions;
-  final Map<String, dynamic> name, description;
-  final List<String> images;
+  final String id;
+  final Map<String, dynamic> name;
+  final Map<String, dynamic> description;
   final double price;
-  final double? oldPrice;
+  final String imageUrl;
+  final List<String> images;
+  final String brand;
+  final String dimensions;
   final bool isSoldOut;
-  final CategoryModel? category;
 
   Product({
     required this.id,
     required this.name,
-    required this.brand,
     required this.description,
-    required this.dimensions,
-    required this.images,
     required this.price,
-    this.oldPrice,
-    this.isSoldOut = false,
-    this.category,
+    required this.imageUrl,
+    required this.images,
+    required this.brand,
+    required this.dimensions,
+    required this.isSoldOut,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
-      id: json['_id'] ?? '',
-      name: json['name'] is Map
-          ? json['name']
-          : {'en': json['name'] ?? '', 'ar': json['name'] ?? ''},
-      brand: json['brand'] ?? 'DETAILS',
-      description: json['description'] is Map
-          ? json['description']
-          : {'en': json['description'] ?? '', 'ar': json['description'] ?? ''},
+      id: json['_id'] ?? json['id'] ?? '',
+      name: json['name'] ?? {},
+      description: json['description'] ?? {},
+      price: (json['price'] ?? 0).toDouble(),
+      imageUrl: json['imageUrl'] ?? '',
+      images: List<String>.from(json['images'] ?? []),
+      brand: json['brand'] ?? '',
       dimensions: json['dimensions'] ?? '',
-      images: List<String>.from(json['images'] ?? [json['imageUrl'] ?? '']),
-      price: (json['price'] as num).toDouble(),
-      oldPrice: json['oldPrice'] != null
-          ? (json['oldPrice'] as num).toDouble()
-          : null,
       isSoldOut: json['isSoldOut'] ?? false,
-      category: json['category'] is Map
-          ? CategoryModel.fromJson(json['category'])
-          : null,
     );
   }
 
   String getName(BuildContext context) {
-    String lang = Localizations.localeOf(context).languageCode;
-    return name[lang] ?? name['en'] ?? name['ar'] ?? '';
+    final locale = Localizations.localeOf(context).languageCode;
+    return name[locale] ?? name['en'] ?? '';
   }
 
   String getDescription(BuildContext context) {
-    String lang = Localizations.localeOf(context).languageCode;
-    return description[lang] ?? description['en'] ?? description['ar'] ?? '';
+    final locale = Localizations.localeOf(context).languageCode;
+    return description[locale] ?? description['en'] ?? '';
   }
 }

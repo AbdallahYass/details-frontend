@@ -28,7 +28,7 @@ class WishlistScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    "Your wishlist is empty", // يمكن إضافتها للترجمة
+                    AppLocalizations.of(context)!.translate('empty_wishlist'),
                     style: const TextStyle(fontSize: 18, color: Colors.grey),
                   ),
                 ],

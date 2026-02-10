@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:details_app/constants/app_colors.dart';
-import 'package:details_app/widgets/language_button.dart';
+import 'package:details_app/providers/cart_provider.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppBar({super.key});
@@ -28,7 +29,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         child: Image.asset(
           'assets/images/logo.png',
           height: 35,
-          errorBuilder: (c, e, s) => const Text(
+          errorBuilder: (c, _, __) => const Text(
             "DETAILS",
             style: TextStyle(
               color: AppColors.primary,
@@ -37,13 +38,48 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
       ),
-      actions: const [
-        LanguageButton(),
-        SizedBox(width: 5),
-        Icon(Icons.search, color: AppColors.primary),
-        SizedBox(width: 15),
-        Icon(Icons.shopping_cart_outlined, color: AppColors.primary),
-        SizedBox(width: 15),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.search, color: AppColors.primary),
+          onPressed: () => context.push('/search'),
+        ),
+        const SizedBox(width: 15),
+        Consumer<CartProvider>(
+          builder: (context, cart, child) => Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(
+                  Icons.shopping_cart_outlined,
+                  color: AppColors.primary,
+                ),
+                onPressed: () => context.push('/cart'),
+              ),
+              if (cart.itemCount > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      '${cart.itemCount}',
+                      style: const TextStyle(color: Colors.white, fontSize: 10),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 15),
       ],
     );
   }

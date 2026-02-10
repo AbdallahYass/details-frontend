@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:details_app/models/product.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:details_app/models/banner_model.dart';
@@ -16,7 +17,8 @@ import 'package:details_app/widgets/custom_app_bar.dart';
 import 'package:details_app/providers/wishlist_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:details_app/main.dart';
+import 'package:details_app/providers/settings_provider.dart';
+import 'package:details_app/providers/auth_provider.dart';
 
 class StoreHomePage extends StatefulWidget {
   const StoreHomePage({super.key});
@@ -107,7 +109,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
 
   Future<void> fetchProducts({String? category}) async {
     try {
-      String url = 'https://api.details-store.com/api/products';
+      String url = '${dotenv.env['API_URL']}/products';
       if (category != null) {
         url += '?category=$category';
       }
@@ -129,8 +131,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
     String? category,
   }) async {
     try {
-      String url =
-          'https://api.details-store.com/api/banners?location=$location';
+      String url = '${dotenv.env['API_URL']}/banners?location=$location';
       if (category != null) {
         url += '&category=$category';
       }
@@ -154,12 +155,14 @@ class _StoreHomePageState extends State<StoreHomePage> {
   Future<void> fetchCategories() async {
     try {
       final res = await http.get(
-        Uri.parse('https://api.details-store.com/api/categories'),
+        Uri.parse('${dotenv.env['API_URL']}/categories'),
       );
       if (res.statusCode == 200) {
-        categories = (json.decode(res.body) as List)
-            .map((j) => CategoryModel.fromJson(j))
-            .toList();
+        setState(() {
+          categories = (json.decode(res.body) as List)
+              .map((j) => CategoryModel.fromJson(j))
+              .toList();
+        });
       }
     } catch (e) {
       debugPrint("Error fetching categories: $e");
@@ -312,6 +315,24 @@ class _StoreHomePageState extends State<StoreHomePage> {
                       size: 20,
                       color: isFav ? AppColors.red : AppColors.secondary,
                       onTap: () async {
+                        final auth = Provider.of<AuthProvider>(
+                          context,
+                          listen: false,
+                        );
+                        if (!auth.isAuthenticated) {
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.translate('please_login'),
+                              ),
+                            ),
+                          );
+                          context.push('/login');
+                          return;
+                        }
                         bool added = await wishlistProvider.toggleWishlist(p);
                         if (!mounted) return;
                         ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -569,7 +590,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
                 child: Image.network(
                   category.imageUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (c, e, s) => Icon(
+                  errorBuilder: (c, _, __) => Icon(
                     Icons.category_outlined,
                     color: isSelected ? AppColors.white : AppColors.grey,
                   ),
@@ -612,9 +633,15 @@ class _StoreHomePageState extends State<StoreHomePage> {
           AppLocalizations.of(context)!.translate('policies'),
           [],
           customChildren: [
-            _buildPolicyItem(AppLocalizations.of(context)!.translate('policy_cancel')),
-            _buildPolicyItem(AppLocalizations.of(context)!.translate('policy_return')),
-            _buildPolicyItem(AppLocalizations.of(context)!.translate('policy_shipping')),
+            _buildPolicyItem(
+              AppLocalizations.of(context)!.translate('policy_cancel'),
+            ),
+            _buildPolicyItem(
+              AppLocalizations.of(context)!.translate('policy_return'),
+            ),
+            _buildPolicyItem(
+              AppLocalizations.of(context)!.translate('policy_shipping'),
+            ),
           ],
         ),
         const Divider(color: Colors.white12, height: 1),
@@ -703,7 +730,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
   Widget _buildLanguageItem(String label, Locale locale) {
     return GestureDetector(
       onTap: () {
-        DetailsStoreApp.setLocale(context, locale);
+        Provider.of<SettingsProvider>(context, listen: false).setLocale(locale);
       },
       child: Container(
         width: double.infinity,
@@ -891,19 +918,44 @@ class _StoreHomePageState extends State<StoreHomePage> {
         _navIcon(
           Icons.search,
           AppLocalizations.of(context)!.translate('nav_search'),
+          onTap: () => context.push('/search'),
         ),
         _navIcon(
           Icons.person_outline,
           AppLocalizations.of(context)!.translate('nav_account'),
+          onTap: () {
+            final auth = Provider.of<AuthProvider>(context, listen: false);
+            if (auth.isAuthenticated) {
+              context.push('/profile');
+            } else {
+              context.push('/login');
+            }
+          },
         ),
         _navIcon(
           Icons.shopping_bag_outlined,
           AppLocalizations.of(context)!.translate('nav_cart'),
+          onTap: () => context.push('/cart'),
         ),
         _navIcon(
           Icons.favorite_border,
           AppLocalizations.of(context)!.translate('nav_wishlist'),
-          onTap: () => context.push('/wishlist'),
+          onTap: () {
+            final auth = Provider.of<AuthProvider>(context, listen: false);
+            if (auth.isAuthenticated) {
+              context.push('/wishlist');
+            } else {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    AppLocalizations.of(context)!.translate('please_login'),
+                  ),
+                ),
+              );
+              context.push('/login');
+            }
+          },
         ),
         _navIcon(
           Icons.chat_bubble_outline,

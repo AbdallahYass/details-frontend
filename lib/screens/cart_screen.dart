@@ -1,0 +1,182 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:details_app/providers/cart_provider.dart';
+import 'package:details_app/constants/app_colors.dart';
+import 'package:details_app/l10n/app_localizations.dart';
+import 'package:go_router/go_router.dart';
+
+class CartScreen extends StatelessWidget {
+  const CartScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final cart = Provider.of<CartProvider>(context);
+    final cartItems = cart.items.values.toList();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context)!.translate('nav_cart')),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+          onPressed: () => context.pop(),
+        ),
+      ),
+      body: Column(
+        children: [
+          Card(
+            margin: const EdgeInsets.all(15),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    AppLocalizations.of(context)!.translate('total'),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  Chip(
+                    label: Text(
+                      '\$${cart.totalAmount.toStringAsFixed(2)}',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    backgroundColor: AppColors.primary,
+                  ),
+                  TextButton(
+                    onPressed: cart.totalAmount <= 0
+                        ? null
+                        : () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.translate('payment_soon'),
+                                ),
+                              ),
+                            );
+                            cart.clear();
+                          },
+                    child: Text(
+                      AppLocalizations.of(context)!.translate('checkout'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.only(bottom: 20),
+              physics: const BouncingScrollPhysics(),
+              itemCount: cart.items.length,
+              itemBuilder: (context, index) {
+                return _CartItemWidget(cartItem: cartItems[index], cart: cart);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CartItemWidget extends StatelessWidget {
+  final CartItem cartItem;
+  final CartProvider cart;
+
+  const _CartItemWidget({required this.cartItem, required this.cart});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dismissible(
+      key: ValueKey(cartItem.id),
+      background: const _DeleteBackground(),
+      direction: DismissDirection.endToStart,
+      onDismissed: (direction) {
+        cart.removeItem(cartItem.id);
+      },
+      child: _CartItemCard(cartItem: cartItem),
+    );
+  }
+}
+
+class _DeleteBackground extends StatelessWidget {
+  const _DeleteBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.only(right: 20),
+      margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.red,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: const Icon(Icons.delete, color: Colors.white, size: 40),
+    );
+  }
+}
+
+class _CartItemCard extends StatelessWidget {
+  final CartItem cartItem;
+
+  const _CartItemCard({required this.cartItem});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 28,
+              backgroundImage: NetworkImage(cartItem.imageUrl),
+              backgroundColor: Colors.transparent,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    cartItem.title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${AppLocalizations.of(context)!.translate('total')}: \$${(cartItem.price * cartItem.quantity).toStringAsFixed(2)}',
+                    style: const TextStyle(color: Colors.grey, fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.lightGrey,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '${cartItem.quantity} x',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

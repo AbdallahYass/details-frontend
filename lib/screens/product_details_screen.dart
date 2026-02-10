@@ -8,6 +8,7 @@ import 'package:details_app/l10n/app_localizations.dart';
 import 'package:details_app/widgets/custom_app_bar.dart';
 import 'package:details_app/providers/wishlist_provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:details_app/providers/cart_provider.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   final Product? product;
@@ -291,7 +292,21 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           border: Border(top: BorderSide(color: Colors.grey[100]!)),
         ),
         child: ElevatedButton(
-          onPressed: () {},
+          onPressed: () {
+            Provider.of<CartProvider>(context, listen: false).addItem(
+              _product!.id,
+              _product!.price.toDouble(),
+              _product!.getName(context),
+              _product!.imageUrl,
+            );
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('تمت الإضافة للسلة بنجاح'),
+                duration: Duration(seconds: 1),
+              ),
+            );
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             minimumSize: const Size(double.infinity, 55),
