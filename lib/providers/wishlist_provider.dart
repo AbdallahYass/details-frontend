@@ -29,7 +29,7 @@ class WishlistProvider with ChangeNotifier {
     if (_token == null) return;
     try {
       final res = await http.get(
-        Uri.parse('https://api.details-store.com/wishlist'),
+        Uri.parse('https://api.details-store.com/api/wishlist'),
         headers: {'Authorization': 'Bearer $_token'},
       );
       if (res.statusCode == 200) {
@@ -56,7 +56,7 @@ class WishlistProvider with ChangeNotifier {
 
     try {
       final res = await http.post(
-        Uri.parse('https://api.details-store.com/wishlist'),
+        Uri.parse('https://api.details-store.com/api/wishlist'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_token',

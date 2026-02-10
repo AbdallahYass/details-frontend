@@ -35,7 +35,7 @@ class _SearchScreenState extends State<SearchScreen> {
   Future<void> _fetchAllProducts() async {
     try {
       final res = await http.get(
-        Uri.parse('https://api.details-store.com/products'),
+        Uri.parse('https://api.details-store.com/api/products'),
       );
       if (res.statusCode == 200) {
         final List<dynamic> data = json.decode(res.body);
