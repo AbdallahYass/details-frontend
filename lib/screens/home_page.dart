@@ -20,7 +20,6 @@ import 'package:details_app/providers/settings_provider.dart';
 import 'package:details_app/providers/auth_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-//
 class StoreHomePage extends StatefulWidget {
   const StoreHomePage({super.key});
   @override
@@ -944,22 +943,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
         _navIcon(
           Icons.favorite_border,
           AppLocalizations.of(context)!.translate('nav_wishlist'),
-          onTap: () {
-            final auth = Provider.of<AuthProvider>(context, listen: false);
-            if (auth.isAuthenticated) {
-              context.push('/wishlist');
-            } else {
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    AppLocalizations.of(context)!.translate('please_login'),
-                  ),
-                ),
-              );
-              context.push('/login');
-            }
-          },
+          onTap: () => context.push('/wishlist'),
         ),
         _navIcon(
           Icons.chat_bubble_outline,
