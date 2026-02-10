@@ -42,7 +42,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   Future<void> _fetchProductById(String id) async {
     try {
       final res = await http.get(
-        Uri.parse('https://api.details-store.com/products/$id'),
+        Uri.parse('https://api.details-store.com/api/products/$id'),
       );
       if (res.statusCode == 200) {
         if (mounted) {
@@ -63,7 +63,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     if (_product == null) return;
     try {
       final res = await http.get(
-        Uri.parse('https://api.details-store.com/products'),
+        Uri.parse('https://api.details-store.com/api/products'),
       );
       if (res.statusCode == 200) {
         final List<dynamic> data = json.decode(res.body);
