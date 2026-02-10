@@ -41,7 +41,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         IconButton(
           icon: const Icon(Icons.search, color: AppColors.primary),
-          onPressed: () => context.push('/search'),
+          onPressed: () => context.go('/search'),
         ),
         const SizedBox(width: 15),
         Consumer<CartProvider>(
@@ -53,7 +53,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   Icons.shopping_cart_outlined,
                   color: AppColors.primary,
                 ),
-                onPressed: () => context.push('/cart'),
+                onPressed: () => context.go('/cart'),
               ),
               if (cart.itemCount > 0)
                 Positioned(

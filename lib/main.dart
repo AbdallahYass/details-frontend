@@ -19,6 +19,7 @@ import 'package:details_app/screens/search_screen.dart';
 import 'package:details_app/providers/orders_provider.dart';
 import 'package:details_app/screens/orders_screen.dart';
 import 'package:details_app/constants/app_theme.dart';
+import 'package:details_app/screens/main_screen.dart';
 
 Future<void> main() async {
   runApp(
@@ -50,8 +51,60 @@ class DetailsStoreApp extends StatefulWidget {
 
 class _DetailsStoreAppState extends State<DetailsStoreApp> {
   final GoRouter _router = GoRouter(
+    initialLocation: '/',
     routes: [
-      GoRoute(path: '/', builder: (context, state) => const StoreHomePage()),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return MainScreen(navigationShell: navigationShell);
+        },
+        branches: [
+          // Branch 0: Home
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/',
+                builder: (context, state) => const StoreHomePage(),
+              ),
+            ],
+          ),
+          // Branch 1: Search
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/search',
+                builder: (context, state) => const SearchScreen(),
+              ),
+            ],
+          ),
+          // Branch 2: Cart
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/cart',
+                builder: (context, state) => const CartScreen(),
+              ),
+            ],
+          ),
+          // Branch 3: Wishlist
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/wishlist',
+                builder: (context, state) => const WishlistScreen(),
+              ),
+            ],
+          ),
+          // Branch 4: Profile
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/profile',
+                builder: (context, state) => const ProfileScreen(),
+              ),
+            ],
+          ),
+        ],
+      ),
       GoRoute(
         path: '/product/:id',
         builder: (context, state) {
@@ -60,23 +113,10 @@ class _DetailsStoreAppState extends State<DetailsStoreApp> {
           return ProductDetailsScreen(productId: productId, product: product);
         },
       ),
-      GoRoute(
-        path: '/wishlist',
-        builder: (context, state) => const WishlistScreen(),
-      ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
-      ),
-      GoRoute(
-        path: '/profile',
-        builder: (context, state) => const ProfileScreen(),
-      ),
-      GoRoute(path: '/cart', builder: (context, state) => const CartScreen()),
-      GoRoute(
-        path: '/search',
-        builder: (context, state) => const SearchScreen(),
       ),
       GoRoute(
         path: '/orders',

@@ -32,7 +32,9 @@ class _AnimatedProductImageState extends State<AnimatedProductImage> {
           crossFadeState: _isHovered && hasSecondImage
               ? CrossFadeState.showSecond
               : CrossFadeState.showFirst,
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 500),
+          firstCurve: Curves.easeInOutCubic,
+          secondCurve: Curves.easeInOutCubic,
         ),
       ),
     );

@@ -85,7 +85,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
         _currentBannerIndex = (_currentBannerIndex + 1) % banners.length;
         _heroController.animateToPage(
           _currentBannerIndex,
-          duration: const Duration(milliseconds: 1000),
+          duration: const Duration(milliseconds: 1200),
           curve: Curves.easeInOutQuart,
         );
       }
@@ -221,7 +221,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
                 ],
               ),
             ),
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
@@ -307,7 +306,13 @@ class _StoreHomePageState extends State<StoreHomePage> {
               borderRadius: BorderRadius.circular(8),
               child: Stack(
                 children: [
-                  AnimatedProductImage(product: p),
+                  GestureDetector(
+                    onTap: () => context.push('/product/${p.id}', extra: p),
+                    child: Hero(
+                      tag: p.id,
+                      child: AnimatedProductImage(product: p),
+                    ),
+                  ),
                   Positioned(
                     top: 10,
                     right: 10,
@@ -927,66 +932,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
         ),
         const SizedBox(width: 10),
         Icon(i, color: AppColors.white, size: 16),
-      ],
-    ),
-  );
-  Widget _buildBottomNav() => Container(
-    height: 70,
-    decoration: BoxDecoration(
-      color: AppColors.white,
-      border: Border(top: BorderSide(color: Colors.grey[100]!)),
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _navIcon(
-          Icons.search,
-          AppLocalizations.of(context)!.translate('nav_search'),
-          onTap: () => context.push('/search'),
-        ),
-        _navIcon(
-          Icons.person_outline,
-          AppLocalizations.of(context)!.translate('nav_account'),
-          onTap: () {
-            final auth = Provider.of<AuthProvider>(context, listen: false);
-            if (auth.isAuthenticated) {
-              context.push('/profile');
-            } else {
-              context.push('/login');
-            }
-          },
-        ),
-        _navIcon(
-          Icons.shopping_bag_outlined,
-          AppLocalizations.of(context)!.translate('nav_cart'),
-          onTap: () => context.push('/cart'),
-        ),
-        _navIcon(
-          Icons.favorite_border,
-          AppLocalizations.of(context)!.translate('nav_wishlist'),
-          onTap: () => context.push('/wishlist'),
-        ),
-        _navIcon(
-          Icons.chat_bubble_outline,
-          AppLocalizations.of(context)!.translate('nav_shop'),
-          c: Colors.green,
-        ),
-      ],
-    ),
-  );
-  Widget _navIcon(
-    IconData i,
-    String l, {
-    Color c = Colors.black,
-    VoidCallback? onTap,
-  }) => GestureDetector(
-    onTap: onTap,
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(i, color: c, size: 24),
-        const SizedBox(height: 4),
-        Text(l, style: TextStyle(color: c, fontSize: 10)),
       ],
     ),
   );

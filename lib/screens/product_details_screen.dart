@@ -122,12 +122,44 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         _currentImageIndex = index;
                       });
                     },
-                    itemBuilder: (c, i) => CachedNetworkImage(
-                      imageUrl: _product!.images[i],
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) =>
-                          const Center(child: CircularProgressIndicator()),
-                    ),
+                    itemBuilder: (c, i) {
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => Scaffold(
+                                backgroundColor: Colors.black,
+                                appBar: AppBar(
+                                  backgroundColor: Colors.black,
+                                  iconTheme: const IconThemeData(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                body: Center(
+                                  child: InteractiveViewer(
+                                    child: CachedNetworkImage(
+                                      imageUrl: _product!.images[i],
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        child: Hero(
+                          tag: i == 0 ? _product!.id : '${_product!.id}_$i',
+                          child: CachedNetworkImage(
+                            imageUrl: _product!.images[i],
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 if (_product!.images.length > 1)
@@ -352,12 +384,15 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(8),
                 ),
-                child: CachedNetworkImage(
-                  imageUrl: p.images.isNotEmpty ? p.images[0] : '',
-                  placeholder: (context, url) =>
-                      Container(color: Colors.grey[200]),
-                  fit: BoxFit.cover,
-                  width: double.infinity,
+                child: Hero(
+                  tag: p.id,
+                  child: CachedNetworkImage(
+                    imageUrl: p.images.isNotEmpty ? p.images[0] : '',
+                    placeholder: (context, url) =>
+                        Container(color: Colors.grey[200]),
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                  ),
                 ),
               ),
             ),

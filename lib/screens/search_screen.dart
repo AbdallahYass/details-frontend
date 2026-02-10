@@ -109,18 +109,21 @@ class _SearchScreenState extends State<SearchScreen> {
                 return ListTile(
                   leading: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: CachedNetworkImage(
-                      imageUrl: product.imageUrl,
-                      width: 50,
-                      height: 50,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) =>
-                          Container(color: Colors.grey[200]),
-                      errorWidget: (context, url, error) => Container(
+                    child: Hero(
+                      tag: product.id,
+                      child: CachedNetworkImage(
+                        imageUrl: product.imageUrl,
                         width: 50,
                         height: 50,
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.image_not_supported),
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) =>
+                            Container(color: Colors.grey[200]),
+                        errorWidget: (context, url, error) => Container(
+                          width: 50,
+                          height: 50,
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.image_not_supported),
+                        ),
                       ),
                     ),
                   ),
