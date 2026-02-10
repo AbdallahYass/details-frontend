@@ -18,7 +18,7 @@ class OrdersProvider with ChangeNotifier {
     if (_token == null) return;
     try {
       final response = await http.get(
-        Uri.parse('https://api.details-store.com/api/orders'),
+        Uri.parse('https://api.details-store.com/orders'),
         headers: {'Authorization': 'Bearer $_token'},
       );
 
@@ -55,7 +55,7 @@ class OrdersProvider with ChangeNotifier {
   ) async {
     if (_token == null) return false;
     try {
-      final url = Uri.parse('https://api.details-store.com/api/orders');
+      final url = Uri.parse('https://api.details-store.com/orders');
       final response = await http.post(
         url,
         headers: {

@@ -109,7 +109,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
 
   Future<void> fetchProducts({String? category}) async {
     try {
-      String url = 'https://api.details-store.com/api/products';
+      String url = 'https://api.details-store.com/products';
       if (category != null) {
         url += '?category=$category';
       }
@@ -131,8 +131,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
     String? category,
   }) async {
     try {
-      String url =
-          'https://api.details-store.com/api/banners?location=$location';
+      String url = 'https://api.details-store.com/banners?location=$location';
       if (category != null) {
         url += '&category=$category';
       }
@@ -156,7 +155,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
   Future<void> fetchCategories() async {
     try {
       final res = await http.get(
-        Uri.parse('https://api.details-store.com/api/categories'),
+        Uri.parse('https://api.details-store.com/categories'),
       );
       if (res.statusCode == 200) {
         setState(() {
