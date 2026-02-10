@@ -133,7 +133,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
-
+                  //
                   // حقل البريد الإلكتروني
                   TextFormField(
                     controller: _emailController,
