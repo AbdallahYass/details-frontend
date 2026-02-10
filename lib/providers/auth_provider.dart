@@ -26,7 +26,7 @@ class AuthProvider with ChangeNotifier {
       final response = await http.post(
         Uri.parse('https://api.details-store.com/api/auth/login'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({'email': email, 'password': password}),
+        body: json.encode({'email': email.toLowerCase(), 'password': password}),
       );
 
       final data = json.decode(response.body);
@@ -75,7 +75,7 @@ class AuthProvider with ChangeNotifier {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'name': name,
-          'email': email,
+          'email': email.toLowerCase(),
           'password': password,
           'phone': phone,
         }),
