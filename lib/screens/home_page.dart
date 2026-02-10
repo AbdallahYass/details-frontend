@@ -39,6 +39,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
 
   List<String> _topAnnouncements = [];
   String? _selectedCategory;
+  final Map<String, bool> _expandedCategories = {};
 
   @override
   void initState() {
@@ -238,6 +239,11 @@ class _StoreHomePageState extends State<StoreHomePage> {
       // إذا لم يكن هناك منتجات في هذا القسم، لا نعرضه
       if (categoryProducts.isEmpty) continue;
 
+      final isExpanded = _expandedCategories[category.id] ?? false;
+      final int itemCount = isExpanded
+          ? categoryProducts.length
+          : (categoryProducts.length > 10 ? 10 : categoryProducts.length);
+
       // إضافة عنوان القسم
       slivers.add(
         SliverToBoxAdapter(
@@ -258,11 +264,53 @@ class _StoreHomePageState extends State<StoreHomePage> {
             ),
             delegate: SliverChildBuilderDelegate(
               (c, i) => _buildProductCard(categoryProducts[i]),
-              childCount: categoryProducts.length,
+              childCount: itemCount,
             ),
           ),
         ),
       );
+
+      // إضافة زر "اعرض الكل" في الأسفل إذا كان هناك أكثر من 10 منتجات
+      if (categoryProducts.length > 10) {
+        slivers.add(
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 20, bottom: 10),
+              child: Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _expandedCategories[category.id] = !isExpanded;
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.secondary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 35,
+                      vertical: 12,
+                    ),
+                  ),
+                  child: Text(
+                    isExpanded
+                        ? (AppLocalizations.of(
+                                context,
+                              )!.translate('show_less') ??
+                              'Show Less')
+                        : AppLocalizations.of(context)!.translate('view_all'),
+                    style: const TextStyle(
+                      color: AppColors.white,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }
     }
 
     // في حال لم تكن هناك أي منتجات أو أقسام محملة بعد
@@ -336,21 +384,6 @@ class _StoreHomePageState extends State<StoreHomePage> {
               subtitle,
               style: const TextStyle(color: AppColors.grey, fontSize: 12),
             ),
-          const SizedBox(height: 15),
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.secondary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 35, vertical: 12),
-            ),
-            child: Text(
-              AppLocalizations.of(context)!.translate('view_all'),
-              style: const TextStyle(color: AppColors.white, fontSize: 13),
-            ),
-          ),
         ],
       ),
     );
