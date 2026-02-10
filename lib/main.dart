@@ -31,7 +31,10 @@ Future<void> main() async {
         ),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
-        ChangeNotifierProvider(create: (_) => OrdersProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, OrdersProvider>(
+          create: (_) => OrdersProvider(),
+          update: (_, auth, orders) => orders!..updateToken(auth.token),
+        ),
       ],
       child: const DetailsStoreApp(),
     ),
