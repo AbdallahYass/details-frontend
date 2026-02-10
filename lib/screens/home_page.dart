@@ -321,17 +321,38 @@ class _StoreHomePageState extends State<StoreHomePage> {
                           listen: false,
                         );
                         if (!auth.isAuthenticated) {
-                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: Text(
                                 AppLocalizations.of(
                                   context,
                                 )!.translate('please_login'),
                               ),
+                              content: Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.translate('login_subtitle'),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  child: const Text("Cancel"),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.pop(ctx);
+                                    context.push('/login');
+                                  },
+                                  child: Text(
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.translate('login_button'),
+                                  ),
+                                ),
+                              ],
                             ),
                           );
-                          context.push('/login');
                           return;
                         }
                         bool added = await wishlistProvider.toggleWishlist(p);

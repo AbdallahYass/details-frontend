@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:details_app/models/product.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+/// Provider to manage user wishlist
 class WishlistProvider with ChangeNotifier {
   List<Product> _wishlist = [];
   String? _token;
@@ -29,7 +29,7 @@ class WishlistProvider with ChangeNotifier {
     if (_token == null) return;
     try {
       final res = await http.get(
-        Uri.parse('${dotenv.env['API_URL']}/wishlist'),
+        Uri.parse('https://api.details-store.com/api/wishlist'),
         headers: {'Authorization': 'Bearer $_token'},
       );
       if (res.statusCode == 200) {
@@ -56,7 +56,7 @@ class WishlistProvider with ChangeNotifier {
 
     try {
       final res = await http.post(
-        Uri.parse('${dotenv.env['API_URL']}/wishlist'),
+        Uri.parse('https://api.details-store.com/api/wishlist'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_token',
