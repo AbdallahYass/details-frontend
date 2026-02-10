@@ -19,6 +19,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:details_app/providers/settings_provider.dart';
 import 'package:details_app/providers/auth_provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class StoreHomePage extends StatefulWidget {
   const StoreHomePage({super.key});
@@ -587,10 +588,12 @@ class _StoreHomePageState extends State<StoreHomePage> {
                 ),
               ),
               child: ClipOval(
-                child: Image.network(
-                  category.imageUrl,
+                child: CachedNetworkImage(
+                  imageUrl: category.imageUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (c, _, __) => Icon(
+                  placeholder: (context, url) =>
+                      Container(color: Colors.grey[200]),
+                  errorWidget: (context, url, error) => Icon(
                     Icons.category_outlined,
                     color: isSelected ? AppColors.white : AppColors.grey,
                   ),

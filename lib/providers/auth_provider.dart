@@ -51,6 +51,7 @@ class AuthProvider with ChangeNotifier {
         return false;
       }
     } catch (e) {
+      debugPrint('Login Error: $e');
       _errorMessage = 'حدث خطأ في الاتصال، يرجى المحاولة لاحقاً';
       _isLoading = false;
       notifyListeners();
@@ -94,6 +95,7 @@ class AuthProvider with ChangeNotifier {
         return false;
       }
     } catch (e) {
+      debugPrint('Register Error: $e');
       _errorMessage = 'حدث خطأ في الاتصال، يرجى المحاولة لاحقاً';
       _isLoading = false;
       notifyListeners();

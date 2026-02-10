@@ -4,6 +4,7 @@ import 'package:details_app/providers/cart_provider.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -138,7 +139,7 @@ class _CartItemCard extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 28,
-              backgroundImage: NetworkImage(cartItem.imageUrl),
+              backgroundImage: CachedNetworkImageProvider(cartItem.imageUrl),
               backgroundColor: Colors.transparent,
             ),
             const SizedBox(width: 12),

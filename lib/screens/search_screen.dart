@@ -6,6 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:details_app/models/product.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/l10n/app_localizations.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -109,12 +110,14 @@ class _SearchScreenState extends State<SearchScreen> {
                 return ListTile(
                   leading: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      product.imageUrl,
+                    child: CachedNetworkImage(
+                      imageUrl: product.imageUrl,
                       width: 50,
                       height: 50,
                       fit: BoxFit.cover,
-                      errorBuilder: (c, _, __) => Container(
+                      placeholder: (context, url) =>
+                          Container(color: Colors.grey[200]),
+                      errorWidget: (context, url, error) => Container(
                         width: 50,
                         height: 50,
                         color: Colors.grey[200],

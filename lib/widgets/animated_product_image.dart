@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:details_app/models/product.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class AnimatedProductImage extends StatelessWidget {
   final Product product;
@@ -7,12 +8,15 @@ class AnimatedProductImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.network(
-      product.imageUrl,
+    return CachedNetworkImage(
+      imageUrl: product.imageUrl,
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,
-      errorBuilder: (c, _, __) => const Center(child: Icon(Icons.error)),
+      placeholder: (context, url) =>
+          const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+      errorWidget: (context, url, error) =>
+          const Center(child: Icon(Icons.error)),
     );
   }
 }

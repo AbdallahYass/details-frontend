@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:details_app/providers/orders_provider.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/l10n/app_localizations.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:details_app/providers/auth_provider.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -20,14 +22,90 @@ class _OrdersScreenState extends State<OrdersScreen> {
     // جلب الطلبات عند فتح الشاشة
     Future.microtask(() {
       if (mounted) {
-        Provider.of<OrdersProvider>(context, listen: false).fetchOrders();
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        if (authProvider.isAuthenticated) {
+          Provider.of<OrdersProvider>(context, listen: false).fetchOrders();
+        }
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
     final ordersData = Provider.of<OrdersProvider>(context);
+
+    // التحقق مما إذا كان المستخدم مسجلاً للدخول
+    if (!authProvider.isAuthenticated) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(AppLocalizations.of(context)!.translate('my_orders')),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+            onPressed: () => context.pop(),
+          ),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.lock_outline, size: 80, color: Colors.grey),
+              const SizedBox(height: 16),
+              Text(
+                AppLocalizations.of(context)!.translate('please_login'),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                AppLocalizations.of(context)!.translate('login_subtitle'),
+                style: const TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () async {
+                  await context.push('/login');
+                  // بعد العودة من شاشة تسجيل الدخول، نتحقق ونحدث البيانات
+                  if (!context.mounted) return;
+
+                  final auth = Provider.of<AuthProvider>(
+                    context,
+                    listen: false,
+                  );
+                  if (auth.isAuthenticated) {
+                    Provider.of<OrdersProvider>(
+                      context,
+                      listen: false,
+                    ).fetchOrders();
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  AppLocalizations.of(context)!.translate('login_button'),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -101,7 +179,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                 (prod) => Padding(
                                   padding: const EdgeInsets.only(right: 10),
                                   child: CircleAvatar(
-                                    backgroundImage: NetworkImage(
+                                    backgroundImage: CachedNetworkImageProvider(
                                       prod.imageUrl,
                                     ),
                                   ),

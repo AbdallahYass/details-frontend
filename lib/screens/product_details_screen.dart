@@ -9,6 +9,7 @@ import 'package:details_app/widgets/custom_app_bar.dart';
 import 'package:details_app/providers/wishlist_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:details_app/providers/cart_provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   final Product? product;
@@ -121,8 +122,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         _currentImageIndex = index;
                       });
                     },
-                    itemBuilder: (c, i) =>
-                        Image.network(_product!.images[i], fit: BoxFit.cover),
+                    itemBuilder: (c, i) => CachedNetworkImage(
+                      imageUrl: _product!.images[i],
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) =>
+                          const Center(child: CircularProgressIndicator()),
+                    ),
                   ),
                 ),
                 if (_product!.images.length > 1)
@@ -347,8 +352,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(8),
                 ),
-                child: Image.network(
-                  p.images.isNotEmpty ? p.images[0] : '',
+                child: CachedNetworkImage(
+                  imageUrl: p.images.isNotEmpty ? p.images[0] : '',
+                  placeholder: (context, url) =>
+                      Container(color: Colors.grey[200]),
                   fit: BoxFit.cover,
                   width: double.infinity,
                 ),

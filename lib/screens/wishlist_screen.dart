@@ -5,14 +5,67 @@ import 'package:details_app/providers/wishlist_provider.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/l10n/app_localizations.dart';
 import 'package:details_app/widgets/custom_app_bar.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:details_app/providers/auth_provider.dart';
 
 class WishlistScreen extends StatelessWidget {
   const WishlistScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
     final wishlistProvider = Provider.of<WishlistProvider>(context);
     final wishlist = wishlistProvider.wishlist;
+
+    if (!authProvider.isAuthenticated) {
+      return Scaffold(
+        appBar: const CustomAppBar(),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.lock_outline, size: 80, color: Colors.grey),
+              const SizedBox(height: 16),
+              Text(
+                AppLocalizations.of(context)!.translate('please_login'),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                AppLocalizations.of(context)!.translate('login_subtitle'),
+                style: const TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => context.push('/login'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  AppLocalizations.of(context)!.translate('login_button'),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: const CustomAppBar(),
@@ -48,8 +101,12 @@ class WishlistScreen extends StatelessWidget {
                     contentPadding: const EdgeInsets.all(10),
                     leading: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        product.images.isNotEmpty ? product.images[0] : '',
+                      child: CachedNetworkImage(
+                        imageUrl: product.images.isNotEmpty
+                            ? product.images[0]
+                            : '',
+                        placeholder: (context, url) =>
+                            Container(color: Colors.grey[200]),
                         width: 60,
                         height: 60,
                         fit: BoxFit.cover,
