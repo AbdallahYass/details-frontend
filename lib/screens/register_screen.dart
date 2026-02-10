@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/providers/auth_provider.dart';
 import 'package:details_app/l10n/app_localizations.dart';
-import 'package:details_app/widgets/custom_app_bar.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});

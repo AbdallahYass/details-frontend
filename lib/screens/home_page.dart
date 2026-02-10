@@ -12,7 +12,6 @@ import 'package:details_app/widgets/animated_banner_item.dart';
 import 'package:details_app/widgets/animated_product_image.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/l10n/app_localizations.dart';
-import 'package:details_app/widgets/custom_app_bar.dart';
 import 'package:details_app/providers/wishlist_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -191,30 +190,8 @@ class _StoreHomePageState extends State<StoreHomePage> {
                     SliverToBoxAdapter(child: _buildTopAnnouncement()),
                     SliverToBoxAdapter(child: _buildHeroSlider()),
                     SliverToBoxAdapter(child: _buildCategoriesSection()),
-                    SliverToBoxAdapter(
-                      child: _buildSectionHeader(
-                        AppLocalizations.of(context)!.translate('most_popular'),
-                        AppLocalizations.of(
-                          context,
-                        )!.translate('best_seller_week'),
-                      ),
-                    ),
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      sliver: SliverGrid(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              childAspectRatio: 0.65,
-                              crossAxisSpacing: 15,
-                              mainAxisSpacing: 25,
-                            ),
-                        delegate: SliverChildBuilderDelegate(
-                          (c, i) => _buildProductCard(products[i]),
-                          childCount: products.length,
-                        ),
-                      ),
-                    ),
+                    // هنا نستدعي الدالة التي تبني الأقسام
+                    ..._buildCategoryGrids(),
                     const SliverToBoxAdapter(child: SizedBox(height: 50)),
                     SliverToBoxAdapter(
                       child: RevealOnScroll(child: _buildFooter()),
@@ -224,6 +201,93 @@ class _StoreHomePageState extends State<StoreHomePage> {
               ),
       ),
     );
+  }
+
+  // دالة لبناء شبكات المنتجات مقسمة حسب الكاتيجوري
+  List<Widget> _buildCategoryGrids() {
+    // إذا كان المستخدم اختار كاتيجوري محدد من الدوائر العلوية، نعرض المنتجات كلها في شبكة واحدة
+    if (_selectedCategory != null) {
+      return [
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.65,
+              crossAxisSpacing: 15,
+              mainAxisSpacing: 25,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (c, i) => _buildProductCard(products[i]),
+              childCount: products.length,
+            ),
+          ),
+        ),
+      ];
+    }
+
+    // إذا لم يتم اختيار كاتيجوري، نعرض كل قسم ومنتجاته
+    List<Widget> slivers = [];
+
+    for (var category in categories) {
+      // تصفية المنتجات التابعة لهذا القسم
+      final categoryProducts = products
+          .where((p) => p.categoryId == category.id)
+          .toList();
+
+      // إذا لم يكن هناك منتجات في هذا القسم، لا نعرضه
+      if (categoryProducts.isEmpty) continue;
+
+      // إضافة عنوان القسم
+      slivers.add(
+        SliverToBoxAdapter(
+          child: _buildSectionHeader(category.getName(context), ''),
+        ),
+      );
+
+      // إضافة شبكة المنتجات لهذا القسم
+      slivers.add(
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.65,
+              crossAxisSpacing: 15,
+              mainAxisSpacing: 25,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (c, i) => _buildProductCard(categoryProducts[i]),
+              childCount: categoryProducts.length,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // في حال لم تكن هناك أي منتجات أو أقسام محملة بعد
+    if (slivers.isEmpty && products.isNotEmpty) {
+      // عرض المنتجات العامة كاحتياط
+      slivers.add(
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          sliver: SliverGrid(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.65,
+              crossAxisSpacing: 15,
+              mainAxisSpacing: 25,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (c, i) => _buildProductCard(products[i]),
+              childCount: products.length,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return slivers;
   }
 
   Widget _buildTopAnnouncement() {
@@ -267,10 +331,11 @@ class _StoreHomePageState extends State<StoreHomePage> {
             ],
           ),
           const SizedBox(height: 5),
-          Text(
-            subtitle,
-            style: const TextStyle(color: AppColors.grey, fontSize: 12),
-          ),
+          if (subtitle.isNotEmpty)
+            Text(
+              subtitle,
+              style: const TextStyle(color: AppColors.grey, fontSize: 12),
+            ),
           const SizedBox(height: 15),
           ElevatedButton(
             onPressed: () {},

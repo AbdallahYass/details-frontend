@@ -10,6 +10,7 @@ class Product {
   final String brand;
   final String dimensions;
   final bool isSoldOut;
+  final dynamic category; // يمكن أن يكون String ID أو Map
 
   Product({
     required this.id,
@@ -21,6 +22,7 @@ class Product {
     required this.brand,
     required this.dimensions,
     required this.isSoldOut,
+    required this.category,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -34,6 +36,7 @@ class Product {
       brand: json['brand'] ?? '',
       dimensions: json['dimensions'] ?? '',
       isSoldOut: json['isSoldOut'] ?? false,
+      category: json['category'],
     );
   }
 
@@ -45,5 +48,15 @@ class Product {
   String getDescription(BuildContext context) {
     final locale = Localizations.localeOf(context).languageCode;
     return description[locale] ?? description['en'] ?? '';
+  }
+
+  // دالة مساعدة للحصول على معرف الكاتيجوري سواء كان كائن أو نص
+  String get categoryId {
+    if (category is Map) {
+      return category['_id'] ?? category['id'] ?? '';
+    } else if (category is String) {
+      return category;
+    }
+    return '';
   }
 }
