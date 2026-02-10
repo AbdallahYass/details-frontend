@@ -5,6 +5,9 @@ import 'package:details_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:details_app/providers/auth_provider.dart';
 import 'package:details_app/widgets/custom_app_bar.dart';
+import 'package:details_app/providers/settings_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class MainScreen extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
@@ -15,12 +18,19 @@ class MainScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(),
+      drawer: _buildDrawer(context),
       body: navigationShell,
       bottomNavigationBar: Container(
         height: 70,
         decoration: BoxDecoration(
           color: AppColors.white,
-          border: Border(top: BorderSide(color: Colors.grey[100]!)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -69,7 +79,7 @@ class MainScreen extends StatelessWidget {
     int index,
   ) {
     final isSelected = navigationShell.currentIndex == index;
-    final color = isSelected ? AppColors.primary : Colors.black;
+    final color = isSelected ? AppColors.primary : AppColors.textSecondary;
 
     return GestureDetector(
       onTap: () => _onTap(context, index),
@@ -98,6 +108,120 @@ class MainScreen extends StatelessWidget {
     navigationShell.goBranch(
       index,
       initialLocation: index == navigationShell.currentIndex,
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
+    final settings = Provider.of<SettingsProvider>(context);
+
+    return Drawer(
+      child: Column(
+        children: [
+          UserAccountsDrawerHeader(
+            decoration: const BoxDecoration(color: AppColors.primary),
+            accountName: Text(
+              auth.isAuthenticated ? (auth.user?.name ?? 'User') : 'Guest',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            accountEmail: Text(
+              auth.isAuthenticated
+                  ? (auth.user?.email ?? '')
+                  : 'Welcome to Details',
+            ),
+            currentAccountPicture: CircleAvatar(
+              backgroundColor: Colors.white,
+              child: Text(
+                auth.isAuthenticated
+                    ? (auth.user?.name[0].toUpperCase() ?? 'U')
+                    : 'G',
+                style: const TextStyle(fontSize: 24, color: AppColors.primary),
+              ),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.language, color: AppColors.primary),
+            title: Text(AppLocalizations.of(context)!.translate('language')),
+            trailing: DropdownButton<Locale>(
+              value: settings.locale,
+              underline: const SizedBox(),
+              icon: const Icon(Icons.arrow_drop_down, color: AppColors.primary),
+              onChanged: (Locale? newLocale) {
+                if (newLocale != null) {
+                  settings.setLocale(newLocale);
+                  Navigator.pop(context); // إغلاق القائمة
+                }
+              },
+              items: const [
+                DropdownMenuItem(
+                  value: Locale('ar', ''),
+                  child: Text('العربية'),
+                ),
+                DropdownMenuItem(
+                  value: Locale('en', ''),
+                  child: Text('English'),
+                ),
+              ],
+            ),
+          ),
+          const Divider(),
+          ListTile(
+            leading: const FaIcon(
+              FontAwesomeIcons.whatsapp,
+              color: Colors.green,
+              size: 24,
+            ),
+            title: const Text('WhatsApp'),
+            onTap: () async {
+              Navigator.pop(context);
+              final Uri url = Uri.parse('https://wa.me/972598723438');
+              if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                debugPrint('Could not launch $url');
+              }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.info_outline, color: AppColors.primary),
+            title: Text(
+              AppLocalizations.of(context)!.translate('footer_about_title'),
+            ),
+            onTap: () {
+              Navigator.pop(context);
+              showAboutDialog(
+                context: context,
+                applicationName: 'Details Store',
+                applicationVersion: '1.0.0',
+                applicationIcon: Image.asset(
+                  'assets/images/logo.png',
+                  width: 50,
+                  height: 50,
+                ),
+              );
+            },
+          ),
+          const Spacer(),
+          const Divider(),
+          if (auth.isAuthenticated)
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: Text(
+                AppLocalizations.of(context)!.translate('logout'),
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                auth.logout();
+                context.go('/');
+              },
+            )
+          else
+            const SizedBox(),
+          const SizedBox(height: 20),
+        ],
+      ),
     );
   }
 }

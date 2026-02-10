@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import 'package:details_app/constants/app_colors.dart';
-import 'package:details_app/providers/cart_provider.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppBar({super.key});
@@ -29,7 +27,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               icon: const Icon(Icons.arrow_back, color: AppColors.primary),
               onPressed: () => context.pop(),
             )
-          : const Icon(Icons.menu, color: AppColors.primary),
+          : IconButton(
+              icon: const Icon(Icons.menu, color: AppColors.primary),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            ),
       title: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: () => context.go('/'),
@@ -47,44 +48,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.search, color: AppColors.primary),
-          onPressed: () => context.go('/search'),
-        ),
-        const SizedBox(width: 15),
-        Consumer<CartProvider>(
-          builder: (context, cart, child) => Stack(
-            alignment: Alignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(
-                  Icons.shopping_cart_outlined,
-                  color: AppColors.primary,
-                ),
-                onPressed: () => context.go('/cart'),
-              ),
-              if (cart.itemCount > 0)
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    constraints: const BoxConstraints(
-                      minWidth: 16,
-                      minHeight: 16,
-                    ),
-                    child: Text(
-                      '${cart.itemCount}',
-                      style: const TextStyle(color: Colors.white, fontSize: 10),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-            ],
+          icon: const Icon(
+            Icons.notifications_outlined,
+            color: AppColors.primary,
           ),
+          onPressed: () {},
         ),
         const SizedBox(width: 15),
       ],

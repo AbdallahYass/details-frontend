@@ -295,10 +295,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
                   ),
                   child: Text(
                     isExpanded
-                        ? (AppLocalizations.of(
-                                context,
-                              )!.translate('show_less') ??
-                              'Show Less')
+                        ? AppLocalizations.of(context)!.translate('show_less')
                         : AppLocalizations.of(context)!.translate('view_all'),
                     style: const TextStyle(
                       color: AppColors.white,
