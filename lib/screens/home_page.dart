@@ -179,13 +179,12 @@ class _StoreHomePageState extends State<StoreHomePage> {
   Future<void> fetchPopularProducts() async {
     try {
       final res = await http.get(
-        Uri.parse('https://api.details-store.com/api/products?sort=popular'),
+        Uri.parse('https://api.details-store.com/api/popular-products'),
       );
       if (res.statusCode == 200) {
         setState(() {
           popularProducts = (json.decode(res.body) as List)
               .map((j) => Product.fromJson(j))
-              .take(10) // أخذ أول 10 منتجات فقط
               .toList();
         });
       }
