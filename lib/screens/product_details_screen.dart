@@ -231,47 +231,53 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       ),
                       Text(
                         _product!.brand,
-                        style: const TextStyle(
-                          color: AppColors.grey,
-                          fontSize: 14,
+                        style: TextStyle(
+                          color: AppColors.secondary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
                           letterSpacing: 1.5,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Text(
                     _product!.getName(context),
                     style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      height: 1.2,
                     ),
                   ),
                   const SizedBox(height: 15),
                   Text(
                     "\$${_product!.price}",
-                    style: const TextStyle(
-                      fontSize: 22,
-                      color: AppColors.gold,
-                      fontWeight: FontWeight.bold,
+                    style: TextStyle(
+                      fontSize: 24,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const Divider(height: 50),
+                  const SizedBox(height: 25),
+                  const Divider(height: 1, color: AppColors.lightGrey),
+                  const SizedBox(height: 25),
                   Text(
                     AppLocalizations.of(context)!.translate('product_desc'),
-                    style: const TextStyle(
-                      fontSize: 18,
+                    style: TextStyle(
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     _product!.getDescription(context),
+
                     textAlign: TextAlign.right,
                     style: const TextStyle(
-                      fontSize: 15,
-                      height: 1.7,
-                      color: AppColors.secondary,
+                      fontSize: 14,
+                      height: 1.8,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 30),
@@ -324,7 +330,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: AppColors.white,
-          border: Border(top: BorderSide(color: Colors.grey[100]!)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
         ),
         child: ElevatedButton(
           onPressed: () {
@@ -345,8 +357,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             minimumSize: const Size(double.infinity, 55),
+            elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(5),
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
           child: Text(

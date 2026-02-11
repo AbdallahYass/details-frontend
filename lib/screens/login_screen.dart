@@ -109,8 +109,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       labelText: AppLocalizations.of(
                         context,
                       )!.translate('email_label'),
+                      filled: true,
+                      fillColor: Colors.grey[50],
                       prefixIcon: const Icon(Icons.email_outlined),
-                      border: const OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[200]!),
+                      ),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -136,6 +145,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       labelText: AppLocalizations.of(
                         context,
                       )!.translate('password_label'),
+                      filled: true,
+                      fillColor: Colors.grey[50],
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -149,7 +160,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           });
                         },
                       ),
-                      border: const OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[200]!),
+                      ),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -174,7 +192,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       backgroundColor: AppColors.primary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: _isLoading

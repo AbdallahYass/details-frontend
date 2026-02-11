@@ -79,8 +79,15 @@ class _SearchScreenState extends State<SearchScreen> {
                   context,
                 )!.translate('search_hint'),
                 prefixIcon: const Icon(Icons.search, color: AppColors.primary),
+                filled: true,
+                fillColor: Colors.grey[50],
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey[200]!),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               ),
@@ -110,42 +117,53 @@ class _SearchScreenState extends State<SearchScreen> {
                     itemCount: _filteredProducts.length,
                     itemBuilder: (context, index) {
                       final product = _filteredProducts[index];
-                      return ListTile(
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Hero(
-                            tag: product.id,
-                            child: CachedNetworkImage(
-                              imageUrl: product.imageUrl,
-                              width: 50,
-                              height: 50,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) =>
-                                  Container(color: Colors.grey[200]),
-                              errorWidget: (context, url, error) => Container(
+                      return Container(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade100),
+                        ),
+                        child: ListTile(
+                          leading: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Hero(
+                              tag: product.id,
+                              child: CachedNetworkImage(
+                                imageUrl: product.imageUrl,
                                 width: 50,
                                 height: 50,
-                                color: Colors.grey[200],
-                                child: const Icon(Icons.image_not_supported),
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) =>
+                                    Container(color: Colors.grey[200]),
+                                errorWidget: (context, url, error) => Container(
+                                  width: 50,
+                                  height: 50,
+                                  color: Colors.grey[200],
+                                  child: const Icon(Icons.image_not_supported),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        title: Text(
-                          product.getName(context),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Text(
-                          "\$${product.price}",
-                          style: const TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
+                          title: Text(
+                            product.getName(context),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        onTap: () => context.push(
-                          '/product/${product.id}',
-                          extra: product,
+                          subtitle: Text(
+                            "\$${product.price}",
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          onTap: () => context.push(
+                            '/product/${product.id}',
+                            extra: product,
+                          ),
                         ),
                       );
                     },

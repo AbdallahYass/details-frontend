@@ -200,53 +200,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                     ),
                     const SizedBox(height: 15),
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.lightGrey),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        children: [
-                          ListTile(
-                            title: Text(
-                              AppLocalizations.of(
-                                context,
-                              )!.translate('cash_on_delivery'),
-                            ),
-                            leading: Radio<String>(
-                              value: 'cod',
-                              groupValue: _paymentMethod,
-                              onChanged: (value) =>
-                                  setState(() => _paymentMethod = value!),
-                            ),
-                            trailing: const Icon(
-                              Icons.money,
-                              color: AppColors.primary,
-                            ),
-                            onTap: () => setState(() => _paymentMethod = 'cod'),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildPaymentOption(
+                            value: 'cod',
+                            label: AppLocalizations.of(
+                              context,
+                            )!.translate('cash_on_delivery'),
+                            icon: Icons.money,
                           ),
-                          const Divider(height: 1),
-                          ListTile(
-                            title: Text(
-                              AppLocalizations.of(
-                                context,
-                              )!.translate('credit_card'),
-                            ),
-                            leading: Radio<String>(
-                              value: 'card',
-                              groupValue: _paymentMethod,
-                              onChanged: (value) =>
-                                  setState(() => _paymentMethod = value!),
-                            ),
-                            trailing: const Icon(
-                              Icons.credit_card,
-                              color: AppColors.primary,
-                            ),
-                            onTap: () =>
-                                setState(() => _paymentMethod = 'card'),
+                        ),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: _buildPaymentOption(
+                            value: 'card',
+                            label: AppLocalizations.of(
+                              context,
+                            )!.translate('credit_card'),
+                            icon: Icons.credit_card,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 30),
                     Container(
@@ -314,8 +289,66 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: AppColors.primary),
+        filled: true,
+        fillColor: Colors.grey[50],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey[200]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+        ),
       ),
       validator: validator,
+    );
+  }
+
+  Widget _buildPaymentOption({
+    required String value,
+    required String label,
+    required IconData icon,
+  }) {
+    final isSelected = _paymentMethod == value;
+    return GestureDetector(
+      onTap: () => setState(() => _paymentMethod = value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary.withValues(alpha: 0.05)
+              : Colors.white,
+          border: Border.all(
+            color: isSelected ? AppColors.primary : Colors.grey[300]!,
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? AppColors.primary : Colors.grey,
+              size: 30,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: isSelected ? AppColors.primary : Colors.grey[700],
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

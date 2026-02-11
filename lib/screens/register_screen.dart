@@ -112,8 +112,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       labelText: AppLocalizations.of(
                         context,
                       )!.translate('name_label'),
+                      filled: true,
+                      fillColor: Colors.grey[50],
                       prefixIcon: const Icon(Icons.person_outline),
-                      border: const OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[200]!),
+                      ),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -134,8 +143,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       labelText: AppLocalizations.of(
                         context,
                       )!.translate('email_label'),
+                      filled: true,
+                      fillColor: Colors.grey[50],
                       prefixIcon: const Icon(Icons.email_outlined),
-                      border: const OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[200]!),
+                      ),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -161,8 +179,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       labelText: AppLocalizations.of(
                         context,
                       )!.translate('phone_label'),
+                      filled: true,
+                      fillColor: Colors.grey[50],
                       prefixIcon: const Icon(Icons.phone_android),
-                      border: const OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[200]!),
+                      ),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -183,6 +210,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       labelText: AppLocalizations.of(
                         context,
                       )!.translate('password_label'),
+                      filled: true,
+                      fillColor: Colors.grey[50],
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -194,7 +223,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           () => _obscurePassword = !_obscurePassword,
                         ),
                       ),
-                      border: const OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[200]!),
+                      ),
                     ),
                     validator: (value) {
                       if (value == null || value.length < 6) {
@@ -215,6 +251,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       labelText: AppLocalizations.of(
                         context,
                       )!.translate('confirm_password_label'),
+                      filled: true,
+                      fillColor: Colors.grey[50],
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -227,7 +265,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               !_obscureConfirmPassword,
                         ),
                       ),
-                      border: const OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[200]!),
+                      ),
                     ),
                     validator: (value) {
                       if (value != _passwordController.text) {
@@ -247,7 +292,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       backgroundColor: AppColors.primary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: _isLoading

@@ -119,8 +119,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     itemCount: ordersData.orders.length,
                     itemBuilder: (ctx, i) {
                       final order = ordersData.orders[i];
-                      return Card(
-                        margin: const EdgeInsets.all(10),
+                      return Container(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
                         child: Column(
                           children: [
                             ListTile(
@@ -153,13 +161,28 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    order.status,
-                                    style: TextStyle(
-                                      color: order.status == 'تم التوصيل'
-                                          ? Colors.green
-                                          : Colors.orange,
-                                      fontWeight: FontWeight.bold,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          (order.status == 'تم التوصيل'
+                                                  ? Colors.green
+                                                  : Colors.orange)
+                                              .withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      order.status,
+                                      style: TextStyle(
+                                        color: order.status == 'تم التوصيل'
+                                            ? Colors.green
+                                            : Colors.orange,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
                                     ),
                                   ),
                                   const Icon(Icons.expand_more),

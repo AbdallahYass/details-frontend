@@ -446,11 +446,18 @@ class _StoreHomePageState extends State<StoreHomePage> {
         Expanded(
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
               color: AppColors.cardBackground,
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               child: Stack(
                 children: [
                   GestureDetector(
@@ -534,7 +541,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
                       },
                     ),
                   ),
-                  const Positioned(
+                  Positioned(
                     top: 10,
                     left: 10,
                     child: Icon(
@@ -633,8 +640,8 @@ class _StoreHomePageState extends State<StoreHomePage> {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
             height: 1.4,
           ),
         ),
@@ -644,13 +651,16 @@ class _StoreHomePageState extends State<StoreHomePage> {
           children: [
             Text(
               AppLocalizations.of(context)!.translate('currency'),
-              style: const TextStyle(fontSize: 12, color: AppColors.grey),
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppColors.textSecondary,
+              ),
             ),
             const SizedBox(width: 4),
             Text(
               p.price.toStringAsFixed(2),
               style: const TextStyle(
-                fontSize: 15,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: AppColors.primary,
               ),
@@ -789,12 +799,19 @@ class _StoreHomePageState extends State<StoreHomePage> {
               height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isSelected
-                    ? AppColors.primary
-                    : AppColors.circleBackground,
+                color: AppColors.cardBackground,
                 border: Border.all(
-                  color: isSelected ? AppColors.primary : Colors.grey[200]!,
+                  color: isSelected ? AppColors.primary : Colors.transparent,
+                  width: 2,
                 ),
+                boxShadow: [
+                  if (!isSelected)
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                ],
               ),
               child: ClipOval(
                 child: CachedNetworkImage(
