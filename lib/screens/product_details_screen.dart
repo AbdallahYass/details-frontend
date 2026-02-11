@@ -9,6 +9,7 @@ import 'package:details_app/providers/wishlist_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:details_app/providers/cart_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   final Product? product;
@@ -25,6 +26,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   int _currentImageIndex = 0;
   List<Product> relatedProducts = [];
   bool isLoadingRelated = true;
+  int _quantity = 1;
 
   @override
   void initState() {
@@ -194,6 +196,22 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
+                        icon: const Icon(Icons.share, color: AppColors.grey),
+                        onPressed: () async {
+                          final text =
+                              'Check out this amazing product: ${_product!.getName(context)}\nPrice: \$${_product!.price}';
+                          final url = Uri.parse(
+                            'https://wa.me/?text=${Uri.encodeComponent(text)}',
+                          );
+                          if (!await launchUrl(
+                            url,
+                            mode: LaunchMode.externalApplication,
+                          )) {
+                            debugPrint('Could not launch $url');
+                          }
+                        },
+                      ),
+                      IconButton(
                         icon: Icon(
                           isFav ? Icons.favorite : Icons.favorite_border,
                           color: isFav ? AppColors.red : AppColors.grey,
@@ -229,6 +247,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           );
                         },
                       ),
+                      const Spacer(),
                       Text(
                         _product!.brand,
                         style: TextStyle(
@@ -257,6 +276,18 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       color: AppColors.primary,
                       fontWeight: FontWeight.bold,
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      const Icon(Icons.star, color: AppColors.gold, size: 18),
+                      const SizedBox(width: 4),
+                      const Text(
+                        "4.8 (120 reviews)",
+                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 30),
                   Text(
@@ -336,38 +367,80 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             ),
           ],
         ),
-        child: ElevatedButton(
-          onPressed: () {
-            Provider.of<CartProvider>(context, listen: false).addItem(
-              _product!.id,
-              _product!.price.toDouble(),
-              _product!.getName(context),
-              _product!.imageUrl,
-            );
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('تمت الإضافة للسلة بنجاح'),
-                duration: Duration(seconds: 1),
+        child: Row(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade200),
+                borderRadius: BorderRadius.circular(12),
               ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            minimumSize: const Size(double.infinity, 55),
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove, color: AppColors.primary),
+                    onPressed: () {
+                      if (_quantity > 1) setState(() => _quantity--);
+                    },
+                  ),
+                  Text(
+                    '$_quantity',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add, color: AppColors.primary),
+                    onPressed: () {
+                      setState(() => _quantity++);
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-          child: Text(
-            AppLocalizations.of(context)!.translate('add_to_cart'),
-            style: const TextStyle(
-              color: AppColors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+            const SizedBox(width: 15),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  final cart = Provider.of<CartProvider>(
+                    context,
+                    listen: false,
+                  );
+                  for (int i = 0; i < _quantity; i++) {
+                    cart.addItem(
+                      _product!.id,
+                      _product!.price.toDouble(),
+                      _product!.getName(context),
+                      _product!.imageUrl,
+                    );
+                  }
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('تمت الإضافة للسلة بنجاح'),
+                      duration: Duration(seconds: 1),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  minimumSize: const Size(double.infinity, 55),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  AppLocalizations.of(context)!.translate('add_to_cart'),
+                  style: const TextStyle(
+                    color: AppColors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
