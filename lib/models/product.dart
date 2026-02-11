@@ -29,21 +29,27 @@ class Product {
 
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
-      id: json['_id'] ?? json['id'] ?? '',
+      id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
       name: json['name'] is Map
           ? Map<String, dynamic>.from(json['name'])
           : {'en': json['name']?.toString() ?? ''},
       description: json['description'] is Map
           ? Map<String, dynamic>.from(json['description'])
           : {'en': json['description']?.toString() ?? ''},
-      price: (json['price'] ?? 0).toDouble(),
-      imageUrl: json['imageUrl'] ?? '',
-      images: List<String>.from(json['images'] ?? []),
-      brand: json['brand'] ?? '',
-      dimensions: json['dimensions'] ?? '',
-      isSoldOut: json['isSoldOut'] ?? false,
+      price: (json['price'] is num)
+          ? (json['price'] as num).toDouble()
+          : double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
+      imageUrl: json['imageUrl']?.toString() ?? '',
+      images: (json['images'] is List)
+          ? (json['images'] as List).map((e) => e.toString()).toList()
+          : [],
+      brand: json['brand']?.toString() ?? '',
+      dimensions: json['dimensions']?.toString() ?? '',
+      isSoldOut: json['isSoldOut'] == true,
       category: json['category'],
-      popularity: (json['popularity'] ?? 0).toInt(),
+      popularity: (json['popularity'] is num)
+          ? (json['popularity'] as num).toInt()
+          : int.tryParse(json['popularity']?.toString() ?? '0') ?? 0,
     );
   }
 
