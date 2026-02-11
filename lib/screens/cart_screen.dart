@@ -15,13 +15,6 @@ class CartScreen extends StatelessWidget {
     final cartItems = cart.items.values.toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.translate('nav_cart')),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
-          onPressed: () => context.pop(),
-        ),
-      ),
       body: Column(
         children: [
           Card(

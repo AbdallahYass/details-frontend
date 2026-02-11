@@ -8,7 +8,6 @@ import 'package:details_app/l10n/app_localizations.dart';
 import 'package:details_app/providers/cart_provider.dart';
 import 'package:details_app/providers/auth_provider.dart';
 import 'package:details_app/providers/orders_provider.dart';
-import 'package:details_app/widgets/custom_app_bar.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -119,7 +118,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final total = cart.totalAmount;
 
     return Scaffold(
-      appBar: const CustomAppBar(),
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context)!.translate('checkout')),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+          onPressed: () => context.pop(),
+        ),
+      ),
       body: cart.items.isEmpty
           ? Center(
               child: Text(
