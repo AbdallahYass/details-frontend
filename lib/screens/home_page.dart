@@ -196,37 +196,34 @@ class _StoreHomePageState extends State<StoreHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      child: Scaffold(
-        body: isLoading
-            ? const Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.primary,
-                  strokeWidth: 1,
-                ),
-              )
-            : RefreshIndicator(
-                onRefresh: _loadAllData,
+    return Scaffold(
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
                 color: AppColors.primary,
-                child: CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    SliverToBoxAdapter(child: _buildTopAnnouncement()),
-                    SliverToBoxAdapter(child: _buildHeroSlider()),
-                    SliverToBoxAdapter(child: _buildCategoriesSection()),
-                    if (popularProducts.isNotEmpty)
-                      SliverToBoxAdapter(child: _buildPopularSection()),
-                    // هنا نستدعي الدالة التي تبني الأقسام
-                    ..._buildCategoryGrids(),
-                    const SliverToBoxAdapter(child: SizedBox(height: 50)),
-                    SliverToBoxAdapter(
-                      child: RevealOnScroll(child: _buildFooter()),
-                    ),
-                  ],
-                ),
+                strokeWidth: 1,
               ),
-      ),
+            )
+          : RefreshIndicator(
+              onRefresh: _loadAllData,
+              color: AppColors.primary,
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(child: _buildTopAnnouncement()),
+                  SliverToBoxAdapter(child: _buildHeroSlider()),
+                  SliverToBoxAdapter(child: _buildCategoriesSection()),
+                  if (popularProducts.isNotEmpty)
+                    SliverToBoxAdapter(child: _buildPopularSection()),
+                  // هنا نستدعي الدالة التي تبني الأقسام
+                  ..._buildCategoryGrids(),
+                  const SliverToBoxAdapter(child: SizedBox(height: 50)),
+                  SliverToBoxAdapter(
+                    child: RevealOnScroll(child: _buildFooter()),
+                  ),
+                ],
+              ),
+            ),
     );
   }
 
