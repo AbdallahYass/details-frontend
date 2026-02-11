@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/l10n/app_localizations.dart';
 import 'package:details_app/providers/cart_provider.dart';
+import 'package:details_app/providers/auth_provider.dart';
 import 'package:details_app/providers/orders_provider.dart';
 import 'package:details_app/widgets/custom_app_bar.dart';
 
@@ -34,6 +35,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Future<void> _submitOrder() async {
     FocusScope.of(context).unfocus();
+
+    // 1. التحقق من تسجيل الدخول
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    if (!auth.isAuthenticated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.translate('please_login'),
+          ),
+          action: SnackBarAction(
+            label: AppLocalizations.of(context)!.translate('login_button'),
+            onPressed: () => context.push('/login'),
+          ),
+        ),
+      );
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
     final cart = Provider.of<CartProvider>(context, listen: false);
