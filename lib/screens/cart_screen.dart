@@ -50,16 +50,7 @@ class CartScreen extends StatelessWidget {
                     onPressed: cart.totalAmount <= 0
                         ? null
                         : () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.translate('payment_soon'),
-                                ),
-                              ),
-                            );
-                            cart.clear();
+                            context.push('/checkout');
                           },
                     child: Text(
                       AppLocalizations.of(context)!.translate('checkout'),
