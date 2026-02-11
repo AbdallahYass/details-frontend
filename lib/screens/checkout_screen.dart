@@ -83,7 +83,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              AppLocalizations.of(context)!.translate('unexpected_error'),
+              AppLocalizations.of(context)!.translate('error_occurred'),
             ),
             backgroundColor: AppColors.error,
           ),
@@ -125,12 +125,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       controller: _cityController,
                       label: AppLocalizations.of(context)!.translate('city'),
                       icon: Icons.location_city,
+                      validator: (value) {
+                        if (value == null || value.trim().length < 3) {
+                          return 'يرجى إدخال اسم مدينة صحيح';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 15),
                     _buildTextField(
                       controller: _streetController,
                       label: AppLocalizations.of(context)!.translate('street'),
                       icon: Icons.map,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return AppLocalizations.of(
+                            context,
+                          )!.translate('required_field');
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 15),
                     _buildTextField(
@@ -138,6 +152,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       label: AppLocalizations.of(context)!.translate('phone'),
                       icon: Icons.phone,
                       keyboardType: TextInputType.phone,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return AppLocalizations.of(
+                            context,
+                          )!.translate('required_field');
+                        }
+                        if (value.length < 10 ||
+                            !RegExp(r'^[0-9]+$').hasMatch(value)) {
+                          return 'يرجى إدخال رقم هاتف صحيح (10 أرقام)';
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 30),
                     Text(
@@ -255,6 +281,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     required String label,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
@@ -263,12 +290,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         labelText: label,
         prefixIcon: Icon(icon, color: AppColors.primary),
       ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return AppLocalizations.of(context)!.translate('required_field');
-        }
-        return null;
-      },
+      validator: validator,
     );
   }
 }
