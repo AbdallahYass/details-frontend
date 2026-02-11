@@ -587,7 +587,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
                         ),
                       ),
                     ),
-                  else if (p.popularity > 0)
+                  if (!p.isSoldOut && p.popularity > 0)
                     Positioned(
                       top: 15,
                       left: 0,
@@ -605,7 +605,11 @@ class _StoreHomePageState extends State<StoreHomePage> {
                         ),
                         child: const Row(
                           children: [
-                            Icon(Icons.local_fire_department, size: 12, color: Colors.white),
+                            Icon(
+                              Icons.local_fire_department,
+                              size: 12,
+                              color: Colors.white,
+                            ),
                             SizedBox(width: 2),
                             Text(
                               "HOT",
