@@ -33,6 +33,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Future<void> _submitOrder() async {
+    FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
 
     final cart = Provider.of<CartProvider>(context, listen: false);
@@ -45,6 +46,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       'street': _streetController.text,
       'phone': _phoneController.text,
       'payment_method': _paymentMethod,
+      'paymentMethod': _paymentMethod,
     };
 
     try {
@@ -126,7 +128,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       label: AppLocalizations.of(context)!.translate('city'),
                       icon: Icons.location_city,
                       validator: (value) {
-                        if (value == null || value.trim().length < 3) {
+                        if (value == null || value.trim().length < 2) {
                           return 'يرجى إدخال اسم مدينة صحيح';
                         }
                         return null;
@@ -158,9 +160,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             context,
                           )!.translate('required_field');
                         }
-                        if (value.length < 10 ||
-                            !RegExp(r'^[0-9]+$').hasMatch(value)) {
-                          return 'يرجى إدخال رقم هاتف صحيح (10 أرقام)';
+                        if (value.length < 9) {
+                          return 'يرجى إدخال رقم هاتف صحيح';
                         }
                         return null;
                       },
