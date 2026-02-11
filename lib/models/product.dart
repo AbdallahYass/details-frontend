@@ -11,6 +11,7 @@ class Product {
   final String dimensions;
   final bool isSoldOut;
   final dynamic category; // يمكن أن يكون String ID أو Map
+  final int popularity;
 
   Product({
     required this.id,
@@ -23,6 +24,7 @@ class Product {
     required this.dimensions,
     required this.isSoldOut,
     required this.category,
+    this.popularity = 0,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -37,6 +39,7 @@ class Product {
       dimensions: json['dimensions'] ?? '',
       isSoldOut: json['isSoldOut'] ?? false,
       category: json['category'],
+      popularity: (json['popularity'] ?? 0) as int,
     );
   }
 

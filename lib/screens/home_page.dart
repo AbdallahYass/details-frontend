@@ -29,6 +29,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
   List<Product> products = [];
   List<BannerModel> banners = [];
   List<CategoryModel> categories = [];
+  List<Product> popularProducts = [];
   bool isLoading = true;
 
   int _currentBannerIndex = 0;
@@ -70,7 +71,12 @@ class _StoreHomePageState extends State<StoreHomePage> {
   }
 
   Future<void> _loadAllData() async {
-    await Future.wait([fetchProducts(), fetchBanners(), fetchCategories()]);
+    await Future.wait([
+      fetchProducts(),
+      fetchBanners(),
+      fetchCategories(),
+      fetchPopularProducts(),
+    ]);
     if (mounted) {
       setState(() => isLoading = false);
       _startHeroScroll();
@@ -170,6 +176,23 @@ class _StoreHomePageState extends State<StoreHomePage> {
     }
   }
 
+  Future<void> fetchPopularProducts() async {
+    try {
+      final res = await http.get(
+        Uri.parse('https://api.details-store.com/api/products?sort=popular'),
+      );
+      if (res.statusCode == 200) {
+        setState(() {
+          popularProducts = (json.decode(res.body) as List)
+              .map((j) => Product.fromJson(j))
+              .toList();
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching popular products: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -191,6 +214,8 @@ class _StoreHomePageState extends State<StoreHomePage> {
                     SliverToBoxAdapter(child: _buildTopAnnouncement()),
                     SliverToBoxAdapter(child: _buildHeroSlider()),
                     SliverToBoxAdapter(child: _buildCategoriesSection()),
+                    if (popularProducts.isNotEmpty)
+                      SliverToBoxAdapter(child: _buildPopularSection()),
                     // هنا نستدعي الدالة التي تبني الأقسام
                     ..._buildCategoryGrids(),
                     const SliverToBoxAdapter(child: SizedBox(height: 50)),
@@ -201,6 +226,33 @@ class _StoreHomePageState extends State<StoreHomePage> {
                 ),
               ),
       ),
+    );
+  }
+
+  Widget _buildPopularSection() {
+    return Column(
+      children: [
+        _buildSectionHeader(
+          AppLocalizations.of(context)!.translate('most_popular'),
+          AppLocalizations.of(context)!.translate('best_seller_week'),
+        ),
+        SizedBox(
+          height: 280,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: popularProducts.length,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemBuilder: (context, index) {
+              return Container(
+                width: 160,
+                margin: const EdgeInsets.only(left: 15),
+                child: _buildProductCard(popularProducts[index]),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 20),
+      ],
     );
   }
 
@@ -532,6 +584,38 @@ class _StoreHomePageState extends State<StoreHomePage> {
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
+                        ),
+                      ),
+                    ),
+                  else if (p.popularity > 0)
+                    Positioned(
+                      top: 15,
+                      left: 0,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: const BoxDecoration(
+                          color: AppColors.warning,
+                          borderRadius: BorderRadius.only(
+                            topRight: Radius.circular(20),
+                            bottomRight: Radius.circular(20),
+                          ),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.local_fire_department, size: 12, color: Colors.white),
+                            SizedBox(width: 2),
+                            Text(
+                              "HOT",
+                              style: TextStyle(
+                                color: AppColors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
