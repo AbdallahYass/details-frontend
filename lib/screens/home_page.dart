@@ -185,6 +185,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
         setState(() {
           popularProducts = (json.decode(res.body) as List)
               .map((j) => Product.fromJson(j))
+              .take(10) // أخذ أول 10 منتجات فقط
               .toList();
         });
       }
