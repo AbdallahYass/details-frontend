@@ -30,8 +30,12 @@ class Product {
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
       id: json['_id'] ?? json['id'] ?? '',
-      name: json['name'] ?? {},
-      description: json['description'] ?? {},
+      name: json['name'] is Map
+          ? Map<String, dynamic>.from(json['name'])
+          : {'en': json['name']?.toString() ?? ''},
+      description: json['description'] is Map
+          ? Map<String, dynamic>.from(json['description'])
+          : {'en': json['description']?.toString() ?? ''},
       price: (json['price'] ?? 0).toDouble(),
       imageUrl: json['imageUrl'] ?? '',
       images: List<String>.from(json['images'] ?? []),
@@ -39,7 +43,7 @@ class Product {
       dimensions: json['dimensions'] ?? '',
       isSoldOut: json['isSoldOut'] ?? false,
       category: json['category'],
-      popularity: (json['popularity'] ?? 0) as int,
+      popularity: (json['popularity'] ?? 0).toInt(),
     );
   }
 
