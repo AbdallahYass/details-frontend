@@ -234,7 +234,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
           AppLocalizations.of(context)!.translate('best_seller_week'),
         ),
         SizedBox(
-          height: 280,
+          height: 260,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: popularProducts.length,
@@ -404,25 +404,18 @@ class _StoreHomePageState extends State<StoreHomePage> {
 
   Widget _buildSectionHeader(String title, String subtitle) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 25),
+      padding: const EdgeInsets.fromLTRB(20, 30, 20, 15),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(width: 30, height: 1.5, color: AppColors.primary),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              Container(width: 30, height: 1.5, color: AppColors.primary),
-            ],
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.5,
+              color: AppColors.textPrimary,
+            ),
           ),
           const SizedBox(height: 5),
           if (subtitle.isNotEmpty)
@@ -446,18 +439,12 @@ class _StoreHomePageState extends State<StoreHomePage> {
         Expanded(
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-              color: AppColors.cardBackground,
+              borderRadius: BorderRadius.circular(16),
+              color: Colors.white,
+              border: Border.all(color: Colors.grey.shade100),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
               child: Stack(
                 children: [
                   GestureDetector(
@@ -633,39 +620,32 @@ class _StoreHomePageState extends State<StoreHomePage> {
             ),
           ),
         ),
-        const SizedBox(height: 12),
-        Text(
-          p.getName(context),
-          textAlign: TextAlign.right,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            height: 1.4,
+        Padding(
+          padding: const EdgeInsets.only(top: 10, right: 4, left: 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                p.getName(context),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  height: 1.2,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                "${p.price.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}",
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 4),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Text(
-              AppLocalizations.of(context)!.translate('currency'),
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              p.price.toStringAsFixed(2),
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
-            ),
-          ],
         ),
       ],
     );
@@ -704,7 +684,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
   Widget _buildHeroSlider() => banners.isEmpty
       ? const SizedBox()
       : SizedBox(
-          height: 400,
+          height: 220,
           child: Stack(
             alignment: Alignment.center,
             children: [
@@ -807,7 +787,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
                 boxShadow: [
                   if (!isSelected)
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),

@@ -171,7 +171,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                           (order.status == 'تم التوصيل'
                                                   ? Colors.green
                                                   : Colors.orange)
-                                              .withOpacity(0.1),
+                                              .withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Text(

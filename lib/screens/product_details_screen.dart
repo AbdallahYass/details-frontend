@@ -112,7 +112,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               alignment: Alignment.bottomCenter,
               children: [
                 SizedBox(
-                  height: 500,
+                  height: 400,
                   child: PageView.builder(
                     itemCount: _product!.images.length,
                     onPageChanged: (index) {
@@ -186,7 +186,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               ],
             ),
             Padding(
-              padding: const EdgeInsets.all(25),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -232,51 +232,49 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       Text(
                         _product!.brand,
                         style: TextStyle(
-                          color: AppColors.secondary,
-                          fontSize: 13,
+                          color: AppColors.primary,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 1.5,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Text(
                     _product!.getName(context),
                     style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
                       height: 1.2,
                     ),
                   ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 10),
                   Text(
                     "\$${_product!.price}",
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 22,
                       color: AppColors.primary,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 25),
-                  const Divider(height: 1, color: AppColors.lightGrey),
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 30),
                   Text(
                     AppLocalizations.of(context)!.translate('product_desc'),
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Text(
                     _product!.getDescription(context),
 
                     textAlign: TextAlign.right,
                     style: const TextStyle(
-                      fontSize: 14,
-                      height: 1.8,
+                      fontSize: 15,
+                      height: 1.6,
                       color: AppColors.textSecondary,
                     ),
                   ),
@@ -332,7 +330,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           color: AppColors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),

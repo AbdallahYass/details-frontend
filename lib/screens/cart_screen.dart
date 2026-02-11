@@ -33,7 +33,7 @@ class CartScreen extends StatelessWidget {
               color: Theme.of(context).cardColor,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   offset: const Offset(0, -4),
                   blurRadius: 10,
                 ),
@@ -145,15 +145,12 @@ class _CartItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 0,
+      elevation: 0.5,
       color: AppColors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
-      ),
-      margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(12),
         child: Row(
           children: [
             ClipRRect(
@@ -210,8 +207,9 @@ class _CartItemCard extends StatelessWidget {
                 ),
                 InkWell(
                   onTap: () {
-                    if (cartItem.quantity > 1)
+                    if (cartItem.quantity > 1) {
                       cart.removeSingleItem(cartItem.id);
+                    }
                   },
                   child: Icon(Icons.remove_circle, color: Colors.grey[400]),
                 ),
