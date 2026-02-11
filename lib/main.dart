@@ -14,12 +14,13 @@ import 'package:details_app/providers/auth_provider.dart';
 import 'package:details_app/screens/profile_screen.dart';
 import 'package:details_app/providers/settings_provider.dart';
 import 'package:details_app/providers/cart_provider.dart';
-import 'package:details_app/screens/cart_screen.dart';
+import 'package:details_app/screens/cart_screen.dart'; // Ensure this points to the correct file in lib/screens/
 import 'package:details_app/screens/search_screen.dart';
 import 'package:details_app/providers/orders_provider.dart';
 import 'package:details_app/screens/orders_screen.dart';
 import 'package:details_app/constants/app_theme.dart';
 import 'package:details_app/screens/main_screen.dart';
+import 'package:details_app/screens/checkout_screen.dart';
 
 Future<void> main() async {
   runApp(
@@ -123,6 +124,10 @@ class _DetailsStoreAppState extends State<DetailsStoreApp> {
               GoRoute(
                 path: '/register',
                 builder: (context, state) => const RegisterScreen(),
+              ),
+              GoRoute(
+                path: '/checkout',
+                builder: (context, state) => const CheckoutScreen(),
               ),
             ],
           ),

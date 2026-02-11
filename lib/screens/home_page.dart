@@ -438,6 +438,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
   Widget _buildProductCard(Product p) {
     final wishlistProvider = Provider.of<WishlistProvider>(context);
     final isFav = wishlistProvider.isInWishlist(p.id);
+    final isHot = popularProducts.any((element) => element.id == p.id);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -584,7 +585,7 @@ class _StoreHomePageState extends State<StoreHomePage> {
                         ),
                       ),
                     ),
-                  if (!p.isSoldOut && p.popularity > 0)
+                  if (!p.isSoldOut && isHot)
                     Positioned(
                       top: 15,
                       left: 0,
