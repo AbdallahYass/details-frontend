@@ -24,7 +24,6 @@ import 'package:details_app/screens/manage_users_screen.dart';
 import 'package:details_app/screens/manage_categories_screen.dart';
 import 'package:details_app/screens/manage_coupons_screen.dart';
 import 'package:details_app/screens/admin_orders_screen.dart';
-import 'package:details_app/screens/manage_banners_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -138,7 +137,8 @@ final router = GoRouter(
         ),
         GoRoute(
           path: 'banners',
-          builder: (context, state) => const ManageBannersScreen(),
+          builder: (context, state) =>
+              const Scaffold(body: Center(child: Text('Manage Banners'))),
         ),
       ],
     ),
