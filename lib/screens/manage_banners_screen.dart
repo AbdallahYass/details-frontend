@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/providers/auth_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:details_app/screens/cloudinary_service.dart';
 
 class ManageBannersScreen extends StatefulWidget {
   const ManageBannersScreen({super.key});
@@ -25,8 +26,9 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
 
   Future<void> _fetchBanners() async {
     try {
+      // جلب البنرات الخاصة بالصفحة الرئيسية
       final response = await http.get(
-        Uri.parse('https://api.details-store.com/api/banners'),
+        Uri.parse('https://api.details-store.com/api/banners?location=home'),
       );
       if (response.statusCode == 200) {
         setState(() {
@@ -39,7 +41,7 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
     }
   }
 
-  Future<void> _addBanner(String title, String imageUrl) async {
+  Future<void> _addBanner(String imageUrl) async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     try {
       final response = await http.post(
@@ -49,11 +51,12 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
           'Authorization': 'Bearer ${auth.token}',
         },
         body: json.encode({
-          'title': {'ar': title, 'en': title},
           'imageUrl': imageUrl,
-          'location': 'home',
+          'location': 'home', // افتراضياً للصفحة الرئيسية
+          'isActive': true,
         }),
       );
+
       if (response.statusCode == 201) {
         _fetchBanners();
         if (mounted) Navigator.pop(context);
@@ -64,7 +67,6 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
         }
       }
     } catch (e) {
-      debugPrint('Error adding banner: $e');
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -80,14 +82,15 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
         Uri.parse('https://api.details-store.com/api/banners/$id'),
         headers: {'Authorization': 'Bearer ${auth.token}'},
       );
-      setState(() => _banners.removeWhere((b) => b['_id'] == id));
+      setState(() {
+        _banners.removeWhere((b) => b['_id'] == id);
+      });
       if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('تم حذف الإعلان بنجاح')));
       }
     } catch (e) {
-      debugPrint('Error deleting banner: $e');
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -97,36 +100,59 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
   }
 
   void _showAddDialog() {
-    final titleController = TextEditingController();
     final imageController = TextEditingController();
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('إضافة إعلان جديد'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(labelText: 'العنوان'),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) {
+          bool isUploading = false;
+
+          Future<void> pickImage() async {
+            setState(() => isUploading = true);
+            final url = await CloudinaryService().pickAndUploadImage();
+            setState(() => isUploading = false);
+            if (url != null) {
+              imageController.text = url;
+            }
+          }
+
+          return AlertDialog(
+            title: const Text('إضافة إعلان جديد'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: imageController,
+                  decoration: InputDecoration(
+                    labelText: 'رابط الصورة',
+                    suffixIcon: isUploading
+                        ? const Padding(
+                            padding: EdgeInsets.all(12.0),
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : IconButton(
+                            icon: const Icon(Icons.cloud_upload),
+                            onPressed: pickImage,
+                          ),
+                  ),
+                ),
+              ],
             ),
-            TextField(
-              controller: imageController,
-              decoration: const InputDecoration(labelText: 'رابط الصورة'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () =>
-                _addBanner(titleController.text, imageController.text),
-            child: const Text('إضافة'),
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('إلغاء'),
+              ),
+              ElevatedButton(
+                onPressed: isUploading
+                    ? null
+                    : () => _addBanner(imageController.text),
+                child: const Text('إضافة'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -141,25 +167,23 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
               itemCount: _banners.length,
               itemBuilder: (ctx, i) {
                 final banner = _banners[i];
-                final title = banner['title'] is Map
-                    ? banner['title']['ar']
-                    : banner['title'];
                 return Card(
                   margin: const EdgeInsets.all(10),
                   child: Column(
                     children: [
-                      CachedNetworkImage(
-                        imageUrl: banner['imageUrl'],
-                        height: 150,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) =>
-                            Container(height: 150, color: Colors.grey[200]),
-                        errorWidget: (context, url, error) =>
-                            const Icon(Icons.error),
+                      AspectRatio(
+                        aspectRatio: 16 / 9,
+                        child: CachedNetworkImage(
+                          imageUrl: banner['imageUrl'],
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) =>
+                              Container(color: Colors.grey[200]),
+                          errorWidget: (context, url, error) =>
+                              const Icon(Icons.error),
+                        ),
                       ),
                       ListTile(
-                        title: Text(title ?? ''),
+                        title: const Text('إعلان الصفحة الرئيسية'),
                         trailing: IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
                           onPressed: () => _deleteBanner(banner['_id']),

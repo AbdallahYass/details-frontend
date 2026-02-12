@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/providers/auth_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:details_app/screens/cloudinary_service.dart';
 
 class ManageCategoriesScreen extends StatefulWidget {
   const ManageCategoriesScreen({super.key});
@@ -107,41 +108,72 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
     final nameEnController = TextEditingController();
     final imageController = TextEditingController();
 
+    // نستخدم StatefulBuilder لتحديث حالة الرفع داخل الـ Dialog
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('إضافة تصنيف جديد'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameArController,
-              decoration: const InputDecoration(labelText: 'الاسم (عربي)'),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) {
+          bool isUploading = false;
+
+          Future<void> pickImage() async {
+            setState(() => isUploading = true);
+            final url = await CloudinaryService().pickAndUploadImage();
+            setState(() => isUploading = false);
+            if (url != null) {
+              imageController.text = url;
+            }
+          }
+
+          return AlertDialog(
+            title: const Text('إضافة تصنيف جديد'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameArController,
+                  decoration: const InputDecoration(labelText: 'الاسم (عربي)'),
+                ),
+                TextField(
+                  controller: nameEnController,
+                  decoration: const InputDecoration(
+                    labelText: 'الاسم (إنجليزي)',
+                  ),
+                ),
+                TextField(
+                  controller: imageController,
+                  decoration: InputDecoration(
+                    labelText: 'رابط الصورة',
+                    suffixIcon: isUploading
+                        ? const Padding(
+                            padding: EdgeInsets.all(12.0),
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : IconButton(
+                            icon: const Icon(Icons.cloud_upload),
+                            onPressed: pickImage,
+                          ),
+                  ),
+                ),
+              ],
             ),
-            TextField(
-              controller: nameEnController,
-              decoration: const InputDecoration(labelText: 'الاسم (إنجليزي)'),
-            ),
-            TextField(
-              controller: imageController,
-              decoration: const InputDecoration(labelText: 'رابط الصورة'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () => _addCategory(
-              nameArController.text,
-              nameEnController.text,
-              imageController.text,
-            ),
-            child: const Text('إضافة'),
-          ),
-        ],
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('إلغاء'),
+              ),
+              ElevatedButton(
+                onPressed: isUploading
+                    ? null
+                    : () => _addCategory(
+                        nameArController.text,
+                        nameEnController.text,
+                        imageController.text,
+                      ),
+                child: const Text('إضافة'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

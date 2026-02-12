@@ -75,7 +75,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       'subtotal': cart.subtotal,
       'discountAmount': cart.discountAmount,
       'couponCode': cart.couponCode,
-      'totalAmount': cart.totalAmount,
+      'amount': cart.totalAmount,
       'shippingAddress': {
         'city': _cityController.text,
         'street': _streetController.text,

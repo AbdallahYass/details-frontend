@@ -8,7 +8,7 @@ import 'package:details_app/providers/settings_provider.dart';
 import 'package:details_app/providers/cart_provider.dart';
 import 'package:details_app/providers/orders_provider.dart';
 import 'package:details_app/constants/app_theme.dart';
-import 'package:details_app/screens/router.dart';
+import 'package:details_app/providers/router.dart';
 
 Future<void> main() async {
   runApp(
