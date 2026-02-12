@@ -6,6 +6,7 @@ import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/providers/auth_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:details_app/screens/cloudinary_service.dart';
+import 'package:details_app/models/product.dart';
 
 class AddEditProductScreen extends StatefulWidget {
   final dynamic product; // If null, we are adding
@@ -21,13 +22,17 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
   final _nameEnController = TextEditingController();
   final _priceController = TextEditingController();
   final _oldPriceController = TextEditingController();
+  final _quantityController = TextEditingController();
   final _descArController = TextEditingController();
   final _descEnController = TextEditingController();
   final _imageController = TextEditingController();
   final _newCategoryController = TextEditingController(); // للكاتيجوري الجديد
+  final _sizeInputController = TextEditingController();
+  final _sizeQtyController = TextEditingController();
   String? _selectedCategory;
   List<dynamic> _categories = [];
   List<String> _galleryImages = []; // قائمة الصور الإضافية
+  List<ProductSize> _sizes = [];
   bool _isLoading = false;
   bool _isImageUploading = false;
   bool _isNewCategory = false; // تحديد وضع الكاتيجوري
@@ -45,6 +50,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
       _nameEnController.text = p['name']['en'];
       _priceController.text = p['price'].toString();
       _oldPriceController.text = p['oldPrice']?.toString() ?? '';
+      _quantityController.text = p['quantity']?.toString() ?? '';
       _descArController.text = p['description']['ar'] ?? '';
       _descEnController.text = p['description']['en'] ?? '';
       _imageController.text = p['imageUrl'];
@@ -60,6 +66,11 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         // إزالة الصورة الرئيسية من القائمة إذا كانت موجودة
         _galleryImages.removeWhere((img) => img == p['imageUrl']);
       }
+      if (p['sizes'] != null) {
+        _sizes = (p['sizes'] as List)
+            .map((e) => ProductSize.fromJson(e))
+            .toList();
+      }
     }
   }
 
@@ -69,10 +80,13 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     _nameEnController.dispose();
     _priceController.dispose();
     _oldPriceController.dispose();
+    _quantityController.dispose();
     _descArController.dispose();
     _descEnController.dispose();
     _imageController.dispose();
     _newCategoryController.dispose();
+    _sizeInputController.dispose();
+    _sizeQtyController.dispose();
     super.dispose();
   }
 
@@ -184,6 +198,8 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         'oldPrice': _oldPriceController.text.isNotEmpty
             ? double.tryParse(_oldPriceController.text)
             : null,
+        'quantity': int.tryParse(_quantityController.text) ?? 0,
+        'sizes': _sizes.map((e) => e.toJson()).toList(),
         'description': {
           'ar': _descArController.text,
           'en': _descEnController.text,
@@ -263,6 +279,76 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                 ),
                 keyboardType: TextInputType.number,
               ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _quantityController,
+                decoration: const InputDecoration(labelText: 'الكمية المتوفرة'),
+                keyboardType: TextInputType.number,
+                validator: (v) => v!.isEmpty ? 'مطلوب' : null,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _sizeInputController,
+                      decoration: const InputDecoration(
+                        labelText: 'إضافة مقاس (Size)',
+                        hintText: 'مثال: S, M, 42',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: 80,
+                    child: TextFormField(
+                      controller: _sizeQtyController,
+                      decoration: const InputDecoration(labelText: 'الكمية'),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.add_circle,
+                      color: AppColors.primary,
+                    ),
+                    onPressed: () {
+                      if (_sizeInputController.text.isNotEmpty) {
+                        final qty = int.tryParse(_sizeQtyController.text) ?? 0;
+                        setState(() {
+                          _sizes.add(
+                            ProductSize(
+                              size: _sizeInputController.text.trim(),
+                              quantity: qty,
+                            ),
+                          );
+                          _sizeInputController.clear();
+                          _sizeQtyController.clear();
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+              if (_sizes.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Wrap(
+                    spacing: 8,
+                    children: _sizes
+                        .map(
+                          (s) => Chip(
+                            label: Text('${s.size} (${s.quantity})'),
+                            onDeleted: () {
+                              setState(() {
+                                _sizes.remove(s);
+                              });
+                            },
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
               const SizedBox(height: 10),
 
               // --- قسم اختيار الكاتيجوري ---

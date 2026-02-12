@@ -4,18 +4,22 @@ import 'package:http/http.dart' as http;
 
 class CartItem {
   final String id;
+  final String productId; // ID المنتج الأصلي
   final String title;
   final int quantity;
   final double price;
   final String imageUrl;
+  final String? size; // المقاس المختار
 
   CartItem({
     required this.id,
+    String? productId,
     required this.title,
     required this.quantity,
     required this.price,
     required this.imageUrl,
-  });
+    this.size,
+  }) : productId = productId ?? id;
 }
 
 class CartProvider with ChangeNotifier {
@@ -41,52 +45,76 @@ class CartProvider with ChangeNotifier {
   double get totalAmount =>
       subtotal - _discountAmount > 0 ? subtotal - _discountAmount : 0.0;
 
-  void addItem(String productId, double price, String title, String imageUrl) {
-    if (_items.containsKey(productId)) {
+  // دالة الإضافة المعدلة
+  void addItem(
+    String productId,
+    double price,
+    String title,
+    String imageUrl, {
+    String? size,
+    int maxQuantity = 999,
+  }) {
+    // المفتاح في السلة يكون دمجاً بين الآيدي والمقاس لتمييز المنتجات المختلفة بالمقاس
+    final cartKey = size != null ? '${productId}_$size' : productId;
+
+    if (_items.containsKey(cartKey)) {
+      // التحقق من عدم تجاوز الكمية المتوفرة
+      if (_items[cartKey]!.quantity >= maxQuantity) {
+        return; // لا تقم بالإضافة إذا وصلنا للحد الأقصى
+      }
+
       // زيادة الكمية إذا المنتج موجود
       _items.update(
-        productId,
+        cartKey,
         (existingCartItem) => CartItem(
           id: existingCartItem.id,
+          productId: existingCartItem.productId,
           title: existingCartItem.title,
           quantity: existingCartItem.quantity + 1,
           price: existingCartItem.price,
           imageUrl: existingCartItem.imageUrl,
+          size: existingCartItem.size,
         ),
       );
     } else {
+      if (maxQuantity < 1) return; // لا يمكن إضافة منتج كميته 0
+
       // إضافة منتج جديد
       _items.putIfAbsent(
-        productId,
+        cartKey,
         () => CartItem(
-          id: productId,
+          id: cartKey,
+          productId: productId,
           title: title,
           quantity: 1,
           price: price,
           imageUrl: imageUrl,
+          size: size,
         ),
       );
     }
     notifyListeners();
   }
 
-  void removeSingleItem(String productId) {
-    if (!_items.containsKey(productId)) {
+  void removeSingleItem(String cartKey) {
+    if (!_items.containsKey(cartKey)) {
       return;
     }
-    if (_items[productId]!.quantity > 1) {
+    if (_items[cartKey]!.quantity > 1) {
       _items.update(
-        productId,
+        cartKey,
         (existingCartItem) => CartItem(
           id: existingCartItem.id,
+          productId: existingCartItem.productId,
           title: existingCartItem.title,
           quantity: existingCartItem.quantity - 1,
           price: existingCartItem.price,
           imageUrl: existingCartItem.imageUrl,
+          size: existingCartItem.size,
         ),
       );
     } else {
-      _items.remove(productId);
+      _items.remove(cartKey);
     }
     if (_items.isEmpty) {
       _couponCode = null;
@@ -95,8 +123,8 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void removeItem(String productId) {
-    _items.remove(productId);
+  void removeItem(String cartKey) {
+    _items.remove(cartKey);
     if (_items.isEmpty) {
       _couponCode = null;
       _discountAmount = 0.0;

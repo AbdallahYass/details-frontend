@@ -64,8 +64,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       'products': cart.items.values
           .map(
             (cp) => {
-              'id': cp.id,
-              'title': cp.title,
+              'id': cp.productId, // نرسل ID المنتج الأصلي
+              'title': cp.size != null
+                  ? '${cp.title} (${cp.size})'
+                  : cp.title, // دمج المقاس مع الاسم
+              'size': cp.size, // إضافة المقاس كحقل منفصل
               'quantity': cp.quantity,
               'price': cp.price,
               'imageUrl': cp.imageUrl,

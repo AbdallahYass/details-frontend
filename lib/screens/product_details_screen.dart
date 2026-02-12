@@ -27,6 +27,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   List<Product> relatedProducts = [];
   bool isLoadingRelated = true;
   int _quantity = 1;
+  String? _selectedSize;
 
   @override
   void initState() {
@@ -83,6 +84,19 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       debugPrint("Error fetching related: $e");
       if (mounted) setState(() => isLoadingRelated = false);
     }
+  }
+
+  int get _availableQuantity {
+    if (_product == null) return 0;
+    if (_product!.sizes.isNotEmpty) {
+      if (_selectedSize == null) return 0;
+      final sizeObj = _product!.sizes.firstWhere(
+        (s) => s.size == _selectedSize,
+        orElse: () => ProductSize(size: '', quantity: 0),
+      );
+      return sizeObj.quantity;
+    }
+    return _product!.quantity;
   }
 
   @override
@@ -327,6 +341,56 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       ),
                     ),
                   ],
+                  if (_product!.sizes.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    const Text(
+                      'المقاس (Size)',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 10,
+                      children: _product!.sizes.map((s) {
+                        final isSelected = _selectedSize == s.size;
+                        final isOutOfStock = s.quantity <= 0;
+                        return ChoiceChip(
+                          label: Text(
+                            '${s.size} ${isOutOfStock ? '(Out)' : ''}',
+                          ),
+                          selected: isSelected,
+                          onSelected: isOutOfStock
+                              ? null
+                              : (selected) {
+                                  setState(() {
+                                    _selectedSize = selected ? s.size : null;
+                                    _quantity = 1; // Reset quantity
+                                  });
+                                },
+                          selectedColor: AppColors.primary,
+                          disabledColor: Colors.grey.shade200,
+                          labelStyle: TextStyle(
+                            color: isSelected
+                                ? Colors.white
+                                : isOutOfStock
+                                ? Colors.grey
+                                : Colors.black,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  Text(
+                    'متوفر: $_availableQuantity',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   if (relatedProducts.isNotEmpty) ...[
                     const Divider(height: 50),
                     Text(
@@ -392,7 +456,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   IconButton(
                     icon: const Icon(Icons.add, color: AppColors.primary),
                     onPressed: () {
-                      setState(() => _quantity++);
+                      if (_quantity < _availableQuantity) {
+                        setState(() => _quantity++);
+                      }
                     },
                   ),
                 ],
@@ -401,27 +467,38 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             const SizedBox(width: 15),
             Expanded(
               child: ElevatedButton(
-                onPressed: () {
-                  final cart = Provider.of<CartProvider>(
-                    context,
-                    listen: false,
-                  );
-                  for (int i = 0; i < _quantity; i++) {
-                    cart.addItem(
-                      _product!.id,
-                      _product!.price.toDouble(),
-                      _product!.getName(context),
-                      _product!.imageUrl,
-                    );
-                  }
-                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('تمت الإضافة للسلة بنجاح'),
-                      duration: Duration(seconds: 1),
-                    ),
-                  );
-                },
+                onPressed: _availableQuantity == 0
+                    ? null
+                    : () {
+                        if (_product!.sizes.isNotEmpty &&
+                            _selectedSize == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('يرجى اختيار المقاس')),
+                          );
+                          return;
+                        }
+                        final cart = Provider.of<CartProvider>(
+                          context,
+                          listen: false,
+                        );
+                        for (int i = 0; i < _quantity; i++) {
+                          cart.addItem(
+                            _product!.id,
+                            _product!.price.toDouble(),
+                            _product!.getName(context),
+                            _product!.imageUrl,
+                            size: _selectedSize,
+                            maxQuantity: _availableQuantity,
+                          );
+                        }
+                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('تمت الإضافة للسلة بنجاح'),
+                            duration: Duration(seconds: 1),
+                          ),
+                        );
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   minimumSize: const Size(double.infinity, 55),

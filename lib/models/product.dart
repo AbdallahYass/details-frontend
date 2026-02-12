@@ -1,5 +1,24 @@
 import 'package:flutter/material.dart';
 
+class ProductSize {
+  final String size;
+  final int quantity;
+
+  ProductSize({required this.size, required this.quantity});
+
+  factory ProductSize.fromJson(dynamic json) {
+    if (json is String) {
+      return ProductSize(size: json, quantity: 0);
+    }
+    return ProductSize(
+      size: json['size']?.toString() ?? '',
+      quantity: int.tryParse(json['quantity']?.toString() ?? '0') ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {'size': size, 'quantity': quantity};
+}
+
 class Product {
   final String id;
   final Map<String, dynamic> name;
@@ -12,6 +31,8 @@ class Product {
   final bool isSoldOut;
   final dynamic category; // يمكن أن يكون String ID أو Map
   final int popularity;
+  final int quantity;
+  final List<ProductSize> sizes;
 
   Product({
     required this.id,
@@ -25,6 +46,8 @@ class Product {
     required this.isSoldOut,
     required this.category,
     this.popularity = 0,
+    this.quantity = 0,
+    this.sizes = const [],
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -50,6 +73,12 @@ class Product {
       popularity: (json['popularity'] is num)
           ? (json['popularity'] as num).toInt()
           : int.tryParse(json['popularity']?.toString() ?? '0') ?? 0,
+      quantity: (json['quantity'] is num)
+          ? (json['quantity'] as num).toInt()
+          : int.tryParse(json['quantity']?.toString() ?? '0') ?? 0,
+      sizes: (json['sizes'] is List)
+          ? (json['sizes'] as List).map((e) => ProductSize.fromJson(e)).toList()
+          : [],
     );
   }
 
