@@ -4,7 +4,7 @@ import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:details_app/providers/auth_provider.dart';
-import 'package:details_app/widgets/custom_app_bar.dart';
+import 'package:details_app/widgets/custom_app_bar.dart'; // Correct the import
 import 'package:details_app/providers/settings_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -17,7 +17,7 @@ class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(),
+      appBar: const CustomAppBar(), // make sure this class exist.
       drawer: _buildDrawer(context),
       body: navigationShell,
       bottomNavigationBar: Container(
@@ -187,18 +187,22 @@ class MainScreen extends StatelessWidget {
             ),
             onTap: () {
               Navigator.pop(context);
-              showAboutDialog(
-                context: context,
-                applicationName: 'Details Store',
-                applicationVersion: '1.0.0',
-                applicationIcon: Image.asset(
-                  'assets/images/logo.png',
-                  width: 50,
-                  height: 50,
-                ),
-              );
+              context.push('/about');
             },
           ),
+          // رابط لوحة التحكم (يظهر فقط للأدمن)
+          if (auth.isAuthenticated && (auth.user?.isAdmin ?? false))
+            ListTile(
+              leading: const Icon(
+                Icons.dashboard_customize,
+                color: AppColors.primary,
+              ),
+              title: const Text('لوحة التحكم'),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/admin');
+              },
+            ),
           const Spacer(),
           const Divider(),
           if (auth.isAuthenticated)

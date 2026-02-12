@@ -20,6 +20,7 @@ import 'package:details_app/providers/auth_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class StoreHomePage extends StatefulWidget {
+  // fix this name
   const StoreHomePage({super.key});
   @override
   State<StoreHomePage> createState() => _StoreHomePageState();

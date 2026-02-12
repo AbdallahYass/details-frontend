@@ -1,0 +1,93 @@
+import 'package:flutter/material.dart';
+import 'package:details_app/constants/app_colors.dart';
+import 'package:details_app/l10n/app_localizations.dart';
+import 'package:go_router/go_router.dart';
+
+class AboutScreen extends StatelessWidget {
+  const AboutScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          AppLocalizations.of(context)!.translate('footer_about_title'),
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+          onPressed: () => context.pop(),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.grey[50],
+              ),
+              child: Image.asset(
+                'assets/images/logo.png',
+                height: 100,
+                errorBuilder: (c, _, __) =>
+                    const Icon(Icons.store, size: 80, color: AppColors.primary),
+              ),
+            ),
+            const SizedBox(height: 30),
+            const Text(
+              "Details Store",
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "Since 2024",
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+            ),
+            const SizedBox(height: 40),
+            _buildSection(
+              context,
+              "Our Story",
+              "We started with a simple idea: to bring high-quality fashion to your doorstep. Details Store is more than just a shop; it's a lifestyle.",
+            ),
+            const SizedBox(height: 20),
+            _buildSection(
+              context,
+              "Our Mission",
+              "To provide exceptional customer service and curated products that add value to your life.",
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSection(BuildContext context, String title, String content) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          content,
+          style: const TextStyle(
+            fontSize: 16,
+            height: 1.6,
+            color: Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+}

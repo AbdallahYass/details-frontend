@@ -39,8 +39,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
         if (success) {
-          if (context.canPop()) {
-            context.pop();
+          if (authProvider.user?.isAdmin == true) {
+            context.go('/admin');
           } else {
             context.go('/');
           }

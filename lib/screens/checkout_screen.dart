@@ -59,19 +59,36 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     setState(() => _isLoading = true);
 
-    final orderData = {
-      'city': _cityController.text,
-      'street': _streetController.text,
-      'phone': _phoneController.text,
+    // تجهيز البيانات حسب Schema الباك اند
+    final orderPayload = {
+      'products': cart.items.values
+          .map(
+            (cp) => {
+              'id': cp.id,
+              'title': cp.title,
+              'quantity': cp.quantity,
+              'price': cp.price,
+              'imageUrl': cp.imageUrl,
+            },
+          )
+          .toList(),
+      'subtotal': cart.subtotal,
+      'discountAmount': cart.discountAmount,
+      'couponCode': cart.couponCode,
+      'totalAmount': cart.totalAmount,
+      'shippingAddress': {
+        'city': _cityController.text,
+        'street': _streetController.text,
+        'phone': _phoneController.text,
+      },
       'payment_method': _paymentMethod,
-      'paymentMethod': _paymentMethod,
     };
 
     try {
       final success = await Provider.of<OrdersProvider>(
         context,
         listen: false,
-      ).addOrder(cart.items.values.toList(), cart.totalAmount, orderData);
+      ).addOrder(orderPayload);
 
       if (mounted) {
         setState(() => _isLoading = false);

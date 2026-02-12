@@ -26,7 +26,7 @@ class WishlistProvider with ChangeNotifier {
   }
 
   Future<void> fetchWishlist() async {
-    if (_token == null) return;
+    if (_token == null) return; //early return
     try {
       final res = await http.get(
         Uri.parse('https://api.details-store.com/api/wishlist'),
@@ -43,7 +43,7 @@ class WishlistProvider with ChangeNotifier {
   }
 
   Future<bool> toggleWishlist(Product product) async {
-    if (_token == null) return false;
+    if (_token == null) return false; //early return
 
     // تحديث الواجهة فوراً (Optimistic UI Update)
     bool exists = isInWishlist(product.id);

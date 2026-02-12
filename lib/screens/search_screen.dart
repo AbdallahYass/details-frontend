@@ -16,14 +16,15 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
-  List<Product> _allProducts = [];
   List<Product> _filteredProducts = [];
   bool _isLoading = true;
+  RangeValues _currentPriceRange = const RangeValues(0, 1000);
+  String _sortBy = 'newest'; // newest, price_asc, price_desc
 
   @override
   void initState() {
     super.initState();
-    _fetchAllProducts();
+    _fetchFilteredProducts();
   }
 
   @override
@@ -32,15 +33,26 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
-  Future<void> _fetchAllProducts() async {
+  Future<void> _fetchFilteredProducts() async {
+    setState(() => _isLoading = true);
     try {
-      final res = await http.get(
-        Uri.parse('https://api.details-store.com/api/products'),
-      );
+      // بناء رابط الـ API مع الباراميترز
+      String url = 'https://api.details-store.com/api/products?';
+
+      if (_searchController.text.isNotEmpty) {
+        url += 'search=${_searchController.text}&';
+      }
+
+      url +=
+          'minPrice=${_currentPriceRange.start}&maxPrice=${_currentPriceRange.end}&';
+      url += 'sort=$_sortBy';
+
+      final res = await http.get(Uri.parse(url));
+
       if (res.statusCode == 200) {
         final List<dynamic> data = json.decode(res.body);
         setState(() {
-          _allProducts = data.map((j) => Product.fromJson(j)).toList();
+          _filteredProducts = data.map((j) => Product.fromJson(j)).toList();
           _isLoading = false;
         });
       }
@@ -51,17 +63,100 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _filterProducts(String query) {
-    if (query.isEmpty) {
-      setState(() => _filteredProducts = []);
-      return;
-    }
+    // نستخدم Debounce بسيط لتجنب كثرة الطلبات (اختياري، هنا نستدعي مباشرة)
+    _fetchFilteredProducts();
+  }
 
-    setState(() {
-      _filteredProducts = _allProducts.where((product) {
-        final name = product.getName(context).toLowerCase();
-        return name.contains(query.toLowerCase());
-      }).toList();
-    });
+  void _showFilterBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Filter & Sort",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Price Range",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  RangeSlider(
+                    values: _currentPriceRange,
+                    min: 0,
+                    max: 2000,
+                    divisions: 20,
+                    labels: RangeLabels(
+                      "\$${_currentPriceRange.start.round()}",
+                      "\$${_currentPriceRange.end.round()}",
+                    ),
+                    activeColor: AppColors.primary,
+                    onChanged: (values) {
+                      setModalState(() => _currentPriceRange = values);
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Sort By",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Wrap(
+                    spacing: 10,
+                    children: [
+                      ChoiceChip(
+                        label: const Text("Newest"),
+                        selected: _sortBy == 'newest',
+                        onSelected: (b) =>
+                            setModalState(() => _sortBy = 'newest'),
+                      ),
+                      ChoiceChip(
+                        label: const Text("Price: Low to High"),
+                        selected: _sortBy == 'price_asc',
+                        onSelected: (b) =>
+                            setModalState(() => _sortBy = 'price_asc'),
+                      ),
+                      ChoiceChip(
+                        label: const Text("Price: High to Low"),
+                        selected: _sortBy == 'price_desc',
+                        onSelected: (b) =>
+                            setModalState(() => _sortBy = 'price_desc'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _fetchFilteredProducts();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                      ),
+                      child: const Text(
+                        "Apply Filters",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -71,27 +166,49 @@ class _SearchScreenState extends State<SearchScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _searchController,
-              autofocus: true,
-              decoration: InputDecoration(
-                hintText: AppLocalizations.of(
-                  context,
-                )!.translate('search_hint'),
-                prefixIcon: const Icon(Icons.search, color: AppColors.primary),
-                filled: true,
-                fillColor: Colors.grey[50],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: AppLocalizations.of(
+                        context,
+                      )!.translate('search_hint'),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: AppColors.primary,
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[200]!),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                      ),
+                    ),
+                    onChanged: _filterProducts,
+                  ),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey[200]!),
+                const SizedBox(width: 10),
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.tune, color: Colors.white),
+                    onPressed: _showFilterBottomSheet,
+                  ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              ),
-              onChanged: _filterProducts,
+              ],
             ),
           ),
           Expanded(

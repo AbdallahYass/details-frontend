@@ -24,10 +24,10 @@ class OrdersProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        _orders = data.map((item) {
+        _orders = data.map<OrderModel>((item) {
           return OrderModel(
             id: item['_id'],
-            amount: (item['amount'] as num).toDouble(),
+            amount: (item['totalAmount'] as num).toDouble(), // تصحيح الاسم
             products: (item['products'] as List).map((p) {
               return CartItem(
                 id: p['id'] ?? '',
@@ -48,11 +48,7 @@ class OrdersProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> addOrder(
-    List<CartItem> cartProducts,
-    double total,
-    Map<String, String> address,
-  ) async {
+  Future<bool> addOrder(Map<String, dynamic> orderPayload) async {
     if (_token == null) return false;
     try {
       final url = Uri.parse('https://api.details-store.com/api/orders');
@@ -62,21 +58,7 @@ class OrdersProvider with ChangeNotifier {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_token',
         },
-        body: json.encode({
-          'products': cartProducts
-              .map(
-                (cp) => {
-                  'id': cp.id,
-                  'title': cp.title,
-                  'quantity': cp.quantity,
-                  'price': cp.price,
-                  'imageUrl': cp.imageUrl,
-                },
-              )
-              .toList(),
-          'amount': total,
-          'shippingAddress': address,
-        }),
+        body: json.encode(orderPayload),
       );
 
       if (response.statusCode == 201) {
