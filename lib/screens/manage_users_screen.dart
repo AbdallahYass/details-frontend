@@ -36,11 +36,6 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
         });
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('فشل تحميل المستخدمين')));
-      }
       setState(() => _isLoading = false);
     }
   }
@@ -49,9 +44,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     try {
       await http.delete(
-        Uri.parse(
-          'https://api.details-store.com/api/admin/users/$id',
-        ), // تصحيح الرابط
+        Uri.parse('https://api.details-store.com/api/admin/users/$id'),
         headers: {'Authorization': 'Bearer ${auth.token}'},
       );
       setState(() {

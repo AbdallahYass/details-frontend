@@ -24,8 +24,21 @@ import 'package:details_app/screens/manage_users_screen.dart';
 import 'package:details_app/screens/manage_categories_screen.dart';
 import 'package:details_app/screens/manage_coupons_screen.dart';
 import 'package:details_app/screens/admin_orders_screen.dart';
+import 'package:details_app/screens/manage_banners_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> _shellNavigatorHome = GlobalKey<NavigatorState>(
+  debugLabel: 'shellHome',
+);
+final GlobalKey<NavigatorState> _shellNavigatorSearch =
+    GlobalKey<NavigatorState>(debugLabel: 'shellSearch');
+final GlobalKey<NavigatorState> _shellNavigatorCart = GlobalKey<NavigatorState>(
+  debugLabel: 'shellCart',
+);
+final GlobalKey<NavigatorState> _shellNavigatorWishlist =
+    GlobalKey<NavigatorState>(debugLabel: 'shellWishlist');
+final GlobalKey<NavigatorState> _shellNavigatorAccount =
+    GlobalKey<NavigatorState>(debugLabel: 'shellAccount');
 
 final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
@@ -37,14 +50,13 @@ final router = GoRouter(
       },
       branches: [
         StatefulShellBranch(
+          navigatorKey: _shellNavigatorHome,
           routes: [
-            GoRoute(
-              path: '/',
-              builder: (context, state) => const StoreHomePage(),
-            ),
+            GoRoute(path: '/', builder: (context, state) => const HomePage()),
           ],
         ),
         StatefulShellBranch(
+          navigatorKey: _shellNavigatorSearch,
           routes: [
             GoRoute(
               path: '/search',
@@ -53,6 +65,7 @@ final router = GoRouter(
           ],
         ),
         StatefulShellBranch(
+          navigatorKey: _shellNavigatorCart,
           routes: [
             GoRoute(
               path: '/cart',
@@ -61,6 +74,7 @@ final router = GoRouter(
           ],
         ),
         StatefulShellBranch(
+          navigatorKey: _shellNavigatorWishlist,
           routes: [
             GoRoute(
               path: '/wishlist',
@@ -69,6 +83,7 @@ final router = GoRouter(
           ],
         ),
         StatefulShellBranch(
+          navigatorKey: _shellNavigatorAccount,
           routes: [
             GoRoute(
               path: '/account',
@@ -79,6 +94,7 @@ final router = GoRouter(
       ],
     ),
     GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
       path: '/product/:id',
       builder: (context, state) {
         final product = state.extra as Product?;
@@ -86,19 +102,34 @@ final router = GoRouter(
         return ProductDetailsScreen(productId: id, product: product);
       },
     ),
-    GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/login',
+      builder: (context, state) => const LoginScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
       path: '/register',
       builder: (context, state) => const RegisterScreen(),
     ),
     GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
       path: '/checkout',
       builder: (context, state) => const CheckoutScreen(),
     ),
-    GoRoute(path: '/orders', builder: (context, state) => const OrdersScreen()),
-    GoRoute(path: '/about', builder: (context, state) => const AboutScreen()),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/orders',
+      builder: (context, state) => const OrdersScreen(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/about',
+      builder: (context, state) => const AboutScreen(),
+    ),
     // Admin Routes
     GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
       path: '/admin',
       builder: (context, state) => const AdminDashboardScreen(),
       routes: [
@@ -137,8 +168,7 @@ final router = GoRouter(
         ),
         GoRoute(
           path: 'banners',
-          builder: (context, state) =>
-              const Scaffold(body: Center(child: Text('Manage Banners'))),
+          builder: (context, state) => const ManageBannersScreen(),
         ),
       ],
     ),

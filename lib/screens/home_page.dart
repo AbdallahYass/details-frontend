@@ -19,14 +19,13 @@ import 'package:details_app/providers/settings_provider.dart';
 import 'package:details_app/providers/auth_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-class StoreHomePage extends StatefulWidget {
-  // fix this name
-  const StoreHomePage({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
   @override
-  State<StoreHomePage> createState() => _StoreHomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _StoreHomePageState extends State<StoreHomePage> {
+class _HomePageState extends State<HomePage> {
   List<Product> products = [];
   List<BannerModel> banners = [];
   List<CategoryModel> categories = [];
