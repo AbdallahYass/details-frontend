@@ -1,5 +1,3 @@
-// ignore_for_file: deprecated_member_use
-
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -43,16 +41,6 @@ class _HomePageState extends State<HomePage> {
   List<String> _topAnnouncements = [];
   String? _selectedCategory;
   final Map<String, bool> _expandedCategories = {};
-
-  final List<Color> _categoryColors = const [
-    Color(0xFFFF6B6B),
-    Color(0xFF4ECDC4),
-    Color(0xFF1A535C),
-    Color(0xFFFF9F1C),
-    Color(0xFF2D3436),
-    Color(0xFF6C63FF),
-    Color(0xFFD980FA),
-  ];
 
   @override
   void initState() {
@@ -226,7 +214,7 @@ class _HomePageState extends State<HomePage> {
                   SliverToBoxAdapter(child: _buildSearchHeader()),
                   SliverToBoxAdapter(child: _buildHeroSlider()),
                   SliverToBoxAdapter(child: _buildCategoriesSection()),
-                  if (popularProducts.isNotEmpty && _selectedCategory == null)
+                  if (popularProducts.isNotEmpty)
                     SliverToBoxAdapter(child: _buildPopularSection()),
                   // هنا نستدعي الدالة التي تبني الأقسام
                   ..._buildCategoryGrids(),
@@ -737,38 +725,37 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildCategoriesSection() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-        child: Text(
-          AppLocalizations.of(context)!.translate('categories'),
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
+      const SizedBox(height: 35),
+      Text(
+        AppLocalizations.of(context)!.translate('categories'),
+        style: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: AppColors.darkBlue,
         ),
       ),
+      Container(
+        margin: const EdgeInsets.only(top: 5),
+        width: 40,
+        height: 2,
+        color: AppColors.orange,
+      ),
+      const SizedBox(height: 25),
       SizedBox(
         height: 110,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           itemCount: categories.length,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemBuilder: (c, i) =>
-              _categoryCircle(category: categories[i], index: i),
+          itemBuilder: (c, i) => _categoryCircle(category: categories[i]),
         ),
       ),
+      const SizedBox(height: 10),
     ],
   );
 
-  Widget _categoryCircle({
-    required CategoryModel category,
-    required int index,
-  }) {
+  Widget _categoryCircle({required CategoryModel category}) {
     bool isSelected = _selectedCategory == category.slug;
-    final color = _categoryColors[index % _categoryColors.length];
 
     return GestureDetector(
       onTap: () {
@@ -793,53 +780,56 @@ class _HomePageState extends State<HomePage> {
         });
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
         child: Column(
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              width: 75,
-              height: 75,
+              width: 65,
+              height: 65,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isSelected ? color.withOpacity(0.1) : Colors.white,
+                color: isSelected
+                    ? AppColors.primary.withOpacity(0.1)
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(15),
                 border: Border.all(
-                  color: isSelected ? color : Colors.transparent,
+                  color: isSelected ? AppColors.primary : Colors.transparent,
                   width: 2,
                 ),
                 boxShadow: [
                   if (!isSelected)
                     BoxShadow(
                       color: Colors.grey.shade200,
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                      blurRadius: 5,
+                      spreadRadius: 1,
                     ),
                 ],
               ),
-              padding: const EdgeInsets.all(15),
-              child: ClipOval(
+              padding: const EdgeInsets.all(10),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
                 child: CachedNetworkImage(
                   imageUrl: category.imageUrl,
-                  fit: BoxFit.cover,
+                  fit: BoxFit.contain,
                   placeholder: (context, url) =>
                       Container(color: Colors.grey[200]),
                   errorWidget: (context, url, error) => Icon(
                     Icons.category_outlined,
-                    color: isSelected ? color : AppColors.grey,
+                    color: isSelected ? AppColors.white : AppColors.grey,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               category.getName(context),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? color : Colors.black87,
+                color: isSelected ? AppColors.primary : Colors.black87,
               ),
             ),
           ],

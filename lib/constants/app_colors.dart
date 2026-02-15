@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // الألوان الأساسية (Modern Luxury Palette)
-  static const Color primary = Color(0xFF6C63FF); // بنفسجي حيوي
+  static const Color primary = Color.fromARGB(255, 18, 17, 34); // بنفسجي حيوي
   static const Color secondary = Color(0xFF00D2D3); // تركواز
   static const Color background = Color(0xFFF8F9FA); // رمادي فاتح جداً للخلفيات
   static const Color cardBackground = Colors.white; // أبيض ناصع للكروت
