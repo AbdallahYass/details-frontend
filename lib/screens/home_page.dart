@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -41,6 +43,16 @@ class _HomePageState extends State<HomePage> {
   List<String> _topAnnouncements = [];
   String? _selectedCategory;
   final Map<String, bool> _expandedCategories = {};
+
+  final List<Color> _categoryColors = const [
+    Color(0xFFFF6B6B),
+    Color(0xFF4ECDC4),
+    Color(0xFF1A535C),
+    Color(0xFFFF9F1C),
+    Color(0xFF2D3436),
+    Color(0xFF6C63FF),
+    Color(0xFFD980FA),
+  ];
 
   @override
   void initState() {
@@ -196,7 +208,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA), // خلفية فاتحة عصرية
+      backgroundColor: Colors.white,
       body: isLoading
           ? const Center(
               child: CircularProgressIndicator(
@@ -214,7 +226,7 @@ class _HomePageState extends State<HomePage> {
                   SliverToBoxAdapter(child: _buildSearchHeader()),
                   SliverToBoxAdapter(child: _buildHeroSlider()),
                   SliverToBoxAdapter(child: _buildCategoriesSection()),
-                  if (popularProducts.isNotEmpty)
+                  if (popularProducts.isNotEmpty && _selectedCategory == null)
                     SliverToBoxAdapter(child: _buildPopularSection()),
                   // هنا نستدعي الدالة التي تبني الأقسام
                   ..._buildCategoryGrids(),
@@ -739,19 +751,25 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       SizedBox(
-        height: 45,
+        height: 110,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           itemCount: categories.length,
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemBuilder: (c, i) => _categoryPill(category: categories[i]),
+          itemBuilder: (c, i) =>
+              _categoryCircle(category: categories[i], index: i),
         ),
       ),
     ],
   );
 
-  Widget _categoryPill({required CategoryModel category}) {
+  Widget _categoryCircle({
+    required CategoryModel category,
+    required int index,
+  }) {
     bool isSelected = _selectedCategory == category.slug;
+    final color = _categoryColors[index % _categoryColors.length];
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -775,56 +793,53 @@ class _HomePageState extends State<HomePage> {
         });
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         child: Column(
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
-              width: 65,
-              height: 65,
+              width: 75,
+              height: 75,
               decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.primary.withOpacity(0.1)
-                    : Colors.white,
-                borderRadius: BorderRadius.circular(15),
+                shape: BoxShape.circle,
+                color: isSelected ? color.withOpacity(0.1) : Colors.white,
                 border: Border.all(
-                  color: isSelected ? AppColors.primary : Colors.transparent,
+                  color: isSelected ? color : Colors.transparent,
                   width: 2,
                 ),
                 boxShadow: [
                   if (!isSelected)
                     BoxShadow(
                       color: Colors.grey.shade200,
-                      blurRadius: 5,
-                      spreadRadius: 1,
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
                 ],
               ),
-              padding: const EdgeInsets.all(10),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+              padding: const EdgeInsets.all(15),
+              child: ClipOval(
                 child: CachedNetworkImage(
                   imageUrl: category.imageUrl,
-                  fit: BoxFit.contain,
+                  fit: BoxFit.cover,
                   placeholder: (context, url) =>
                       Container(color: Colors.grey[200]),
                   errorWidget: (context, url, error) => Icon(
                     Icons.category_outlined,
-                    color: isSelected ? AppColors.white : AppColors.grey,
+                    color: isSelected ? color : AppColors.grey,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               category.getName(context),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? AppColors.primary : Colors.black87,
+                color: isSelected ? color : Colors.black87,
               ),
             ),
           ],

@@ -441,7 +441,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.remove, color: AppColors.primary),
+                    icon: Icon(Icons.remove, color: AppColors.primary),
                     onPressed: () {
                       if (_quantity > 1) setState(() => _quantity--);
                     },
@@ -454,7 +454,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.add, color: AppColors.primary),
+                    icon: Icon(Icons.add, color: AppColors.primary),
                     onPressed: () {
                       if (_quantity < _availableQuantity) {
                         setState(() => _quantity++);
