@@ -30,14 +30,18 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
       final response = await http.get(
         Uri.parse('https://api.details-store.com/api/banners?location=home'),
       );
+      if (!mounted) return;
       if (response.statusCode == 200) {
+        final data = json.decode(response.body);
         setState(() {
-          _banners = json.decode(response.body);
+          _banners = data is List ? data : [];
           _isLoading = false;
         });
+      } else {
+        setState(() => _isLoading = false);
       }
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -69,6 +73,12 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('تم إضافة الإعلان بنجاح')),
           );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('فشل إضافة الإعلان')));
         }
       }
     } catch (e) {
@@ -126,37 +136,39 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
 
           return AlertDialog(
             title: const Text('إضافة إعلان جديد'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: titleArController,
-                  decoration: const InputDecoration(
-                    labelText: 'العنوان (عربي)',
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleArController,
+                    decoration: const InputDecoration(
+                      labelText: 'العنوان (عربي)',
+                    ),
                   ),
-                ),
-                TextField(
-                  controller: titleEnController,
-                  decoration: const InputDecoration(
-                    labelText: 'العنوان (إنجليزي)',
+                  TextField(
+                    controller: titleEnController,
+                    decoration: const InputDecoration(
+                      labelText: 'العنوان (إنجليزي)',
+                    ),
                   ),
-                ),
-                TextField(
-                  controller: imageController,
-                  decoration: InputDecoration(
-                    labelText: 'رابط الصورة',
-                    suffixIcon: isUploading
-                        ? const Padding(
-                            padding: EdgeInsets.all(12.0),
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : IconButton(
-                            icon: const Icon(Icons.cloud_upload),
-                            onPressed: pickImage,
-                          ),
+                  TextField(
+                    controller: imageController,
+                    decoration: InputDecoration(
+                      labelText: 'رابط الصورة',
+                      suffixIcon: isUploading
+                          ? const Padding(
+                              padding: EdgeInsets.all(12.0),
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : IconButton(
+                              icon: const Icon(Icons.cloud_upload),
+                              onPressed: pickImage,
+                            ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             actions: [
               TextButton(
@@ -186,36 +198,53 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
       appBar: AppBar(title: const Text('إدارة الإعلانات')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: _banners.length,
-              itemBuilder: (ctx, i) {
-                final banner = _banners[i];
-                return Card(
-                  margin: const EdgeInsets.all(10),
-                  child: Column(
-                    children: [
-                      AspectRatio(
-                        aspectRatio: 16 / 9,
-                        child: CachedNetworkImage(
-                          imageUrl: banner['imageUrl'] ?? '',
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) =>
-                              Container(color: Colors.grey[200]),
-                          errorWidget: (context, url, error) =>
-                              const Icon(Icons.error),
-                        ),
-                      ),
-                      ListTile(
-                        title: const Text('إعلان الصفحة الرئيسية'),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _deleteBanner(banner['_id']),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+          : RefreshIndicator(
+              onRefresh: _fetchBanners,
+              child: _banners.isEmpty
+                  ? ListView(
+                      children: const [
+                        SizedBox(height: 200),
+                        Center(child: Text('لا يوجد إعلانات حالياً')),
+                      ],
+                    )
+                  : ListView.builder(
+                      itemCount: _banners.length,
+                      itemBuilder: (ctx, i) {
+                        final banner = _banners[i];
+                        return Card(
+                          margin: const EdgeInsets.all(10),
+                          child: Column(
+                            children: [
+                              AspectRatio(
+                                aspectRatio: 16 / 9,
+                                child: CachedNetworkImage(
+                                  imageUrl: banner['imageUrl'] ?? '',
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) =>
+                                      Container(color: Colors.grey[200]),
+                                  errorWidget: (context, url, error) =>
+                                      const Icon(Icons.error),
+                                ),
+                              ),
+                              ListTile(
+                                title: Text(
+                                  banner['title'] is Map
+                                      ? (banner['title']['ar'] ?? 'إعلان')
+                                      : 'إعلان',
+                                ),
+                                trailing: IconButton(
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () => _deleteBanner(banner['_id']),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddDialog,
