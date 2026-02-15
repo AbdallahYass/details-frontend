@@ -712,6 +712,8 @@ class _HomePageState extends State<HomePage> {
 
   void _onBannerTap(BannerModel banner) {
     // تأكد من أن BannerModel يحتوي على حقل category
+    if (_selectedCategory != null) return;
+
     if (banner.category != null) {
       try {
         // البحث عن القسم المطابق للـ ID الموجود في الإعلان
