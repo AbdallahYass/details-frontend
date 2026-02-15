@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -118,6 +119,14 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
     }
   }
 
+  String _generateRandomCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final rnd = Random();
+    return String.fromCharCodes(
+      Iterable.generate(6, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))),
+    );
+  }
+
   void _showAddCouponDialog() {
     showDialog(
       context: context,
@@ -130,7 +139,16 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
             children: [
               TextFormField(
                 controller: _codeController,
-                decoration: const InputDecoration(labelText: 'كود الكوبون'),
+                decoration: InputDecoration(
+                  labelText: 'كود الكوبون',
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.autorenew),
+                    tooltip: 'توليد كود تلقائي',
+                    onPressed: () {
+                      _codeController.text = _generateRandomCode();
+                    },
+                  ),
+                ),
                 textCapitalization: TextCapitalization.characters,
                 validator: (v) => v!.isEmpty ? 'مطلوب' : null,
               ),
