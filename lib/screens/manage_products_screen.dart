@@ -17,6 +17,8 @@ class ManageProductsScreen extends StatefulWidget {
 class _ManageProductsScreenState extends State<ManageProductsScreen> {
   List<dynamic> _products = [];
   bool _isLoading = true;
+  String _searchQuery = '';
+  List<dynamic> _filteredProducts = [];
 
   @override
   void initState() {
@@ -32,6 +34,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
       if (response.statusCode == 200) {
         setState(() {
           _products = json.decode(response.body);
+          _filteredProducts = _products;
           _isLoading = false;
         });
       }
@@ -49,6 +52,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
       );
       setState(() {
         _products.removeWhere((p) => p['_id'] == id);
+        _filterProducts(_searchQuery);
       });
       if (mounted) {
         ScaffoldMessenger.of(
@@ -65,16 +69,41 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
     }
   }
 
+  void _filterProducts(String query) {
+    setState(() {
+      _searchQuery = query;
+      if (query.isEmpty) {
+        _filteredProducts = _products;
+      } else {
+        _filteredProducts = _products.where((product) {
+          final nameAr = product['name'] is Map ? product['name']['ar'] : '';
+          final nameEn = product['name'] is Map ? product['name']['en'] : '';
+          return nameAr.contains(query) || nameEn.contains(query);
+        }).toList();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('إدارة المنتجات')),
+      appBar: AppBar(
+        title: TextField(
+          decoration: const InputDecoration(
+            hintText: 'بحث عن منتج...',
+            border: InputBorder.none,
+            hintStyle: TextStyle(color: Colors.white70),
+          ),
+          style: const TextStyle(color: Colors.white),
+          onChanged: _filterProducts,
+        ),
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView.builder(
-              itemCount: _products.length,
+              itemCount: _filteredProducts.length,
               itemBuilder: (ctx, i) {
-                final product = _products[i];
+                final product = _filteredProducts[i];
                 final name = product['name'] is Map
                     ? product['name']['ar']
                     : product['name'];

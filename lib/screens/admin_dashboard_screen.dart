@@ -1,11 +1,51 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:details_app/providers/auth_provider.dart';
+import 'package:http/http.dart' as http;
 
-class AdminDashboardScreen extends StatelessWidget {
+class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
+
+  @override
+  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  Map<String, dynamic> _stats = {
+    'productsCount': 0,
+    'ordersCount': 0,
+    'usersCount': 0,
+    'totalSales': 0,
+  };
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchStats();
+  }
+
+  Future<void> _fetchStats() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    try {
+      final response = await http.get(
+        Uri.parse('https://api.details-store.com/api/admin/stats'),
+        headers: {'Authorization': 'Bearer ${auth.token}'},
+      );
+      if (response.statusCode == 200) {
+        setState(() {
+          _stats = json.decode(response.body);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      debugPrint('Error fetching stats: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +65,7 @@ class AdminDashboardScreen extends StatelessWidget {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.store_rounded),
+            icon: const Icon(Icons.store_rounded, color: Colors.white),
             tooltip: 'الذهاب للمتجر',
             onPressed: () => context.go('/'),
           ),
@@ -85,6 +125,38 @@ class AdminDashboardScreen extends StatelessWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 20),
+                  // عرض الإحصائيات
+                  if (_isLoading)
+                    const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    )
+                  else
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildStatItem(
+                          'المبيعات',
+                          '\$${_stats['totalSales']}',
+                          Icons.monetization_on,
+                        ),
+                        _buildStatItem(
+                          'الطلبات',
+                          '${_stats['ordersCount']}',
+                          Icons.shopping_cart,
+                        ),
+                        _buildStatItem(
+                          'المنتجات',
+                          '${_stats['productsCount']}',
+                          Icons.inventory,
+                        ),
+                        _buildStatItem(
+                          'المستخدمين',
+                          '${_stats['usersCount']}',
+                          Icons.people,
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -219,6 +291,34 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, IconData icon) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.2),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: Colors.white, size: 20),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
+        ),
+      ],
     );
   }
 }
