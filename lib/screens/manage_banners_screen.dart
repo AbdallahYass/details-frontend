@@ -174,7 +174,7 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
                       AspectRatio(
                         aspectRatio: 16 / 9,
                         child: CachedNetworkImage(
-                          imageUrl: banner['imageUrl'],
+                          imageUrl: banner['imageUrl'] ?? '',
                           fit: BoxFit.cover,
                           placeholder: (context, url) =>
                               Container(color: Colors.grey[200]),

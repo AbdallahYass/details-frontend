@@ -1,72 +1,153 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:details_app/constants/app_colors.dart';
+import 'package:provider/provider.dart';
+import 'package:details_app/providers/auth_provider.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
+    final user = auth.user;
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
-        title: const Text('لوحة التحكم'),
+        title: const Text(
+          'لوحة التحكم',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        ),
+        centerTitle: true,
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.store),
+            icon: const Icon(Icons.store_rounded),
             tooltip: 'الذهاب للمتجر',
             onPressed: () => context.go('/'),
           ),
         ],
       ),
-      body: GridView.count(
-        padding: const EdgeInsets.all(20),
-        crossAxisCount: 2,
-        crossAxisSpacing: 15,
-        mainAxisSpacing: 15,
-        children: [
-          _buildAdminCard(
-            context,
-            'المنتجات',
-            Icons.shopping_bag,
-            Colors.blue,
-            '/admin/products',
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // ترويسة ترحيبية
+          SliverToBoxAdapter(
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(24, 10, 24, 40),
+              decoration: const BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(32),
+                  bottomRight: Radius.circular(32),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 28,
+                        backgroundColor: Colors.white24,
+                        child: Text(
+                          user?.name[0].toUpperCase() ?? 'A',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 24,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'مرحباً، ${user?.name ?? "Admin"} 👋',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'إدارة متجرك أصبحت أسهل',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
-          _buildAdminCard(
-            context,
-            'الطلبات',
-            Icons.list_alt,
-            Colors.orange,
-            '/admin/orders',
-          ),
-          _buildAdminCard(
-            context,
-            'الكوبونات',
-            Icons.local_offer,
-            Colors.green,
-            '/admin/coupons',
-          ),
-          _buildAdminCard(
-            context,
-            'الإعلانات',
-            Icons.image,
-            Colors.purple,
-            '/admin/banners',
-          ),
-          _buildAdminCard(
-            context,
-            'التصنيفات',
-            Icons.category,
-            Colors.teal,
-            '/admin/categories',
-          ),
-          _buildAdminCard(
-            context,
-            'المستخدمين',
-            Icons.people,
-            Colors.redAccent,
-            '/admin/users',
+          // شبكة البطاقات
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            sliver: SliverGrid.count(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.0,
+              children: [
+                _buildAdminCard(
+                  context,
+                  'المنتجات',
+                  Icons.inventory_2_outlined,
+                  Colors.blue,
+                  '/admin/products',
+                  'إدارة المخزون',
+                ),
+                _buildAdminCard(
+                  context,
+                  'الطلبات',
+                  Icons.shopping_cart_checkout_outlined,
+                  Colors.orange,
+                  '/admin/orders',
+                  'متابعة الطلبات',
+                ),
+                _buildAdminCard(
+                  context,
+                  'الكوبونات',
+                  Icons.discount_outlined,
+                  Colors.green,
+                  '/admin/coupons',
+                  'أكواد الخصم',
+                ),
+                _buildAdminCard(
+                  context,
+                  'الإعلانات',
+                  Icons.campaign_outlined,
+                  Colors.purple,
+                  '/admin/banners',
+                  'بنرات التطبيق',
+                ),
+                _buildAdminCard(
+                  context,
+                  'التصنيفات',
+                  Icons.category_outlined,
+                  Colors.teal,
+                  '/admin/categories',
+                  'أقسام المتجر',
+                ),
+                _buildAdminCard(
+                  context,
+                  'المستخدمين',
+                  Icons.group_outlined,
+                  Colors.redAccent,
+                  '/admin/users',
+                  'إدارة العملاء',
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -79,39 +160,63 @@ class AdminDashboardScreen extends StatelessWidget {
     IconData icon,
     Color color,
     String route,
+    String subtitle,
   ) {
-    return InkWell(
-      onTap: () => context.push(route),
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(24),
+      elevation: 0,
+      child: InkWell(
+        onTap: () => context.push(route),
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
               ),
-              child: Icon(icon, size: 32, color: color),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ],
+            ],
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, size: 28, color: color),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[500],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

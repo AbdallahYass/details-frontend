@@ -46,14 +46,18 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     _fetchCategories();
     if (widget.product != null) {
       final p = widget.product;
-      _nameArController.text = p['name']['ar'];
-      _nameEnController.text = p['name']['en'];
+      _nameArController.text = p['name'] is Map ? (p['name']['ar'] ?? '') : '';
+      _nameEnController.text = p['name'] is Map ? (p['name']['en'] ?? '') : '';
       _priceController.text = p['price'].toString();
       _oldPriceController.text = p['oldPrice']?.toString() ?? '';
       _quantityController.text = p['quantity']?.toString() ?? '';
-      _descArController.text = p['description']['ar'] ?? '';
-      _descEnController.text = p['description']['en'] ?? '';
-      _imageController.text = p['imageUrl'];
+      _descArController.text = p['description'] is Map
+          ? (p['description']['ar'] ?? '')
+          : '';
+      _descEnController.text = p['description'] is Map
+          ? (p['description']['en'] ?? '')
+          : '';
+      _imageController.text = p['imageUrl'] ?? '';
       _selectedCategory = p['category'] is Map
           ? p['category']['_id']
           : p['category'];
@@ -96,10 +100,13 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         Uri.parse('https://api.details-store.com/api/categories'),
       );
       if (res.statusCode == 200) {
+        final data = json.decode(res.body);
         setState(() {
-          _categories = json.decode(res.body);
-          if (_selectedCategory == null && _categories.isNotEmpty) {
-            _selectedCategory = _categories[0]['_id'];
+          if (data is List) {
+            _categories = data;
+            if (_selectedCategory == null && _categories.isNotEmpty) {
+              _selectedCategory = _categories[0]['_id'];
+            }
           }
         });
       }
@@ -182,6 +189,10 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     try {
       String finalImageUrl = _imageController.text;
 
+      // تجهيز قائمة الصور مع تجنب تكرار الصورة الرئيسية
+      final List<String> allImages = [finalImageUrl];
+      allImages.addAll(_galleryImages.where((img) => img != finalImageUrl));
+
       // تحديد قيمة الكاتيجوري (إما ID موجود أو اسم جديد)
       final categoryValue = _isNewCategory
           ? _newCategoryController.text
@@ -194,7 +205,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
       });
       request.body = json.encode({
         'name': {'ar': _nameArController.text, 'en': _nameEnController.text},
-        'price': double.parse(_priceController.text),
+        'price': double.tryParse(_priceController.text) ?? 0.0,
         'oldPrice': _oldPriceController.text.isNotEmpty
             ? double.tryParse(_oldPriceController.text)
             : null,
@@ -208,10 +219,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         'category': categoryValue,
         'isSoldOut': _isSoldOut,
         'featured': _isFeatured,
-        'images': [
-          finalImageUrl,
-          ..._galleryImages,
-        ], // دمج الصورة الرئيسية مع المعرض
+        'images': allImages,
       });
 
       final response = await request.send();
@@ -269,7 +277,11 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                 controller: _priceController,
                 decoration: const InputDecoration(labelText: 'السعر'),
                 keyboardType: TextInputType.number,
-                validator: (v) => v!.isEmpty ? 'مطلوب' : null,
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'مطلوب';
+                  if (double.tryParse(v) == null) return 'أدخل رقم صحيح';
+                  return null;
+                },
               ),
               const SizedBox(height: 10),
               TextFormField(
@@ -284,7 +296,11 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                 controller: _quantityController,
                 decoration: const InputDecoration(labelText: 'الكمية المتوفرة'),
                 keyboardType: TextInputType.number,
-                validator: (v) => v!.isEmpty ? 'مطلوب' : null,
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'مطلوب';
+                  if (int.tryParse(v) == null) return 'أدخل رقم صحيح';
+                  return null;
+                },
               ),
               const SizedBox(height: 10),
               Row(
@@ -378,11 +394,19 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
               if (!_isNewCategory)
                 DropdownButtonFormField<String>(
                   // ignore: deprecated_member_use
-                  value: _selectedCategory,
+                  // التأكد من أن القيمة المختارة موجودة في القائمة لتجنب الكراش
+                  initialValue:
+                      _selectedCategory != null &&
+                          _categories.any((c) => c['_id'] == _selectedCategory)
+                      ? _selectedCategory
+                      : null,
                   decoration: const InputDecoration(labelText: 'اختر التصنيف'),
                   items: _categories.map<DropdownMenuItem<String>>((c) {
                     final name = c['name'] is Map ? c['name']['ar'] : c['name'];
-                    return DropdownMenuItem(value: c['_id'], child: Text(name));
+                    return DropdownMenuItem(
+                      value: c['_id'],
+                      child: Text(name ?? 'بدون اسم'),
+                    );
                   }).toList(),
                   onChanged: (v) => setState(() => _selectedCategory = v),
                   validator: (v) =>

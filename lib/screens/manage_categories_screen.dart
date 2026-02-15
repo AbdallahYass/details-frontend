@@ -200,7 +200,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                     leading: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: CachedNetworkImage(
-                        imageUrl: cat['imageUrl'],
+                        imageUrl: cat['imageUrl'] ?? '',
                         width: 50,
                         height: 50,
                         fit: BoxFit.cover,

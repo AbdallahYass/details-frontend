@@ -14,6 +14,12 @@ class AdminOrdersScreen extends StatefulWidget {
 class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   List<dynamic> _orders = [];
   bool _isLoading = true;
+  final List<String> _orderStatuses = [
+    'قيد التجهيز',
+    'تم الشحن',
+    'تم التوصيل',
+    'ملغي',
+  ];
 
   @override
   void initState() {
@@ -29,8 +35,9 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
         headers: {'Authorization': 'Bearer ${auth.token}'},
       );
       if (response.statusCode == 200) {
+        final data = json.decode(response.body);
         setState(() {
-          _orders = json.decode(response.body);
+          _orders = data is List ? data : [];
           _isLoading = false;
         });
       }
@@ -41,6 +48,13 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
 
   Future<void> _updateStatus(String id, String newStatus) async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
+
+    // تحديث محلي فوري لتحسين تجربة المستخدم
+    setState(() {
+      final index = _orders.indexWhere((o) => o['_id'] == id);
+      if (index != -1) _orders[index]['status'] = newStatus;
+    });
+
     try {
       await http.put(
         Uri.parse('https://api.details-store.com/api/admin/orders/$id/status'),
@@ -50,7 +64,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
         },
         body: json.encode({'status': newStatus}),
       );
-      _fetchOrders();
+      // لا داعي لإعادة تحميل الطلبات بالكامل إذا نجح الطلب
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -58,6 +72,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
       }
     } catch (e) {
       debugPrint('Error updating status: $e');
+      _fetchOrders(); // إعادة التحميل في حالة الخطأ فقط للتصحيح
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -72,56 +87,135 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
       appBar: AppBar(title: const Text('إدارة الطلبات')),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: _orders.length,
-              itemBuilder: (ctx, i) {
-                final order = _orders[i];
-                return Card(
-                  margin: const EdgeInsets.all(10),
-                  child: ExpansionTile(
-                    title: Text(
-                      'طلب #${order['_id'].toString().substring(0, 8)}',
-                    ),
-                    subtitle: Text(
-                      '${order['totalAmount']} - ${order['status']}',
-                      style: TextStyle(
-                        color: order['status'] == 'تم التوصيل'
-                            ? Colors.green
-                            : Colors.orange,
-                        fontWeight: FontWeight.bold,
+          : RefreshIndicator(
+              onRefresh: _fetchOrders,
+              child: ListView.builder(
+                itemCount: _orders.length,
+                itemBuilder: (ctx, i) {
+                  final order = _orders[i];
+                  final orderId = order['_id'].toString();
+                  final user = order['user'];
+                  final items = order['orderItems'] as List<dynamic>? ?? [];
+                  final shipping = order['shippingAddress'];
+
+                  return Card(
+                    margin: const EdgeInsets.all(10),
+                    child: ExpansionTile(
+                      title: Text(
+                        'طلب #${orderId.length > 8 ? orderId.substring(0, 8) : orderId}',
                       ),
-                    ),
-                    children: [
-                      ListTile(
-                        title: const Text('تغيير الحالة'),
-                        trailing: DropdownButton<String>(
-                          value:
-                              [
-                                'قيد التجهيز',
-                                'تم الشحن',
-                                'تم التوصيل',
-                                'ملغي',
-                              ].contains(order['status'])
-                              ? order['status']
-                              : null,
-                          items:
-                              ['قيد التجهيز', 'تم الشحن', 'تم التوصيل', 'ملغي']
-                                  .map(
-                                    (s) => DropdownMenuItem(
-                                      value: s,
-                                      child: Text(s),
-                                    ),
-                                  )
-                                  .toList(),
-                          onChanged: (val) {
-                            if (val != null) _updateStatus(order['_id'], val);
-                          },
+                      subtitle: Text(
+                        '${order['totalAmount']} - ${order['status']}',
+                        style: TextStyle(
+                          color: order['status'] == 'تم التوصيل'
+                              ? Colors.green
+                              : Colors.orange,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ],
-                  ),
-                );
-              },
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.edit_attributes),
+                          title: const Text('تغيير الحالة'),
+                          trailing: DropdownButton<String>(
+                            value: _orderStatuses.contains(order['status'])
+                                ? order['status']
+                                : null,
+                            items: _orderStatuses
+                                .map(
+                                  (s) => DropdownMenuItem(
+                                    value: s,
+                                    child: Text(s),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (val) {
+                              if (val != null) _updateStatus(orderId, val);
+                            },
+                          ),
+                        ),
+                        const Divider(),
+                        if (user != null || shipping != null)
+                          Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'معلومات العميل:',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                if (user != null && user['name'] != null)
+                                  Text('👤 الاسم: ${user['name']}'),
+                                if (shipping != null &&
+                                    shipping['phone'] != null)
+                                  Text('📞 الهاتف: ${shipping['phone']}'),
+                                if (shipping != null)
+                                  Text(
+                                    '📍 العنوان: ${shipping['city'] ?? ''} - ${shipping['street'] ?? ''}',
+                                  ),
+                              ],
+                            ),
+                          ),
+                        if (items.isNotEmpty) ...[
+                          const Divider(),
+                          Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'المنتجات:',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                ...items.map((item) {
+                                  final product = item['product'];
+                                  final productName = product != null
+                                      ? (product['name'] is Map
+                                            ? product['name']['ar'] ??
+                                                  product['name']['en']
+                                            : product['name'])
+                                      : 'منتج محذوف';
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 4,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            '- $productName (x${item['quantity']})',
+                                          ),
+                                        ),
+                                        Text(
+                                          '${item['price']} ₪',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
     );
   }

@@ -87,7 +87,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                     leading: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: CachedNetworkImage(
-                        imageUrl: product['imageUrl'],
+                        imageUrl: product['imageUrl'] ?? '',
                         width: 50,
                         height: 50,
                         fit: BoxFit.cover,
