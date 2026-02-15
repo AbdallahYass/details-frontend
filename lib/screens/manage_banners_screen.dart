@@ -41,7 +41,11 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
     }
   }
 
-  Future<void> _addBanner(String imageUrl) async {
+  Future<void> _addBanner(
+    String titleAr,
+    String titleEn,
+    String imageUrl,
+  ) async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     try {
       final response = await http.post(
@@ -51,6 +55,7 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
           'Authorization': 'Bearer ${auth.token}',
         },
         body: json.encode({
+          'title': {'ar': titleAr, 'en': titleEn},
           'imageUrl': imageUrl,
           'location': 'home', // افتراضياً للصفحة الرئيسية
           'isActive': true,
@@ -100,6 +105,8 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
   }
 
   void _showAddDialog() {
+    final titleArController = TextEditingController();
+    final titleEnController = TextEditingController();
     final imageController = TextEditingController();
 
     showDialog(
@@ -122,6 +129,18 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                TextField(
+                  controller: titleArController,
+                  decoration: const InputDecoration(
+                    labelText: 'العنوان (عربي)',
+                  ),
+                ),
+                TextField(
+                  controller: titleEnController,
+                  decoration: const InputDecoration(
+                    labelText: 'العنوان (إنجليزي)',
+                  ),
+                ),
                 TextField(
                   controller: imageController,
                   decoration: InputDecoration(
@@ -147,7 +166,11 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
               ElevatedButton(
                 onPressed: isUploading
                     ? null
-                    : () => _addBanner(imageController.text),
+                    : () => _addBanner(
+                        titleArController.text,
+                        titleEnController.text,
+                        imageController.text,
+                      ),
                 child: const Text('إضافة'),
               ),
             ],

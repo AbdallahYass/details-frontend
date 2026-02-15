@@ -95,7 +95,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                   final order = _orders[i];
                   final orderId = order['_id'].toString();
                   final user = order['user'];
-                  final items = order['orderItems'] as List<dynamic>? ?? [];
+                  final items = order['products'] as List<dynamic>? ?? [];
                   final shipping = order['shippingAddress'];
 
                   return Card(
@@ -177,13 +177,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                 ),
                                 const SizedBox(height: 5),
                                 ...items.map((item) {
-                                  final product = item['product'];
-                                  final productName = product != null
-                                      ? (product['name'] is Map
-                                            ? product['name']['ar'] ??
-                                                  product['name']['en']
-                                            : product['name'])
-                                      : 'منتج محذوف';
+                                  final productName =
+                                      item['title'] ?? 'منتج غير معروف';
                                   return Padding(
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 4,
