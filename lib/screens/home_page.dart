@@ -304,7 +304,7 @@ class _HomePageState extends State<HomePage> {
           sliver: SliverGrid(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              childAspectRatio: 0.62, // تعديل النسبة للتصميم الجديد
+              childAspectRatio: 0.65,
               crossAxisSpacing: 15,
               mainAxisSpacing: 25,
             ),
@@ -348,7 +348,7 @@ class _HomePageState extends State<HomePage> {
           sliver: SliverGrid(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              childAspectRatio: 0.62,
+              childAspectRatio: 0.65,
               crossAxisSpacing: 15,
               mainAxisSpacing: 25,
             ),
@@ -412,7 +412,7 @@ class _HomePageState extends State<HomePage> {
           sliver: SliverGrid(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              childAspectRatio: 0.62,
+              childAspectRatio: 0.65,
               crossAxisSpacing: 15,
               mainAxisSpacing: 25,
             ),
@@ -463,11 +463,11 @@ class _HomePageState extends State<HomePage> {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 15,
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
               offset: const Offset(0, 5),
             ),
           ],
@@ -481,11 +481,16 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(20),
+                      top: Radius.circular(16),
                     ),
                     child: Hero(
                       tag: p.id,
-                      child: AnimatedProductImage(product: p),
+                      child: Container(
+                        color: Colors.grey[50],
+                        width: double.infinity,
+                        height: double.infinity,
+                        child: AnimatedProductImage(product: p),
+                      ),
                     ),
                   ),
                   // Favorite Button
@@ -561,35 +566,29 @@ class _HomePageState extends State<HomePage> {
                       child: Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Colors.white.withOpacity(0.9),
                           shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 5,
-                            ),
-                          ],
                         ),
                         child: Icon(
                           isFav ? Icons.favorite : Icons.favorite_border,
                           size: 18,
-                          color: isFav ? AppColors.red : Colors.grey,
+                          color: isFav ? AppColors.red : Colors.grey[400],
                         ),
                       ),
                     ),
                   ),
                   if (p.isSoldOut)
                     Positioned(
-                      top: 10,
-                      left: 10,
+                      top: 8,
+                      left: 8,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.7),
-                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.black.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           AppLocalizations.of(context)!.translate('sold_out'),
@@ -626,7 +625,7 @@ class _HomePageState extends State<HomePage> {
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 14,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                       color: Colors.black87,
                     ),
                   ),
@@ -638,12 +637,13 @@ class _HomePageState extends State<HomePage> {
                         "${p.price.toStringAsFixed(0)} ${AppLocalizations.of(context)!.translate('currency')}",
                         style: const TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.all(6),
+                        width: 32,
+                        height: 32,
                         decoration: BoxDecoration(
                           color: AppColors.primary,
                           borderRadius: BorderRadius.circular(10),
@@ -651,7 +651,7 @@ class _HomePageState extends State<HomePage> {
                         child: const Icon(
                           Icons.add,
                           color: Colors.white,
-                          size: 16,
+                          size: 20,
                         ),
                       ),
                     ],
@@ -728,29 +728,29 @@ class _HomePageState extends State<HomePage> {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         child: Text(
           AppLocalizations.of(context)!.translate('categories'),
           style: const TextStyle(
-            fontSize: 18,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
             color: Colors.black87,
           ),
         ),
       ),
       SizedBox(
-        height: 100,
+        height: 45,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           itemCount: categories.length,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          itemBuilder: (c, i) => _categoryCard(category: categories[i]),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemBuilder: (c, i) => _categoryPill(category: categories[i]),
         ),
       ),
     ],
   );
 
-  Widget _categoryCard({required CategoryModel category}) {
+  Widget _categoryPill({required CategoryModel category}) {
     bool isSelected = _selectedCategory == category.slug;
     return GestureDetector(
       onTap: () {
