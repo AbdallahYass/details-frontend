@@ -692,7 +692,10 @@ class _HomePageState extends State<HomePage> {
                 controller: _heroController,
                 itemCount: banners.length,
                 onPageChanged: (i) => setState(() => _currentBannerIndex = i),
-                itemBuilder: (c, i) => AnimatedBannerItem(banner: banners[i]),
+                itemBuilder: (c, i) => GestureDetector(
+                  onTap: () => _onBannerTap(banners[i]),
+                  child: AnimatedBannerItem(banner: banners[i]),
+                ),
               ),
               Positioned(
                 bottom: 20,
@@ -706,6 +709,32 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         );
+
+  void _onBannerTap(BannerModel banner) {
+    // تأكد من أن BannerModel يحتوي على حقل category
+    if (banner.category != null) {
+      try {
+        // البحث عن القسم المطابق للـ ID الموجود في الإعلان
+        final cat = categories.firstWhere((c) => c.id == banner.category);
+
+        // تفعيل القسم وتحديث الصفحة (نفس منطق الضغط على دائرة القسم)
+        setState(() {
+          _selectedCategory = cat.slug;
+          isLoading = true;
+        });
+
+        Future.wait([
+          fetchProducts(category: _selectedCategory),
+          fetchBanners(location: 'category', category: _selectedCategory),
+        ]).then((_) {
+          if (mounted) setState(() => isLoading = false);
+        });
+      } catch (e) {
+        debugPrint('Category not found for banner: ${banner.category}');
+      }
+    }
+  }
+
   Widget _dot(bool a) => Container(
     margin: const EdgeInsets.symmetric(horizontal: 4),
     width: 8,

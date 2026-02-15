@@ -16,19 +16,37 @@ class ManageBannersScreen extends StatefulWidget {
 
 class _ManageBannersScreenState extends State<ManageBannersScreen> {
   List<dynamic> _banners = [];
+  List<dynamic> _categories = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _fetchBanners();
+    _fetchCategories();
+  }
+
+  Future<void> _fetchCategories() async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://api.details-store.com/api/categories'),
+      );
+      if (response.statusCode == 200) {
+        if (mounted) {
+          setState(() {
+            _categories = json.decode(response.body);
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching categories: $e');
+    }
   }
 
   Future<void> _fetchBanners() async {
     try {
-      // جلب البنرات الخاصة بالصفحة الرئيسية
       final response = await http.get(
-        Uri.parse('https://api.details-store.com/api/banners?location=home'),
+        Uri.parse('https://api.details-store.com/api/banners'),
       );
       if (!mounted) return;
       if (response.statusCode == 200) {
@@ -49,6 +67,7 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
     String titleAr,
     String titleEn,
     String imageUrl,
+    String? categoryId,
   ) async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     try {
@@ -63,6 +82,7 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
           'imageUrl': imageUrl,
           'location': 'home', // افتراضياً للصفحة الرئيسية
           'isActive': true,
+          if (categoryId != null) 'category': categoryId,
         }),
       );
 
@@ -118,6 +138,7 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
     final titleArController = TextEditingController();
     final titleEnController = TextEditingController();
     final imageController = TextEditingController();
+    String? selectedCategory;
 
     showDialog(
       context: context,
@@ -167,6 +188,25 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
                             ),
                     ),
                   ),
+                  const SizedBox(height: 10),
+                  if (_categories.isNotEmpty)
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedCategory,
+                      decoration: const InputDecoration(
+                        labelText: 'ربط بقسم (اختياري)',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: _categories.map<DropdownMenuItem<String>>((c) {
+                        final name = c['name'] is Map
+                            ? c['name']['ar']
+                            : c['name'];
+                        return DropdownMenuItem(
+                          value: c['_id'],
+                          child: Text(name ?? ''),
+                        );
+                      }).toList(),
+                      onChanged: (v) => setState(() => selectedCategory = v),
+                    ),
                 ],
               ),
             ),
@@ -182,6 +222,7 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
                         titleArController.text,
                         titleEnController.text,
                         imageController.text,
+                        selectedCategory,
                       ),
                 child: const Text('إضافة'),
               ),
@@ -231,6 +272,9 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
                                   banner['title'] is Map
                                       ? (banner['title']['ar'] ?? 'إعلان')
                                       : 'إعلان',
+                                ),
+                                subtitle: Text(
+                                  'الموقع: ${banner['location'] ?? 'home'}',
                                 ),
                                 trailing: IconButton(
                                   icon: const Icon(
