@@ -32,7 +32,7 @@ class _HomePageState extends State<HomePage> {
   List<Product> popularProducts = [];
   bool isLoading = true;
 
-  int _currentBannerIndex = 0;
+  final ValueNotifier<int> _bannerIndexNotifier = ValueNotifier(0);
   final PageController _heroController = PageController();
   Timer? _heroTimer;
 
@@ -48,6 +48,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     _heroTimer?.cancel();
+    _bannerIndexNotifier.dispose();
     _heroController.dispose();
     super.dispose();
   }
@@ -69,9 +70,9 @@ class _HomePageState extends State<HomePage> {
     _heroTimer?.cancel();
     _heroTimer = Timer.periodic(const Duration(seconds: 5), (t) {
       if (banners.isNotEmpty && _heroController.hasClients) {
-        _currentBannerIndex = (_currentBannerIndex + 1) % banners.length;
+        int nextIndex = (_bannerIndexNotifier.value + 1) % banners.length;
         _heroController.animateToPage(
-          _currentBannerIndex,
+          nextIndex,
           duration: const Duration(milliseconds: 1200),
           curve: Curves.easeInOutQuart,
         );
@@ -114,7 +115,7 @@ class _HomePageState extends State<HomePage> {
           banners = (json.decode(res.body) as List)
               .map((j) => BannerModel.fromJson(j))
               .toList();
-          _currentBannerIndex = 0;
+          _bannerIndexNotifier.value = 0;
           if (_heroController.hasClients) {
             _heroController.jumpToPage(0);
           }
@@ -182,6 +183,12 @@ class _HomePageState extends State<HomePage> {
                     elevation: 0,
                     centerTitle: true,
                     iconTheme: const IconThemeData(color: Colors.black),
+                    leading: IconButton(
+                      icon: const Icon(Icons.menu, color: Colors.black),
+                      onPressed: () {
+                        Scaffold.of(context).openDrawer();
+                      },
+                    ),
                     title: Image.asset('assets/images/logo1.png', height: 40),
                     actions: [
                       IconButton(
@@ -715,7 +722,7 @@ class _HomePageState extends State<HomePage> {
               PageView.builder(
                 controller: _heroController,
                 itemCount: banners.length,
-                onPageChanged: (i) => setState(() => _currentBannerIndex = i),
+                onPageChanged: (i) => _bannerIndexNotifier.value = i,
                 itemBuilder: (c, i) => GestureDetector(
                   onTap: () => _onBannerTap(banners[i]),
                   child: AnimatedBannerItem(banner: banners[i]),
@@ -723,11 +730,16 @@ class _HomePageState extends State<HomePage> {
               ),
               Positioned(
                 bottom: 20,
-                child: Row(
-                  children: List.generate(
-                    banners.length,
-                    (i) => _dot(i == _currentBannerIndex),
-                  ),
+                child: ValueListenableBuilder<int>(
+                  valueListenable: _bannerIndexNotifier,
+                  builder: (context, currentIndex, child) {
+                    return Row(
+                      children: List.generate(
+                        banners.length,
+                        (i) => _dot(i == currentIndex),
+                      ),
+                    );
+                  },
                 ),
               ),
             ],
@@ -772,22 +784,6 @@ class _HomePageState extends State<HomePage> {
   Widget _buildCategoriesSection() => Column(
     children: [
       const SizedBox(height: 20),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          children: [
-            Text(
-              AppLocalizations.of(context)!.translate('categories'),
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.darkBlue,
-              ),
-            ),
-          ],
-        ),
-      ),
-      const SizedBox(height: 15),
       Container(
         margin: const EdgeInsets.symmetric(horizontal: 16),
         padding: const EdgeInsets.all(16),
@@ -802,17 +798,31 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-        child: GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: categories.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 15,
-            childAspectRatio: 0.7,
-          ),
-          itemBuilder: (c, i) => _buildCategoryItem(category: categories[i]),
+        child: Column(
+          children: [
+            Text(
+              AppLocalizations.of(context)!.translate('categories'),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.darkBlue,
+              ),
+            ),
+            const SizedBox(height: 15),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: categories.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 15,
+                childAspectRatio: 0.85,
+              ),
+              itemBuilder: (c, i) =>
+                  _buildCategoryItem(category: categories[i]),
+            ),
+          ],
         ),
       ),
       const SizedBox(height: 10),
