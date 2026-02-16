@@ -33,12 +33,9 @@ class _HomePageState extends State<HomePage> {
   bool isLoading = true;
 
   int _currentBannerIndex = 0;
-  int _currentAnnouncementIndex = 0;
   final PageController _heroController = PageController();
-  final PageController _announcementController = PageController();
-  Timer? _heroTimer, _announcementTimer;
+  Timer? _heroTimer;
 
-  List<String> _topAnnouncements = [];
   String? _selectedCategory;
   final Map<String, bool> _expandedCategories = {};
 
@@ -49,24 +46,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final loc = AppLocalizations.of(context);
-    if (loc != null) {
-      _topAnnouncements = [
-        loc.translate('top_announcement_1'),
-        loc.translate('top_announcement_2'),
-        loc.translate('top_announcement_3'),
-      ];
-    }
-  }
-
-  @override
   void dispose() {
     _heroTimer?.cancel();
-    _announcementTimer?.cancel();
     _heroController.dispose();
-    _announcementController.dispose();
     super.dispose();
   }
 
@@ -80,7 +62,6 @@ class _HomePageState extends State<HomePage> {
     if (mounted) {
       setState(() => isLoading = false);
       _startHeroScroll();
-      _startAnnouncementScroll();
     }
   }
 
@@ -93,21 +74,6 @@ class _HomePageState extends State<HomePage> {
           _currentBannerIndex,
           duration: const Duration(milliseconds: 1200),
           curve: Curves.easeInOutQuart,
-        );
-      }
-    });
-  }
-
-  void _startAnnouncementScroll() {
-    _announcementTimer?.cancel();
-    _announcementTimer = Timer.periodic(const Duration(seconds: 15), (t) {
-      if (_topAnnouncements.isNotEmpty && _announcementController.hasClients) {
-        _currentAnnouncementIndex =
-            (_currentAnnouncementIndex + 1) % _topAnnouncements.length;
-        _announcementController.animateToPage(
-          _currentAnnouncementIndex,
-          duration: const Duration(milliseconds: 800),
-          curve: Curves.easeInOut,
         );
       }
     });
@@ -209,10 +175,27 @@ class _HomePageState extends State<HomePage> {
               child: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
-                  SliverToBoxAdapter(child: _buildTopAnnouncement()),
+                  SliverAppBar(
+                    floating: true,
+                    pinned: true,
+                    backgroundColor: Colors.white,
+                    elevation: 0,
+                    centerTitle: true,
+                    iconTheme: const IconThemeData(color: Colors.black),
+                    title: Image.asset('assets/images/logo1.png', height: 40),
+                    actions: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.notifications_outlined,
+                          color: Colors.black,
+                        ),
+                        onPressed: () {},
+                      ),
+                    ],
+                  ),
                   SliverToBoxAdapter(child: _buildHeroSlider()),
                   SliverToBoxAdapter(child: _buildCategoriesSection()),
-                  if (popularProducts.isNotEmpty)
+                  if (popularProducts.isNotEmpty && _selectedCategory == null)
                     SliverToBoxAdapter(child: _buildPopularSection()),
                   // هنا نستدعي الدالة التي تبني الأقسام
                   ..._buildCategoryGrids(),
@@ -382,24 +365,6 @@ class _HomePageState extends State<HomePage> {
     }
 
     return slivers;
-  }
-
-  Widget _buildTopAnnouncement() {
-    return Container(
-      height: 35,
-      color: AppColors.lightGrey,
-      child: PageView.builder(
-        controller: _announcementController,
-        itemCount: _topAnnouncements.length,
-        onPageChanged: (i) => _currentAnnouncementIndex = i,
-        itemBuilder: (c, i) => Center(
-          child: Text(
-            _topAnnouncements[i],
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
-          ),
-        ),
-      ),
-    );
   }
 
   Widget _buildSectionHeader(String title, String subtitle) {
@@ -747,34 +712,54 @@ class _HomePageState extends State<HomePage> {
   );
   Widget _buildCategoriesSection() => Column(
     children: [
-      const SizedBox(height: 35),
-      Text(
-        AppLocalizations.of(context)!.translate('categories'),
-        style: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: AppColors.darkBlue,
+      const SizedBox(height: 20),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          children: [
+            Text(
+              AppLocalizations.of(context)!.translate('categories'),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.darkBlue,
+              ),
+            ),
+          ],
         ),
       ),
+      const SizedBox(height: 15),
       Container(
-        margin: const EdgeInsets.only(top: 5),
-        width: 40,
-        height: 2,
-        color: AppColors.orange,
-      ),
-      const SizedBox(height: 25),
-      SizedBox(
-        height: 110,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
           itemCount: categories.length,
-          itemBuilder: (c, i) => _categoryCircle(category: categories[i]),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 4,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 15,
+            childAspectRatio: 0.7,
+          ),
+          itemBuilder: (c, i) => _buildCategoryItem(category: categories[i]),
         ),
       ),
       const SizedBox(height: 10),
     ],
   );
-  Widget _categoryCircle({required CategoryModel category}) {
+  Widget _buildCategoryItem({required CategoryModel category}) {
     bool isSelected = _selectedCategory == category.slug;
     return GestureDetector(
       onTap: () {

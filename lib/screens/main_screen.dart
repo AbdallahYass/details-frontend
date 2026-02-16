@@ -17,7 +17,7 @@ class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(), // make sure this class exist.
+      appBar: navigationShell.currentIndex == 0 ? null : const CustomAppBar(),
       drawer: _buildDrawer(context),
       body: navigationShell,
       bottomNavigationBar: Container(
