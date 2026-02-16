@@ -37,7 +37,7 @@ class _HomePageState extends State<HomePage> {
   Timer? _heroTimer;
 
   String? _selectedCategory;
-  final Map<String, bool> _expandedCategories = {};
+  final Map<String, int> _categoryPageIndices = {};
 
   @override
   void initState() {
@@ -210,29 +210,66 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildPopularSection() {
-    return Column(
-      children: [
-        _buildSectionHeader(
-          AppLocalizations.of(context)!.translate('most_popular'),
-          AppLocalizations.of(context)!.translate('best_seller_week'),
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.3),
+          width: 2,
         ),
-        SizedBox(
-          height: 260,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: popularProducts.length,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemBuilder: (context, index) {
-              return Container(
-                width: 160,
-                margin: const EdgeInsets.only(left: 15),
-                child: _buildProductCard(popularProducts[index]),
-              );
-            },
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
-        ),
-        const SizedBox(height: 20),
-      ],
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.star, color: Colors.amber, size: 24),
+              const SizedBox(width: 8),
+              Text(
+                AppLocalizations.of(context)!.translate('most_popular'),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(Icons.star, color: Colors.amber, size: 24),
+            ],
+          ),
+          const SizedBox(height: 5),
+          Text(
+            AppLocalizations.of(context)!.translate('best_seller_week'),
+            style: const TextStyle(color: Colors.grey, fontSize: 12),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 260,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: popularProducts.length,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemBuilder: (context, index) {
+                return Container(
+                  width: 160,
+                  margin: const EdgeInsetsDirectional.only(end: 15),
+                  child: _buildProductCard(popularProducts[index]),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -259,7 +296,7 @@ class _HomePageState extends State<HomePage> {
       ];
     }
 
-    // إذا لم يتم اختيار كاتيجوري، نعرض كل قسم ومنتجاته
+    // إذا لم يتم اختيار كاتيجوري، نعرض كل قسم ومنتجاته داخل بطاقات
     List<Widget> slivers = [];
 
     for (var category in categories) {
@@ -271,75 +308,123 @@ class _HomePageState extends State<HomePage> {
       // إذا لم يكن هناك منتجات في هذا القسم، لا نعرضه
       if (categoryProducts.isEmpty) continue;
 
-      final isExpanded = _expandedCategories[category.id] ?? false;
-      final int itemCount = isExpanded
-          ? categoryProducts.length
-          : (categoryProducts.length > 10 ? 10 : categoryProducts.length);
+      // تحديد الصفحة الحالية لهذا القسم
+      int pageIndex = _categoryPageIndices[category.id] ?? 0;
+      int itemsPerPage = 4;
+      int totalItems = categoryProducts.length;
 
-      // إضافة عنوان القسم
+      // حساب بداية ونهاية القائمة المعروضة
+      int startIndex = pageIndex * itemsPerPage;
+      // إذا كان الفهرس خارج النطاق (مثلاً بعد تحديث البيانات)، نعيده للصفر
+      if (startIndex >= totalItems) {
+        startIndex = 0;
+        pageIndex = 0;
+        _categoryPageIndices[category.id] = 0;
+      }
+
+      int endIndex = startIndex + itemsPerPage;
+      if (endIndex > totalItems) endIndex = totalItems;
+
+      final currentProducts = categoryProducts.sublist(startIndex, endIndex);
+
       slivers.add(
         SliverToBoxAdapter(
-          child: _buildSectionHeader(category.getName(context), ''),
-        ),
-      );
-
-      // إضافة شبكة المنتجات لهذا القسم
-      slivers.add(
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.65,
-              crossAxisSpacing: 15,
-              mainAxisSpacing: 25,
+          child: Container(
+            margin: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
             ),
-            delegate: SliverChildBuilderDelegate(
-              (c, i) => _buildProductCard(categoryProducts[i]),
-              childCount: itemCount,
-            ),
-          ),
-        ),
-      );
-
-      // إضافة زر "اعرض الكل" في الأسفل إذا كان هناك أكثر من 10 منتجات
-      if (categoryProducts.length > 10) {
-        slivers.add(
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 20, bottom: 10),
-              child: Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _expandedCategories[category.id] = !isExpanded;
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.secondary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 35,
-                      vertical: 12,
-                    ),
-                  ),
-                  child: Text(
-                    isExpanded
-                        ? AppLocalizations.of(context)!.translate('show_less')
-                        : AppLocalizations.of(context)!.translate('view_all'),
-                    style: const TextStyle(
-                      color: AppColors.white,
-                      fontSize: 13,
-                    ),
+            child: Column(
+              children: [
+                // اسم القسم في المنتصف
+                Text(
+                  category.getName(context),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.darkBlue,
                   ),
                 ),
-              ),
+                const SizedBox(height: 15),
+
+                // شبكة المنتجات (4 منتجات)
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: currentProducts.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.65,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                  ),
+                  itemBuilder: (c, i) => _buildProductCard(currentProducts[i]),
+                ),
+
+                // أزرار التنقل (السابق / التالي)
+                if (totalItems > itemsPerPage) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        onPressed: pageIndex > 0
+                            ? () {
+                                setState(() {
+                                  _categoryPageIndices[category.id] =
+                                      pageIndex - 1;
+                                });
+                              }
+                            : null,
+                        icon: Icon(
+                          Icons.arrow_back_ios,
+                          size: 20,
+                          color: pageIndex > 0
+                              ? AppColors.primary
+                              : Colors.grey.shade300,
+                        ),
+                      ),
+                      Text(
+                        '${pageIndex + 1} / ${(totalItems / itemsPerPage).ceil()}',
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: endIndex < totalItems
+                            ? () {
+                                setState(() {
+                                  _categoryPageIndices[category.id] =
+                                      pageIndex + 1;
+                                });
+                              }
+                            : null,
+                        icon: Icon(
+                          Icons.arrow_forward_ios,
+                          size: 20,
+                          color: endIndex < totalItems
+                              ? AppColors.primary
+                              : Colors.grey.shade300,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
             ),
           ),
-        );
-      }
+        ),
+      );
     }
 
     // في حال لم تكن هناك أي منتجات أو أقسام محملة بعد
@@ -365,32 +450,6 @@ class _HomePageState extends State<HomePage> {
     }
 
     return slivers;
-  }
-
-  Widget _buildSectionHeader(String title, String subtitle) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 30, 20, 15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0.5,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 5),
-          if (subtitle.isNotEmpty)
-            Text(
-              subtitle,
-              style: const TextStyle(color: AppColors.grey, fontSize: 12),
-            ),
-        ],
-      ),
-    );
   }
 
   Widget _buildProductCard(Product p) {
