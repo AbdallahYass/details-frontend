@@ -32,13 +32,16 @@ class AboutScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.grey[50],
+                color: AppColors.aboutLogoBackground,
               ),
               child: Image.asset(
                 'assets/images/logo.png',
                 height: 100,
-                errorBuilder: (c, _, __) =>
-                    const Icon(Icons.store, size: 80, color: AppColors.primary),
+                errorBuilder: (c, _, __) => const Icon(
+                  Icons.store,
+                  size: 80,
+                  color: AppColors.aboutLogoFallback,
+                ),
               ),
             ),
             const SizedBox(height: 30),
@@ -47,13 +50,16 @@ class AboutScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: AppColors.primary,
+                color: AppColors.aboutTitle,
               ),
             ),
             const SizedBox(height: 10),
             Text(
               "Since 2024",
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              style: TextStyle(
+                color: AppColors.aboutTextSecondary,
+                fontSize: 14,
+              ),
             ),
             const SizedBox(height: 40),
             _buildSection(
@@ -87,7 +93,7 @@ class AboutScreen extends StatelessWidget {
           style: const TextStyle(
             fontSize: 16,
             height: 1.6,
-            color: Colors.black87,
+            color: AppColors.aboutTextPrimary,
           ),
         ),
       ],

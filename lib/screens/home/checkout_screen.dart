@@ -247,7 +247,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.cardBackground,
+                        color: AppColors.white,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: AppColors.lightGrey),
                       ),
@@ -280,7 +280,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         onPressed: _isLoading ? null : _submitOrder,
                         child: _isLoading
                             ? const CircularProgressIndicator(
-                                color: Colors.white,
+                                color: AppColors.white,
                               )
                             : Text(
                                 AppLocalizations.of(
@@ -310,14 +310,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         labelText: label,
         prefixIcon: Icon(icon, color: AppColors.primary),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey.shade200),
+          borderSide: const BorderSide(color: AppColors.arrowInactive),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey.shade200),
+          borderSide: const BorderSide(color: AppColors.arrowInactive),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
@@ -341,10 +341,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.05)
-              : Colors.white,
+              ? AppColors.primary.withOpacity(0.05)
+              : AppColors.white,
           border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.grey[300]!,
+            color: isSelected ? AppColors.primary : AppColors.arrowInactive,
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(15),
@@ -353,7 +353,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           children: [
             Icon(
               icon,
-              color: isSelected ? AppColors.primary : Colors.grey,
+              color: isSelected ? AppColors.primary : AppColors.grey,
               size: 30,
             ),
             const SizedBox(height: 10),
@@ -361,7 +361,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               label,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: isSelected ? AppColors.primary : Colors.grey[700],
+                color: isSelected ? AppColors.primary : AppColors.textSecondary,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                 fontSize: 12,
               ),

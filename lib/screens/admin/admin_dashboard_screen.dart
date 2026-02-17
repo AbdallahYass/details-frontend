@@ -55,7 +55,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final user = auth.user;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: AppColors.adminBackground,
       appBar: AppBar(
         title: const Text(
           'لوحة التحكم',
@@ -179,7 +179,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   context,
                   'المنتجات',
                   Icons.inventory_2_outlined,
-                  Colors.blue,
+                  AppColors.adminDashProducts,
                   '/admin/products',
                   'إدارة المخزون',
                 ),
@@ -187,7 +187,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   context,
                   'الطلبات',
                   Icons.shopping_cart_checkout_outlined,
-                  Colors.orange,
+                  AppColors.adminDashOrders,
                   '/admin/orders',
                   'متابعة الطلبات',
                 ),
@@ -195,7 +195,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   context,
                   'الكوبونات',
                   Icons.discount_outlined,
-                  Colors.green,
+                  AppColors.adminDashCoupons,
                   '/admin/coupons',
                   'أكواد الخصم',
                 ),
@@ -203,7 +203,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   context,
                   'الإعلانات',
                   Icons.campaign_outlined,
-                  Colors.purple,
+                  AppColors.adminDashBanners,
                   '/admin/banners',
                   'بنرات التطبيق',
                 ),
@@ -211,7 +211,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   context,
                   'التصنيفات',
                   Icons.category_outlined,
-                  Colors.teal,
+                  AppColors.adminDashCategories,
                   '/admin/categories',
                   'أقسام المتجر',
                 ),
@@ -219,7 +219,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   context,
                   'المستخدمين',
                   Icons.group_outlined,
-                  Colors.redAccent,
+                  AppColors.adminDashUsers,
                   '/admin/users',
                   'إدارة العملاء',
                 ),

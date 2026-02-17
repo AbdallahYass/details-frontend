@@ -51,6 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 authProvider.errorMessage ??
                     AppLocalizations.of(context)!.translate('error_occurred'),
               ),
+              backgroundColor: AppColors.error,
             ),
           );
         }
@@ -97,7 +98,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     AppLocalizations.of(context)!.translate('login_subtitle'),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 16, color: Colors.grey),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: 32),
 
@@ -110,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         context,
                       )!.translate('email_label'),
                       filled: true,
-                      fillColor: Colors.grey[50],
+                      fillColor: AppColors.white,
                       prefixIcon: const Icon(Icons.email_outlined),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -118,7 +122,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey[200]!),
+                        borderSide: const BorderSide(
+                          color: AppColors.arrowInactive,
+                        ),
                       ),
                     ),
                     validator: (value) {
@@ -146,7 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         context,
                       )!.translate('password_label'),
                       filled: true,
-                      fillColor: Colors.grey[50],
+                      fillColor: AppColors.white,
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -166,7 +172,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey[200]!),
+                        borderSide: const BorderSide(
+                          color: AppColors.arrowInactive,
+                        ),
                       ),
                     ),
                     validator: (value) {
@@ -200,7 +208,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(
-                              color: Colors.white,
+                              color: AppColors.white,
                               strokeWidth: 2,
                             ),
                           )
@@ -211,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: AppColors.white,
                             ),
                           ),
                   ),

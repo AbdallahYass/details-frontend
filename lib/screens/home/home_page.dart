@@ -182,9 +182,14 @@ class _HomePageState extends State<HomePage> {
                     backgroundColor: AppColors.appBarBackground,
                     elevation: 0,
                     centerTitle: true,
-                    iconTheme: const IconThemeData(color: AppColors.appBarForeground),
+                    iconTheme: const IconThemeData(
+                      color: AppColors.appBarForeground,
+                    ),
                     leading: IconButton(
-                      icon: const Icon(Icons.menu, color: AppColors.appBarForeground),
+                      icon: const Icon(
+                        Icons.menu,
+                        color: AppColors.appBarForeground,
+                      ),
                       onPressed: () {
                         Scaffold.of(context).openDrawer();
                       },
@@ -221,15 +226,12 @@ class _HomePageState extends State<HomePage> {
       margin: const EdgeInsets.fromLTRB(16, 20, 16, 10),
       padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.homeBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.primary.withOpacity(0.3),
-          width: 2,
-        ),
+        border: Border.all(color: AppColors.homeSectionBorder, width: 2),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.05),
+            color: AppColors.shadowColor,
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -240,24 +242,27 @@ class _HomePageState extends State<HomePage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.star, color: Colors.amber, size: 24),
+              const Icon(Icons.star, color: AppColors.starColor, size: 24),
               const SizedBox(width: 8),
               Text(
                 AppLocalizations.of(context)!.translate('most_popular'),
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
+                  color: AppColors.homeSectionTitle,
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(Icons.star, color: Colors.amber, size: 24),
+              const Icon(Icons.star, color: AppColors.starColor, size: 24),
             ],
           ),
           const SizedBox(height: 5),
           Text(
             AppLocalizations.of(context)!.translate('best_seller_week'),
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
+            style: const TextStyle(
+              color: AppColors.homeSectionSubtitle,
+              fontSize: 12,
+            ),
           ),
           const SizedBox(height: 20),
           SizedBox(
@@ -341,11 +346,11 @@ class _HomePageState extends State<HomePage> {
             margin: const EdgeInsets.fromLTRB(16, 10, 16, 10),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.homeBackground,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: AppColors.shadowColor,
                   blurRadius: 10,
                   offset: const Offset(0, 5),
                 ),
@@ -359,7 +364,7 @@ class _HomePageState extends State<HomePage> {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.darkBlue,
+                    color: AppColors.homeSectionTitle,
                   ),
                 ),
                 const SizedBox(height: 15),
@@ -397,14 +402,14 @@ class _HomePageState extends State<HomePage> {
                           Icons.arrow_back_ios,
                           size: 20,
                           color: pageIndex > 0
-                              ? AppColors.primary
-                              : Colors.grey.shade300,
+                              ? AppColors.homeArrowActive
+                              : AppColors.arrowInactive,
                         ),
                       ),
                       Text(
                         '${pageIndex + 1} / ${(totalItems / itemsPerPage).ceil()}',
                         style: const TextStyle(
-                          color: Colors.grey,
+                          color: AppColors.homePageNumber,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -421,8 +426,8 @@ class _HomePageState extends State<HomePage> {
                           Icons.arrow_forward_ios,
                           size: 20,
                           color: endIndex < totalItems
-                              ? AppColors.primary
-                              : Colors.grey.shade300,
+                              ? AppColors.homeArrowActive
+                              : AppColors.arrowInactive,
                         ),
                       ),
                     ],
@@ -472,8 +477,8 @@ class _HomePageState extends State<HomePage> {
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              color: Colors.white,
-              border: Border.all(color: Colors.grey.shade100),
+              color: AppColors.homeBackground,
+              border: Border.all(color: AppColors.cardBorder),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -492,7 +497,9 @@ class _HomePageState extends State<HomePage> {
                     child: _circleIcon(
                       isFav ? Icons.favorite : Icons.favorite_border,
                       size: 20,
-                      color: isFav ? AppColors.red : AppColors.secondary,
+                      color: isFav
+                          ? AppColors.homeFavActive
+                          : AppColors.homeFavInactive,
                       onTap: () async {
                         final auth = Provider.of<AuthProvider>(
                           context,
@@ -565,7 +572,7 @@ class _HomePageState extends State<HomePage> {
                     left: 10,
                     child: Icon(
                       Icons.fullscreen,
-                      color: AppColors.white,
+                      color: AppColors.homeProductIcon,
                       size: 24,
                     ),
                   ),
@@ -595,7 +602,7 @@ class _HomePageState extends State<HomePage> {
                           vertical: 6,
                         ),
                         decoration: const BoxDecoration(
-                          color: AppColors.red,
+                          color: AppColors.homeBadgeSoldOut,
                           borderRadius: BorderRadius.only(
                             topRight: Radius.circular(20),
                             bottomRight: Radius.circular(20),
@@ -604,7 +611,7 @@ class _HomePageState extends State<HomePage> {
                         child: Text(
                           AppLocalizations.of(context)!.translate('sold_out'),
                           style: const TextStyle(
-                            color: AppColors.white,
+                            color: AppColors.homeBadgeText,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -621,7 +628,7 @@ class _HomePageState extends State<HomePage> {
                           vertical: 4,
                         ),
                         decoration: const BoxDecoration(
-                          color: AppColors.warning,
+                          color: AppColors.homeBadgeHot,
                           borderRadius: BorderRadius.only(
                             topRight: Radius.circular(20),
                             bottomRight: Radius.circular(20),
@@ -632,13 +639,13 @@ class _HomePageState extends State<HomePage> {
                             Icon(
                               Icons.local_fire_department,
                               size: 12,
-                              color: Colors.white,
+                              color: AppColors.homeBadgeText,
                             ),
                             SizedBox(width: 2),
                             Text(
                               "HOT",
                               style: TextStyle(
-                                color: AppColors.white,
+                                color: AppColors.homeBadgeText,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -673,7 +680,7 @@ class _HomePageState extends State<HomePage> {
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
+                  color: AppColors.homeProductPrice,
                 ),
               ),
             ],
@@ -695,20 +702,17 @@ class _HomePageState extends State<HomePage> {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: isWhite
-              ? AppColors.white
-              : AppColors.primary.withOpacity(0.05),
+          color: isWhite ? AppColors.homeBackground : AppColors.homeIconBg,
           shape: BoxShape.circle,
           boxShadow: isWhite
-              ? [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.1),
-                    blurRadius: 4,
-                  ),
-                ]
+              ? [BoxShadow(color: AppColors.homeIconShadow, blurRadius: 4)]
               : [],
         ),
-        child: Icon(icon, color: color ?? AppColors.secondary, size: size),
+        child: Icon(
+          icon,
+          color: color ?? AppColors.homeFavInactive,
+          size: size,
+        ),
       ),
     );
   }
@@ -777,9 +781,9 @@ class _HomePageState extends State<HomePage> {
     width: 8,
     height: 8,
     decoration: BoxDecoration(
-      color: a ? AppColors.white : AppColors.white.withOpacity(0.5),
+      color: a ? AppColors.homeDotActive : AppColors.homeDotInactive,
       shape: BoxShape.circle,
-      border: Border.all(color: AppColors.white),
+      border: Border.all(color: AppColors.homeDotActive),
     ),
   );
   Widget _buildCategoriesSection() => Column(
@@ -789,11 +793,11 @@ class _HomePageState extends State<HomePage> {
         margin: const EdgeInsets.symmetric(horizontal: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.homeBackground,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: AppColors.shadowColor,
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -806,7 +810,7 @@ class _HomePageState extends State<HomePage> {
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: AppColors.darkBlue,
+                color: AppColors.homeSectionTitle,
               ),
             ),
             const SizedBox(height: 15),
@@ -863,15 +867,15 @@ class _HomePageState extends State<HomePage> {
               height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.transparent,
+                color: AppColors.transparent,
                 border: Border.all(
-                  color: isSelected ? AppColors.primary : Colors.transparent,
+                  color: isSelected ? AppColors.primary : AppColors.transparent,
                   width: 2,
                 ),
                 boxShadow: [
                   if (!isSelected)
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: AppColors.shadowColor,
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -882,10 +886,12 @@ class _HomePageState extends State<HomePage> {
                   imageUrl: category.imageUrl,
                   fit: BoxFit.cover,
                   placeholder: (context, url) =>
-                      Container(color: Colors.grey[200]),
+                      Container(color: AppColors.imagePlaceholder),
                   errorWidget: (context, url, error) => Icon(
                     Icons.category_outlined,
-                    color: isSelected ? AppColors.white : AppColors.grey,
+                    color: isSelected
+                        ? AppColors.white
+                        : AppColors.homeCategoryIcon,
                   ),
                 ),
               ),
@@ -896,7 +902,9 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? AppColors.primary : Colors.black,
+                color: isSelected
+                    ? AppColors.primary
+                    : AppColors.homeCategoryText,
               ),
             ),
           ],
@@ -907,7 +915,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildFooter() => Container(
     width: double.infinity,
-    color: AppColors.primary,
+    color: AppColors.homeFooterBackground,
     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
     child: Column(
       children: [
@@ -921,7 +929,7 @@ class _HomePageState extends State<HomePage> {
             _buildLanguageItem('English', const Locale('en', '')),
           ],
         ),
-        const Divider(color: Colors.white12, height: 1),
+        const Divider(color: AppColors.footerDivider, height: 1),
         _footerAccordion(
           AppLocalizations.of(context)!.translate('policies'),
           [],
@@ -937,20 +945,20 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-        const Divider(color: Colors.white12, height: 1),
+        const Divider(color: AppColors.footerDivider, height: 1),
         _footerAccordion(
           AppLocalizations.of(context)!.translate('stay_updated'),
           [],
           isSubscribe: true,
         ),
         const SizedBox(height: 40),
-        const Divider(color: Colors.white12),
+        const Divider(color: AppColors.footerDivider),
         const SizedBox(height: 20),
         Text(
           AppLocalizations.of(context)!.translate('copyright'),
           textAlign: TextAlign.center,
           style: const TextStyle(
-            color: Colors.white54,
+            color: AppColors.footerText,
             fontSize: 11,
             fontWeight: FontWeight.bold,
           ),
@@ -975,7 +983,7 @@ class _HomePageState extends State<HomePage> {
         AppLocalizations.of(context)!.translate('footer_about_desc'),
         textAlign: TextAlign.center,
         style: const TextStyle(
-          color: Colors.white70,
+          color: AppColors.footerTextSecondary,
           fontSize: 13,
           height: 1.6,
           fontWeight: FontWeight.bold,
@@ -1032,7 +1040,7 @@ class _HomePageState extends State<HomePage> {
           label,
           textAlign: TextAlign.center,
           style: const TextStyle(
-            color: Colors.white54,
+            color: AppColors.footerText,
             fontSize: 13,
             fontWeight: FontWeight.bold,
           ),
@@ -1065,7 +1073,7 @@ class _HomePageState extends State<HomePage> {
           title,
           textAlign: TextAlign.center,
           style: const TextStyle(
-            color: Colors.white54,
+            color: AppColors.footerText,
             fontSize: 13,
             fontWeight: FontWeight.bold,
           ),
@@ -1080,7 +1088,7 @@ class _HomePageState extends State<HomePage> {
     bool isSubscribe = false,
     List<Widget>? customChildren,
   }) => Theme(
-    data: ThemeData().copyWith(dividerColor: Colors.transparent),
+    data: ThemeData().copyWith(dividerColor: AppColors.transparent),
     child: ExpansionTile(
       title: Center(
         child: Text(
@@ -1107,7 +1115,7 @@ class _HomePageState extends State<HomePage> {
                           item,
                           textAlign: TextAlign.center,
                           style: const TextStyle(
-                            color: Colors.white54,
+                            color: AppColors.footerText,
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1124,7 +1132,7 @@ class _HomePageState extends State<HomePage> {
         AppLocalizations.of(context)!.translate('subscribe_text'),
         textAlign: TextAlign.center,
         style: const TextStyle(
-          color: Colors.white54,
+          color: AppColors.footerText,
           fontSize: 12,
           fontWeight: FontWeight.bold,
         ),
@@ -1133,7 +1141,7 @@ class _HomePageState extends State<HomePage> {
       Container(
         height: 50,
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.white24),
+          border: Border.all(color: AppColors.inputBorder),
           borderRadius: BorderRadius.circular(30),
         ),
         child: Row(
@@ -1142,7 +1150,7 @@ class _HomePageState extends State<HomePage> {
               margin: const EdgeInsets.all(4),
               padding: const EdgeInsets.symmetric(horizontal: 20),
               decoration: BoxDecoration(
-                color: Colors.white10,
+                color: AppColors.subscribeBg,
                 borderRadius: BorderRadius.circular(25),
               ),
               child: const Center(
@@ -1168,7 +1176,7 @@ class _HomePageState extends State<HomePage> {
                     context,
                   )!.translate('email_hint'),
                   hintStyle: const TextStyle(
-                    color: Colors.white24,
+                    color: AppColors.hintText,
                     fontWeight: FontWeight.bold,
                   ),
                   border: InputBorder.none,
@@ -1189,7 +1197,7 @@ class _HomePageState extends State<HomePage> {
         Text(
           t,
           style: const TextStyle(
-            color: Colors.white70,
+            color: AppColors.footerTextSecondary,
             fontSize: 12,
             fontWeight: FontWeight.bold,
           ),

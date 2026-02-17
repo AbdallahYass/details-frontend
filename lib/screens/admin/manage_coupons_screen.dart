@@ -211,7 +211,7 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                 '${coupon['discountType'] == 'percentage' ? '%' : '\$'}${coupon['value']} - Used: ${coupon['usedCount']}',
               ),
               trailing: IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
+                icon: const Icon(Icons.delete, color: AppColors.adminDelete),
                 onPressed: () => _deleteCoupon(coupon['_id']),
               ),
             ),
@@ -220,7 +220,7 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddCouponDialog,
-        backgroundColor: AppColors.black,
+        backgroundColor: AppColors.adminAdd,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );

@@ -23,10 +23,10 @@ class MainScreen extends StatelessWidget {
       bottomNavigationBar: Container(
         height: 70,
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.homeNavBackground,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: AppColors.shadowColor,
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),
@@ -79,7 +79,9 @@ class MainScreen extends StatelessWidget {
     int index,
   ) {
     final isSelected = navigationShell.currentIndex == index;
-    final color = isSelected ? AppColors.primary : AppColors.textSecondary;
+    final color = isSelected
+        ? AppColors.homeNavActive
+        : AppColors.homeNavInactive;
 
     return GestureDetector(
       onTap: () => _onTap(context, index),
@@ -119,7 +121,7 @@ class MainScreen extends StatelessWidget {
       child: Column(
         children: [
           UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(color: AppColors.primary),
+            decoration: const BoxDecoration(color: AppColors.homeDrawerHeader),
             accountName: Text(
               auth.isAuthenticated ? (auth.user?.name ?? 'User') : 'Guest',
               style: const TextStyle(fontWeight: FontWeight.bold),
@@ -130,22 +132,31 @@ class MainScreen extends StatelessWidget {
                   : 'Welcome to Details',
             ),
             currentAccountPicture: CircleAvatar(
-              backgroundColor: Colors.white,
+              backgroundColor: AppColors.homeDrawerAvatarBg,
               child: Text(
                 auth.isAuthenticated
                     ? (auth.user?.name[0].toUpperCase() ?? 'U')
                     : 'G',
-                style: const TextStyle(fontSize: 24, color: AppColors.primary),
+                style: const TextStyle(
+                  fontSize: 24,
+                  color: AppColors.homeDrawerAvatarText,
+                ),
               ),
             ),
           ),
           ListTile(
-            leading: const Icon(Icons.language, color: AppColors.primary),
+            leading: const Icon(
+              Icons.language,
+              color: AppColors.homeDrawerIcon,
+            ),
             title: Text(AppLocalizations.of(context)!.translate('language')),
             trailing: DropdownButton<Locale>(
               value: settings.locale,
               underline: const SizedBox(),
-              icon: const Icon(Icons.arrow_drop_down, color: AppColors.primary),
+              icon: const Icon(
+                Icons.arrow_drop_down,
+                color: AppColors.homeDrawerIcon,
+              ),
               onChanged: (Locale? newLocale) {
                 if (newLocale != null) {
                   settings.setLocale(newLocale);
@@ -168,7 +179,7 @@ class MainScreen extends StatelessWidget {
           ListTile(
             leading: const FaIcon(
               FontAwesomeIcons.whatsapp,
-              color: Colors.green,
+              color: AppColors.whatsapp,
               size: 24,
             ),
             title: const Text('WhatsApp'),
@@ -181,7 +192,10 @@ class MainScreen extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.info_outline, color: AppColors.primary),
+            leading: const Icon(
+              Icons.info_outline,
+              color: AppColors.homeDrawerIcon,
+            ),
             title: Text(
               AppLocalizations.of(context)!.translate('footer_about_title'),
             ),
@@ -195,7 +209,7 @@ class MainScreen extends StatelessWidget {
             ListTile(
               leading: const Icon(
                 Icons.dashboard_customize,
-                color: AppColors.primary,
+                color: AppColors.homeDrawerIcon,
               ),
               title: const Text('لوحة التحكم'),
               onTap: () {
@@ -207,11 +221,14 @@ class MainScreen extends StatelessWidget {
           const Divider(),
           if (auth.isAuthenticated)
             ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
+              leading: const Icon(
+                Icons.logout,
+                color: AppColors.homeDrawerLogout,
+              ),
               title: Text(
                 AppLocalizations.of(context)!.translate('logout'),
                 style: const TextStyle(
-                  color: Colors.red,
+                  color: AppColors.homeDrawerLogout,
                   fontWeight: FontWeight.bold,
                 ),
               ),

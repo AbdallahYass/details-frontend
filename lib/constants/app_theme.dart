@@ -26,13 +26,13 @@ class AppTheme {
 
       // تحسين شكل الـ AppBar
       appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.appBarBackground,
         elevation: 0,
         centerTitle: true,
         scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(color: AppColors.primary),
+        iconTheme: IconThemeData(color: AppColors.appBarForeground),
         titleTextStyle: TextStyle(
-          color: AppColors.primary,
+          color: AppColors.appBarForeground,
           fontSize: 20,
           fontWeight: FontWeight.bold,
           fontFamily: 'Cairo',
@@ -43,7 +43,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.white,
           elevation: 2,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

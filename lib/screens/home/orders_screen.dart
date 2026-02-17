@@ -44,20 +44,24 @@ class _OrdersScreenState extends State<OrdersScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.lock_outline, size: 80, color: Colors.grey),
+              const Icon(
+                Icons.lock_outline,
+                size: 80,
+                color: AppColors.homeEmptyStateIcon,
+              ),
               const SizedBox(height: 16),
               Text(
                 AppLocalizations.of(context)!.translate('please_login'),
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey,
+                  color: AppColors.homeEmptyStateText,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 AppLocalizations.of(context)!.translate('login_subtitle'),
-                style: const TextStyle(color: Colors.grey),
+                style: const TextStyle(color: AppColors.homeEmptyStateText),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -78,7 +82,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: AppColors.homeButtonPrimary,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 32,
                     vertical: 12,
@@ -92,7 +96,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: AppColors.homeButtonText,
                   ),
                 ),
               ),
@@ -129,9 +133,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.homeCardBackground,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade200),
+                          border: Border.all(color: AppColors.cardBorder),
                         ),
                         child: Column(
                           children: [
@@ -151,7 +155,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                 '\$${order.amount.toStringAsFixed(2)}',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
+                                  color: AppColors.homeOrderPrice,
                                   fontSize: 16,
                                 ),
                               ),
@@ -173,8 +177,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                     decoration: BoxDecoration(
                                       color:
                                           (order.status == 'تم التوصيل'
-                                                  ? Colors.green
-                                                  : Colors.orange)
+                                                  ? AppColors
+                                                        .homeOrderStatusDelivered
+                                                  : AppColors
+                                                        .homeOrderStatusPending)
                                               .withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(20),
                                     ),
@@ -182,14 +188,17 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                       order.status,
                                       style: TextStyle(
                                         color: order.status == 'تم التوصيل'
-                                            ? Colors.green
-                                            : Colors.orange,
+                                            ? AppColors.homeOrderStatusDelivered
+                                            : AppColors.homeOrderStatusPending,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 12,
                                       ),
                                     ),
                                   ),
-                                  const Icon(Icons.expand_more),
+                                  const Icon(
+                                    Icons.expand_more,
+                                    color: AppColors.homeOrderExpandIcon,
+                                  ),
                                 ],
                               ),
                             ),

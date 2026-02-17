@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -51,16 +53,22 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
         _users.removeWhere((user) => user['_id'] == id);
       });
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('تم حذف المستخدم بنجاح')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تم حذف المستخدم بنجاح'),
+            backgroundColor: AppColors.success,
+          ),
+        );
       }
     } catch (e) {
       debugPrint('Error deleting user: $e');
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('فشل الحذف')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('فشل الحذف'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     }
   }
@@ -75,12 +83,15 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
         centerTitle: true,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
           : ListView.builder(
               itemCount: _users.length,
               itemBuilder: (ctx, i) {
                 final user = _users[i];
                 return Card(
+                  color: AppColors.adminSurface,
                   margin: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 5,
@@ -90,15 +101,28 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                       backgroundColor: AppColors.primary,
                       child: Text(
                         user['name'][0].toUpperCase(),
-                        style: const TextStyle(color: Colors.white),
+                        style: const TextStyle(color: AppColors.white),
                       ),
                     ),
                     title: Text(user['name']),
                     subtitle: Text(user['email']),
                     trailing: user['isAdmin'] == true
-                        ? const Chip(label: Text('Admin'))
+                        ? Chip(
+                            label: const Text(
+                              'Admin',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            backgroundColor: AppColors.primary.withOpacity(0.1),
+                            side: BorderSide.none,
+                          )
                         : IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
+                            icon: const Icon(
+                              Icons.delete,
+                              color: AppColors.adminDelete,
+                            ),
                             onPressed: () => showDialog(
                               context: context,
                               builder: (c) => AlertDialog(
@@ -109,7 +133,12 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.pop(c),
-                                    child: const Text('إلغاء'),
+                                    child: const Text(
+                                      'إلغاء',
+                                      style: TextStyle(
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
                                   ),
                                   TextButton(
                                     onPressed: () {
@@ -118,7 +147,9 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                                     },
                                     child: const Text(
                                       'حذف',
-                                      style: TextStyle(color: Colors.red),
+                                      style: TextStyle(
+                                        color: AppColors.adminDelete,
+                                      ),
                                     ),
                                   ),
                                 ],

@@ -67,17 +67,23 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
       );
       // لا داعي لإعادة تحميل الطلبات بالكامل إذا نجح الطلب
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('تم تحديث حالة الطلب')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تم تحديث حالة الطلب'),
+            backgroundColor: AppColors.success,
+          ),
+        );
       }
     } catch (e) {
       debugPrint('Error updating status: $e');
       _fetchOrders(); // إعادة التحميل في حالة الخطأ فقط للتصحيح
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('فشل تحديث الحالة')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('فشل تحديث الحالة'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     }
   }
@@ -92,7 +98,9 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
         centerTitle: true,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
           : RefreshIndicator(
               onRefresh: _fetchOrders,
               child: ListView.builder(
@@ -105,6 +113,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                   final shipping = order['shippingAddress'];
 
                   return Card(
+                    color: AppColors.adminSurface,
                     margin: const EdgeInsets.all(10),
                     child: ExpansionTile(
                       title: Text(
@@ -114,14 +123,18 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                         '${order['totalAmount']} - ${order['status']}',
                         style: TextStyle(
                           color: order['status'] == 'تم التوصيل'
-                              ? Colors.green
-                              : Colors.orange,
+                              ? AppColors
+                                    .adminDashCoupons // أخضر
+                              : AppColors.adminDashOrders, // برتقالي
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       children: [
                         ListTile(
-                          leading: const Icon(Icons.edit_attributes),
+                          leading: const Icon(
+                            Icons.edit_attributes,
+                            color: AppColors.adminEdit,
+                          ),
                           title: const Text('تغيير الحالة'),
                           trailing: DropdownButton<String>(
                             value: _orderStatuses.contains(order['status'])
@@ -151,7 +164,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                   'معلومات العميل:',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.grey,
+                                    color: AppColors.textSecondary,
                                   ),
                                 ),
                                 const SizedBox(height: 5),
@@ -178,7 +191,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                   'المنتجات:',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.grey,
+                                    color: AppColors.textSecondary,
                                   ),
                                 ),
                                 const SizedBox(height: 5),
@@ -202,6 +215,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                           '${item['price']} ₪',
                                           style: const TextStyle(
                                             fontWeight: FontWeight.bold,
+                                            color: AppColors.adminDashProducts,
                                           ),
                                         ),
                                       ],

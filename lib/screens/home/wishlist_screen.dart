@@ -22,26 +22,30 @@ class WishlistScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.lock_outline, size: 80, color: Colors.grey),
+              const Icon(
+                Icons.lock_outline,
+                size: 80,
+                color: AppColors.homeEmptyStateIcon,
+              ),
               const SizedBox(height: 16),
               Text(
                 AppLocalizations.of(context)!.translate('please_login'),
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey,
+                  color: AppColors.homeEmptyStateText,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 AppLocalizations.of(context)!.translate('login_subtitle'),
-                style: const TextStyle(color: Colors.grey),
+                style: const TextStyle(color: AppColors.homeEmptyStateText),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () => context.push('/login'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: AppColors.homeButtonPrimary,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 32,
                     vertical: 12,
@@ -55,7 +59,7 @@ class WishlistScreen extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: AppColors.homeButtonText,
                   ),
                 ),
               ),
@@ -74,12 +78,15 @@ class WishlistScreen extends StatelessWidget {
                   const Icon(
                     Icons.favorite_border,
                     size: 80,
-                    color: Colors.grey,
+                    color: AppColors.homeEmptyStateIcon,
                   ),
                   const SizedBox(height: 20),
                   Text(
                     AppLocalizations.of(context)!.translate('empty_wishlist'),
-                    style: const TextStyle(fontSize: 18, color: Colors.grey),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      color: AppColors.homeEmptyStateText,
+                    ),
                   ),
                 ],
               ),
@@ -90,6 +97,7 @@ class WishlistScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final product = wishlist[index];
                 return Card(
+                  color: AppColors.homeCardBackground,
                   margin: const EdgeInsets.only(bottom: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -103,7 +111,7 @@ class WishlistScreen extends StatelessWidget {
                             ? product.images[0]
                             : '',
                         placeholder: (context, url) =>
-                            Container(color: Colors.grey[200]),
+                            Container(color: AppColors.imagePlaceholder),
                         width: 60,
                         height: 60,
                         fit: BoxFit.cover,
@@ -118,12 +126,15 @@ class WishlistScreen extends StatelessWidget {
                     subtitle: Text(
                       "\$${product.price}",
                       style: const TextStyle(
-                        color: AppColors.gold,
+                        color: AppColors.homeProductPrice,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     trailing: IconButton(
-                      icon: const Icon(Icons.favorite, color: AppColors.red),
+                      icon: const Icon(
+                        Icons.favorite,
+                        color: AppColors.homeWishlistIcon,
+                      ),
                       onPressed: () {
                         wishlistProvider.toggleWishlist(product).then((added) {
                           if (!context.mounted) return;

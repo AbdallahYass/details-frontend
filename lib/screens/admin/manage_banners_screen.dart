@@ -284,7 +284,7 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
                                 trailing: IconButton(
                                   icon: const Icon(
                                     Icons.delete,
-                                    color: Colors.red,
+                                    color: AppColors.adminDelete,
                                   ),
                                   onPressed: () => _deleteBanner(banner['_id']),
                                 ),
@@ -297,7 +297,7 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddDialog,
-        backgroundColor: AppColors.black,
+        backgroundColor: AppColors.adminAdd,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );

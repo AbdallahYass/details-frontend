@@ -129,7 +129,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('تم رفع الصورة بنجاح'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.adminDashCoupons,
           ),
         );
       }
@@ -138,7 +138,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('فشل رفع الصورة'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.adminDelete,
           ),
         );
       }
@@ -159,7 +159,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('تم إضافة الصورة للمعرض'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppColors.adminDashCoupons,
           ),
         );
       }
@@ -168,7 +168,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('فشل رفع الصورة'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.adminDelete,
           ),
         );
       }
@@ -227,18 +227,24 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (mounted) {
           Navigator.pop(context);
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('تم حفظ المنتج بنجاح')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('تم حفظ المنتج بنجاح'),
+              backgroundColor: AppColors.success,
+            ),
+          );
         }
       } else {
         throw Exception('Failed to save');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('حدث خطأ')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('حدث خطأ'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -329,7 +335,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                   IconButton(
                     icon: const Icon(
                       Icons.add_circle,
-                      color: AppColors.primary,
+                      color: AppColors.adminEdit,
                     ),
                     onPressed: () {
                       if (_sizeInputController.text.isNotEmpty) {
@@ -432,12 +438,15 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                   suffixIcon: _isImageUploading
                       ? const Padding(
                           padding: EdgeInsets.all(12.0),
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.primary,
+                          ),
                         )
                       : IconButton(
                           icon: const Icon(
                             Icons.image,
-                            color: AppColors.primary,
+                            color: AppColors.adminEdit,
                           ),
                           onPressed: _pickMainImage,
                         ),
@@ -450,29 +459,32 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                   height: 200,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
+                    border: Border.all(color: AppColors.arrowInactive),
                     borderRadius: BorderRadius.circular(12),
-                    color: Colors.grey.shade50,
+                    color: AppColors.lightGrey,
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: CachedNetworkImage(
                       imageUrl: _imageController.text,
                       fit: BoxFit.contain,
-                      placeholder: (context, url) =>
-                          const Center(child: CircularProgressIndicator()),
+                      placeholder: (context, url) => const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                        ),
+                      ),
                       errorWidget: (context, url, error) => const Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
                               Icons.broken_image,
-                              color: Colors.grey,
+                              color: AppColors.grey,
                               size: 40,
                             ),
                             Text(
                               "رابط غير صالح",
-                              style: TextStyle(color: Colors.grey),
+                              style: TextStyle(color: AppColors.grey),
                             ),
                           ],
                         ),
@@ -494,7 +506,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                   IconButton(
                     onPressed: _isImageUploading ? null : _pickGalleryImage,
                     icon: const Icon(Icons.add_photo_alternate),
-                    color: AppColors.primary,
+                    color: AppColors.adminEdit,
                   ),
                 ],
               ),
@@ -512,7 +524,9 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                             width: 100,
                             height: 100,
                             decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey.shade300),
+                              border: Border.all(
+                                color: AppColors.arrowInactive,
+                              ),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: ClipRRect(
@@ -532,11 +546,11 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                               }),
                               child: const CircleAvatar(
                                 radius: 12,
-                                backgroundColor: Colors.red,
+                                backgroundColor: AppColors.adminDelete,
                                 child: Icon(
                                   Icons.close,
                                   size: 16,
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                 ),
                               ),
                             ),
@@ -575,8 +589,11 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                   minimumSize: const Size(double.infinity, 50),
                 ),
                 child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('حفظ', style: TextStyle(color: Colors.white)),
+                    ? const CircularProgressIndicator(color: AppColors.white)
+                    : const Text(
+                        'حفظ',
+                        style: TextStyle(color: AppColors.white),
+                      ),
               ),
             ],
           ),

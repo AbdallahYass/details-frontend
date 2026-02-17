@@ -135,14 +135,20 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.blue),
+                          icon: const Icon(
+                            Icons.edit,
+                            color: AppColors.adminEdit,
+                          ),
                           onPressed: () => context.push(
                             '/admin/products/edit',
                             extra: product,
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
+                          icon: const Icon(
+                            Icons.delete,
+                            color: AppColors.adminDelete,
+                          ),
                           onPressed: () => _deleteProduct(product['_id']),
                         ),
                       ],
@@ -153,7 +159,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/admin/products/add'),
-        backgroundColor: AppColors.black,
+        backgroundColor: AppColors.adminAdd,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );

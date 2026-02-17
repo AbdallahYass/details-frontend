@@ -214,7 +214,10 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                     ),
                     title: Text(name ?? ''),
                     trailing: IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
+                      icon: const Icon(
+                        Icons.delete,
+                        color: AppColors.adminDelete,
+                      ),
                       onPressed: () => _deleteCategory(cat['_id']),
                     ),
                   ),
@@ -223,7 +226,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddDialog,
-        backgroundColor: AppColors.black,
+        backgroundColor: AppColors.adminAdd,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
