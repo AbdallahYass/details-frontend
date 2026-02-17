@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -106,8 +108,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
           AppLocalizations.of(context)!.translate('my_orders'),
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.appBarBackground,
+        foregroundColor: AppColors.appBarForeground,
         centerTitle: true,
       ),
       body: Column(
@@ -173,7 +175,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                           (order.status == 'تم التوصيل'
                                                   ? Colors.green
                                                   : Colors.orange)
-                                              .withValues(alpha: 0.1),
+                                              .withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Text(

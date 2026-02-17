@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/providers/auth_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:details_app/screens/cloudinary_service.dart';
+import 'package:details_app/screens/home/cloudinary_service.dart';
 import 'package:details_app/models/product.dart';
 
 class AddEditProductScreen extends StatefulWidget {
@@ -250,8 +250,8 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.product == null ? 'إضافة منتج' : 'تعديل منتج'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.appBarBackground,
+        foregroundColor: AppColors.appBarForeground,
         centerTitle: true,
       ),
       body: SingleChildScrollView(

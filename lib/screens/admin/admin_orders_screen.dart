@@ -87,8 +87,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('إدارة الطلبات'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.appBarBackground,
+        foregroundColor: AppColors.appBarForeground,
         centerTitle: true,
       ),
       body: _isLoading

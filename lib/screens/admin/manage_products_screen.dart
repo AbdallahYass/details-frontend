@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -88,15 +90,17 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.appBarBackground,
+        foregroundColor: AppColors.appBarForeground,
         title: TextField(
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: 'بحث عن منتج...',
             border: InputBorder.none,
-            hintStyle: TextStyle(color: Colors.white70),
+            hintStyle: TextStyle(
+              color: AppColors.appBarForeground.withOpacity(0.7),
+            ),
           ),
-          style: const TextStyle(color: Colors.white),
+          style: const TextStyle(color: AppColors.appBarForeground),
           onChanged: _filterProducts,
         ),
       ),

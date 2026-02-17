@@ -192,8 +192,8 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('إدارة الكوبونات'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.appBarBackground,
+        foregroundColor: AppColors.appBarForeground,
         centerTitle: true,
       ),
       body: ListView.builder(

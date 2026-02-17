@@ -3,29 +3,29 @@ import 'package:go_router/go_router.dart';
 import 'package:details_app/models/product.dart';
 
 // Screens
-import 'package:details_app/screens/main_screen.dart';
-import 'package:details_app/screens/home_page.dart';
-import 'package:details_app/screens/search_screen.dart';
-import 'package:details_app/screens/cart_screen.dart';
-import 'package:details_app/screens/product_details_screen.dart';
-import 'package:details_app/screens/login_screen.dart';
-import 'package:details_app/screens/register_screen.dart';
-import 'package:details_app/screens/checkout_screen.dart';
-import 'package:details_app/screens/orders_screen.dart';
-import 'package:details_app/screens/about_screen.dart';
-import 'package:details_app/screens/wishlist_screen.dart';
-import 'package:details_app/screens/account_screen.dart';
+import 'package:details_app/screens/home/main_screen.dart';
+import 'package:details_app/screens/home/home_page.dart';
+import 'package:details_app/screens/home/search_screen.dart';
+import 'package:details_app/screens/home/cart_screen.dart';
+import 'package:details_app/screens/home/product_details_screen.dart';
+import 'package:details_app/screens/login/login_screen.dart';
+import 'package:details_app/screens/login/register_screen.dart';
+import 'package:details_app/screens/home/checkout_screen.dart';
+import 'package:details_app/screens/home/orders_screen.dart';
+import 'package:details_app/screens/home/about_screen.dart';
+import 'package:details_app/screens/home/wishlist_screen.dart';
+import 'package:details_app/screens/login/account_screen.dart';
 
 // Admin Screens
-import 'package:details_app/screens/admin_dashboard_screen.dart';
-import 'package:details_app/screens/manage_products_screen.dart';
-import 'package:details_app/screens/add_edit_product_screen.dart';
-import 'package:details_app/screens/manage_users_screen.dart';
-import 'package:details_app/screens/manage_categories_screen.dart';
-import 'package:details_app/screens/manage_coupons_screen.dart';
-import 'package:details_app/screens/manage_banners_screen.dart';
+import 'package:details_app/screens/admin/admin_dashboard_screen.dart';
+import 'package:details_app/screens/admin/manage_products_screen.dart';
+import 'package:details_app/screens/admin/add_edit_product_screen.dart';
+import 'package:details_app/screens/admin/manage_users_screen.dart';
+import 'package:details_app/screens/admin/manage_categories_screen.dart';
+import 'package:details_app/screens/admin/manage_coupons_screen.dart';
+import 'package:details_app/screens/admin/manage_banners_screen.dart';
 
-import 'package:details_app/screens/admin_orders_screen.dart';
+import 'package:details_app/screens/admin/admin_orders_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 

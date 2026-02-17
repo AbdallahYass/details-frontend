@@ -26,4 +26,8 @@ class AppColors {
   static const Color darkBlue = primary;
   static const Color orange = secondary;
   static const Color circleBackground = Color(0xFFE2E8F0);
+
+  // AppBar Colors
+  static const Color appBarBackground = primary;
+  static const Color appBarForeground = white;
 }

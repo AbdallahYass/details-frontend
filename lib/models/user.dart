@@ -8,12 +8,12 @@ class User {
     required this.id,
     required this.name,
     required this.email,
-    required this.isAdmin,
+    this.isAdmin = false,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'] ?? '',
+      id: json['_id'] ?? json['id'] ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       isAdmin: json['isAdmin'] ?? false,

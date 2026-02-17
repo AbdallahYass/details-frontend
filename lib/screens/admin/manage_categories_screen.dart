@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/providers/auth_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:details_app/screens/cloudinary_service.dart';
+import 'package:details_app/screens/home/cloudinary_service.dart';
 
 class ManageCategoriesScreen extends StatefulWidget {
   const ManageCategoriesScreen({super.key});
@@ -183,8 +183,8 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('إدارة التصنيفات'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.appBarBackground,
+        foregroundColor: AppColors.appBarForeground,
         centerTitle: true,
       ),
       body: _isLoading

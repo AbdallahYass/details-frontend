@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -60,12 +62,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         centerTitle: true,
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.appBarBackground,
+        foregroundColor: AppColors.appBarForeground,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.store_rounded, color: Colors.white),
+            icon: const Icon(
+              Icons.store_rounded,
+              color: AppColors.appBarForeground,
+            ),
             tooltip: 'الذهاب للمتجر',
             onPressed: () => context.go('/'),
           ),
@@ -246,7 +251,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
+                color: Colors.black.withOpacity(0.03),
                 blurRadius: 15,
                 offset: const Offset(0, 5),
               ),
@@ -260,7 +265,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
+                  color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(icon, size: 28, color: color),
@@ -300,7 +305,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.2),
+            color: Colors.white.withOpacity(0.2),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: Colors.white, size: 20),

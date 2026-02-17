@@ -179,12 +179,12 @@ class _HomePageState extends State<HomePage> {
                   SliverAppBar(
                     floating: true,
                     pinned: true,
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: AppColors.appBarBackground,
                     elevation: 0,
                     centerTitle: true,
-                    iconTheme: const IconThemeData(color: Colors.white),
+                    iconTheme: const IconThemeData(color: AppColors.appBarForeground),
                     leading: IconButton(
-                      icon: const Icon(Icons.menu, color: Colors.white),
+                      icon: const Icon(Icons.menu, color: AppColors.appBarForeground),
                       onPressed: () {
                         Scaffold.of(context).openDrawer();
                       },
@@ -194,7 +194,7 @@ class _HomePageState extends State<HomePage> {
                       IconButton(
                         icon: const Icon(
                           Icons.notifications_outlined,
-                          color: Colors.white,
+                          color: AppColors.appBarForeground,
                         ),
                         onPressed: () {},
                       ),
@@ -224,12 +224,12 @@ class _HomePageState extends State<HomePage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.3),
+          color: AppColors.primary.withOpacity(0.3),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.05),
+            color: AppColors.primary.withOpacity(0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -345,7 +345,7 @@ class _HomePageState extends State<HomePage> {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: Colors.black.withOpacity(0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 5),
                 ),
@@ -697,12 +697,12 @@ class _HomePageState extends State<HomePage> {
         decoration: BoxDecoration(
           color: isWhite
               ? AppColors.white
-              : AppColors.primary.withValues(alpha: 0.05),
+              : AppColors.primary.withOpacity(0.05),
           shape: BoxShape.circle,
           boxShadow: isWhite
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: AppColors.primary.withOpacity(0.1),
                     blurRadius: 4,
                   ),
                 ]
@@ -777,7 +777,7 @@ class _HomePageState extends State<HomePage> {
     width: 8,
     height: 8,
     decoration: BoxDecoration(
-      color: a ? AppColors.white : AppColors.white.withValues(alpha: 0.5),
+      color: a ? AppColors.white : AppColors.white.withOpacity(0.5),
       shape: BoxShape.circle,
       border: Border.all(color: AppColors.white),
     ),
@@ -793,7 +793,7 @@ class _HomePageState extends State<HomePage> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -871,7 +871,7 @@ class _HomePageState extends State<HomePage> {
                 boxShadow: [
                   if (!isSelected)
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
+                      color: Colors.black.withOpacity(0.05),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),

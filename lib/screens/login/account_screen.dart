@@ -32,8 +32,8 @@ class AccountScreen extends StatelessWidget {
         title: Text(
           AppLocalizations.of(context)?.translate('nav_account') ?? 'Account',
         ),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.appBarBackground,
+        foregroundColor: AppColors.appBarForeground,
         centerTitle: true,
       ),
       body: ListView(
