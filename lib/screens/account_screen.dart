@@ -19,7 +19,8 @@ class AccountScreen extends StatelessWidget {
           child: ElevatedButton(
             onPressed: () => context.push('/login'),
             child: Text(
-              AppLocalizations.of(context)!.translate('login_button'),
+              AppLocalizations.of(context)?.translate('login_button') ??
+                  'Login',
             ),
           ),
         ),
@@ -28,7 +29,12 @@ class AccountScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.translate('nav_account')),
+        title: Text(
+          AppLocalizations.of(context)?.translate('nav_account') ?? 'Account',
+        ),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        centerTitle: true,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -57,14 +63,17 @@ class AccountScreen extends StatelessWidget {
           const SizedBox(height: 40),
           ListTile(
             leading: const Icon(Icons.list_alt),
-            title: Text(AppLocalizations.of(context)!.translate('my_orders')),
+            title: Text(
+              AppLocalizations.of(context)?.translate('my_orders') ??
+                  'My Orders',
+            ),
             onTap: () => context.push('/orders'),
           ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
             title: Text(
-              AppLocalizations.of(context)!.translate('logout'),
+              AppLocalizations.of(context)?.translate('logout') ?? 'Logout',
               style: const TextStyle(color: Colors.red),
             ),
             onTap: () {

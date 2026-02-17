@@ -179,12 +179,12 @@ class _HomePageState extends State<HomePage> {
                   SliverAppBar(
                     floating: true,
                     pinned: true,
-                    backgroundColor: Colors.white,
+                    backgroundColor: AppColors.primary,
                     elevation: 0,
                     centerTitle: true,
-                    iconTheme: const IconThemeData(color: Colors.black),
+                    iconTheme: const IconThemeData(color: Colors.white),
                     leading: IconButton(
-                      icon: const Icon(Icons.menu, color: Colors.black),
+                      icon: const Icon(Icons.menu, color: Colors.white),
                       onPressed: () {
                         Scaffold.of(context).openDrawer();
                       },
@@ -194,7 +194,7 @@ class _HomePageState extends State<HomePage> {
                       IconButton(
                         icon: const Icon(
                           Icons.notifications_outlined,
-                          color: Colors.black,
+                          color: Colors.white,
                         ),
                         onPressed: () {},
                       ),

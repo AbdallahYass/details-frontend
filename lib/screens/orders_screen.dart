@@ -101,15 +101,17 @@ class _OrdersScreenState extends State<OrdersScreen> {
     }
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          AppLocalizations.of(context)!.translate('my_orders'),
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        centerTitle: true,
+      ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              AppLocalizations.of(context)!.translate('my_orders'),
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-          ),
           Expanded(
             child: ordersData.orders.isEmpty
                 ? const Center(

@@ -190,7 +190,12 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('إدارة الكوبونات')),
+      appBar: AppBar(
+        title: const Text('إدارة الكوبونات'),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        centerTitle: true,
+      ),
       body: ListView.builder(
         itemCount: _coupons.length,
         itemBuilder: (ctx, i) {

@@ -181,7 +181,12 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('إدارة التصنيفات')),
+      appBar: AppBar(
+        title: const Text('إدارة التصنيفات'),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        centerTitle: true,
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView.builder(

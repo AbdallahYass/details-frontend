@@ -236,7 +236,12 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('إدارة الإعلانات')),
+      appBar: AppBar(
+        title: const Text('إدارة الإعلانات'),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        centerTitle: true,
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(

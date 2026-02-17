@@ -250,6 +250,9 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.product == null ? 'إضافة منتج' : 'تعديل منتج'),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

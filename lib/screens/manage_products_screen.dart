@@ -88,6 +88,8 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
         title: TextField(
           decoration: const InputDecoration(
             hintText: 'بحث عن منتج...',

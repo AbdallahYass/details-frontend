@@ -14,8 +14,11 @@ class AboutScreen extends StatelessWidget {
           AppLocalizations.of(context)!.translate('footer_about_title'),
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.pop(),
         ),
       ),
