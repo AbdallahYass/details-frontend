@@ -292,7 +292,7 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddDialog,
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.black,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );

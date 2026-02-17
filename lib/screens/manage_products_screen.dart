@@ -147,7 +147,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/admin/products/add'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.black,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );

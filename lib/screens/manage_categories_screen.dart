@@ -218,7 +218,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddDialog,
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.black,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );

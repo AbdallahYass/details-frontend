@@ -215,7 +215,7 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddCouponDialog,
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.black,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
