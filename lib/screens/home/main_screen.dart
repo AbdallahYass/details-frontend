@@ -4,7 +4,6 @@ import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:details_app/providers/auth_provider.dart';
-import 'package:details_app/widgets/custom_app_bar.dart'; // Correct the import
 import 'package:details_app/providers/settings_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -17,7 +16,7 @@ class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: navigationShell.currentIndex == 0 ? null : const CustomAppBar(),
+      appBar: navigationShell.currentIndex == 0 ? null : _buildAppBar(context),
       drawer: _buildDrawer(context),
       body: navigationShell,
       bottomNavigationBar: Container(
@@ -69,6 +68,26 @@ class MainScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return AppBar(
+      backgroundColor: AppColors.appBarBackground,
+      foregroundColor: AppColors.appBarForeground,
+      elevation: 0,
+      centerTitle: true,
+      leading: IconButton(
+        icon: const Icon(Icons.menu),
+        onPressed: () => Scaffold.of(context).openDrawer(),
+      ),
+      title: Image.asset('assets/images/logo1.png', height: 40),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.notifications_outlined),
+          onPressed: () {},
+        ),
+      ],
     );
   }
 

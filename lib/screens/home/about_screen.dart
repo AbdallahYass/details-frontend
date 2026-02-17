@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:details_app/constants/app_colors.dart';
-import 'package:details_app/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 class AboutScreen extends StatelessWidget {
@@ -10,17 +9,20 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          AppLocalizations.of(context)!.translate('footer_about_title'),
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: Image.asset('assets/images/logo1.png', height: 40),
         backgroundColor: AppColors.appBarBackground,
         foregroundColor: AppColors.appBarForeground,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.appBarForeground),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {},
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -35,7 +37,7 @@ class AboutScreen extends StatelessWidget {
                 color: AppColors.aboutLogoBackground,
               ),
               child: Image.asset(
-                'assets/images/logo.png',
+                'assets/images/logo1.png',
                 height: 100,
                 errorBuilder: (c, _, __) => const Icon(
                   Icons.store,

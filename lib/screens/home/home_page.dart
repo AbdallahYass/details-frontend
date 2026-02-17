@@ -180,16 +180,11 @@ class _HomePageState extends State<HomePage> {
                     floating: true,
                     pinned: true,
                     backgroundColor: AppColors.appBarBackground,
+                    foregroundColor: AppColors.appBarForeground,
                     elevation: 0,
                     centerTitle: true,
-                    iconTheme: const IconThemeData(
-                      color: AppColors.appBarForeground,
-                    ),
                     leading: IconButton(
-                      icon: const Icon(
-                        Icons.menu,
-                        color: AppColors.appBarForeground,
-                      ),
+                      icon: const Icon(Icons.menu),
                       onPressed: () {
                         Scaffold.of(context).openDrawer();
                       },
@@ -197,10 +192,7 @@ class _HomePageState extends State<HomePage> {
                     title: Image.asset('assets/images/logo1.png', height: 40),
                     actions: [
                       IconButton(
-                        icon: const Icon(
-                          Icons.notifications_outlined,
-                          color: AppColors.appBarForeground,
-                        ),
+                        icon: const Icon(Icons.notifications_outlined),
                         onPressed: () {},
                       ),
                     ],
