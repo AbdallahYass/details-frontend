@@ -28,14 +28,6 @@ class AccountScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          AppLocalizations.of(context)?.translate('nav_account') ?? 'Account',
-        ),
-        backgroundColor: AppColors.appBarBackground,
-        foregroundColor: AppColors.appBarForeground,
-        centerTitle: true,
-      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -44,7 +36,7 @@ class AccountScreen extends StatelessWidget {
             backgroundColor: AppColors.primary,
             child: Text(
               user?.name[0].toUpperCase() ?? 'U',
-              style: const TextStyle(fontSize: 40, color: Colors.white),
+              style: const TextStyle(fontSize: 40, color: AppColors.white),
             ),
           ),
           const SizedBox(height: 20),
@@ -57,7 +49,7 @@ class AccountScreen extends StatelessWidget {
           Center(
             child: Text(
               user?.email ?? '',
-              style: const TextStyle(color: Colors.grey),
+              style: const TextStyle(color: AppColors.textSecondary),
             ),
           ),
           const SizedBox(height: 40),
@@ -71,10 +63,10 @@ class AccountScreen extends StatelessWidget {
           ),
           const Divider(),
           ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
+            leading: const Icon(Icons.logout, color: AppColors.error),
             title: Text(
               AppLocalizations.of(context)?.translate('logout') ?? 'Logout',
-              style: const TextStyle(color: Colors.red),
+              style: const TextStyle(color: AppColors.error),
             ),
             onTap: () {
               auth.logout();

@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // --- Base Palette (الألوان الأساسية) ---
-  static const Color primary = Color(0xFF2C3E50); // أزرق ليلي غامق (فخم ورسمي)
+  static const Color primary = Color(0xFF800020); // خمري بارد
   static const Color secondary = Color(
-    0xFFE67E22,
-  ); // برتقالي حيوي (للأزرار والأسعار)
-  static const Color background = Color(
-    0xFFF5F6FA,
-  ); // رمادي فاتح جداً (مريح للعين)
+    0xFFD4AF37,
+  ); // ذهبي (يتناسق مع الخمري والبيج)
+  static const Color background = Color(0xFFF5F5DC); // بيج
   static const Color white = Colors.white;
   static const Color black = Color(0xFF2D3436); // أسود ناعم
   static const Color grey = Color(0xFF636E72); // رمادي متوسط
@@ -62,9 +60,7 @@ class AppColors {
   static const Color homeBadgeText = white;
   static const Color homeCategoryText = textPrimary;
   static const Color homeCategoryIcon = grey;
-  static const Color homeFooterBackground = Color(
-    0xFF1E272E,
-  ); // فوتر غامق جداً (Dark Slate)
+  static const Color homeFooterBackground = primary; // خلفية الفوتر
   static const Color homeNavActive = primary;
   static const Color homeNavInactive = Color(0xFFB2BEC3);
   static const Color homeNavBackground = white;
