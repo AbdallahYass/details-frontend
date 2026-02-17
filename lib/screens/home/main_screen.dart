@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:details_app/constants/app_colors.dart';
@@ -16,23 +18,26 @@ class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       appBar: navigationShell.currentIndex == 0 ? null : _buildAppBar(context),
       drawer: _buildDrawer(context),
       body: navigationShell,
       bottomNavigationBar: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
         height: 70,
         decoration: BoxDecoration(
           color: AppColors.homeNavBackground,
+          borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: AppColors.shadowColor,
-              blurRadius: 10,
-              offset: const Offset(0, -5),
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _navIcon(
               context,
@@ -98,20 +103,43 @@ class MainScreen extends StatelessWidget {
     int index,
   ) {
     final isSelected = navigationShell.currentIndex == index;
-    final color = isSelected
-        ? AppColors.homeNavActive
-        : AppColors.homeNavInactive;
 
     return GestureDetector(
       onTap: () => _onTap(context, index),
       behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 4),
-          Text(label, style: TextStyle(color: color, fontSize: 10)),
-        ],
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        padding: isSelected
+            ? const EdgeInsets.symmetric(horizontal: 12, vertical: 8)
+            : const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary.withOpacity(0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? AppColors.primary : AppColors.homeNavInactive,
+              size: 24,
+            ),
+            if (isSelected) ...[
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
