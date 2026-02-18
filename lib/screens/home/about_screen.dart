@@ -16,7 +16,7 @@ class AboutScreen extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
-        ),
+        ), //
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
