@@ -580,7 +580,29 @@ class _HomePageState extends State<HomePage> {
                               context.push('/product/${p.id}', extra: p),
                         ),
                         const SizedBox(height: 8),
-                        _circleIcon(Icons.link, isWhite: true),
+                        _circleIcon(
+                          Icons.share,
+                          isWhite: true,
+                          onTap: () async {
+                            final currency = AppLocalizations.of(context)!
+                                .translate('currency');
+                            final text =
+                                '🌟 *Check out this amazing product!* 🌟\n\n'
+                                '🛍️ *${p.getName(context)}*\n'
+                                '💰 Price: *${p.price} $currency*\n\n'
+                                '🔗 ${p.imageUrl}\n\n'
+                                '_Sent from Details Store App_';
+                            final url = Uri.parse(
+                              'https://wa.me/?text=${Uri.encodeComponent(text)}',
+                            );
+                            if (!await launchUrl(
+                              url,
+                              mode: LaunchMode.externalApplication,
+                            )) {
+                              debugPrint('Could not launch $url');
+                            }
+                          },
+                        ),
                       ],
                     ),
                   ),

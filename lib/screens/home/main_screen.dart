@@ -48,16 +48,14 @@ class _MainScreenState extends State<MainScreen> {
         },
         child: widget.navigationShell,
       ),
-      bottomNavigationBar: AnimatedContainer(
+      bottomNavigationBar: AnimatedOpacity(
         duration: const Duration(milliseconds: 300),
+        opacity: _isBottomBarVisible ? 1.0 : 0.0,
         curve: Curves.easeInOut,
-        height: _isBottomBarVisible ? 70 : 0,
-        margin: _isBottomBarVisible
-            ? const EdgeInsets.fromLTRB(16, 0, 16, 20)
-            : EdgeInsets.zero,
-        child: SingleChildScrollView(
-          physics: const NeverScrollableScrollPhysics(),
+        child: IgnorePointer(
+          ignoring: !_isBottomBarVisible,
           child: Container(
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
             height: 70,
             decoration: BoxDecoration(
               color: AppColors.homeNavBackground,

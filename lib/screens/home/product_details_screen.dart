@@ -228,8 +228,15 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       IconButton(
                         icon: const Icon(Icons.share, color: AppColors.grey),
                         onPressed: () async {
+                          final currency = AppLocalizations.of(
+                            context,
+                          )!.translate('currency');
                           final text =
-                              'Check out this amazing product: ${_product!.getName(context)}\nPrice: \$${_product!.price}';
+                              '🌟 *Check out this amazing product!* 🌟\n\n'
+                              '🛍️ *${_product!.getName(context)}*\n'
+                              '💰 Price: *${_product!.price} $currency*\n\n'
+                              '🔗 ${_product!.imageUrl}\n\n'
+                              '_Sent from Details Store App_';
                           final url = Uri.parse(
                             'https://wa.me/?text=${Uri.encodeComponent(text)}',
                           );
