@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/l10n/app_localizations.dart';
@@ -10,67 +11,102 @@ import 'package:details_app/providers/settings_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-class MainScreen extends StatelessWidget {
+class MainScreen extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
 
   const MainScreen({super.key, required this.navigationShell});
 
   @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  bool _isBottomBarVisible = true;
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      appBar: navigationShell.currentIndex == 0 ? null : _buildAppBar(context),
+      appBar: widget.navigationShell.currentIndex == 0
+          ? null
+          : _buildAppBar(context),
       drawer: _buildDrawer(context),
-      body: navigationShell,
-      bottomNavigationBar: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-        height: 70,
-        decoration: BoxDecoration(
-          color: AppColors.homeNavBackground,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+      body: NotificationListener<UserScrollNotification>(
+        onNotification: (notification) {
+          if (notification.direction == ScrollDirection.reverse &&
+              notification.metrics.axis == Axis.vertical) {
+            if (_isBottomBarVisible) {
+              setState(() => _isBottomBarVisible = false);
+            }
+          } else if (notification.direction == ScrollDirection.forward &&
+              notification.metrics.axis == Axis.vertical) {
+            if (!_isBottomBarVisible) {
+              setState(() => _isBottomBarVisible = true);
+            }
+          }
+          return true;
+        },
+        child: widget.navigationShell,
+      ),
+      bottomNavigationBar: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        height: _isBottomBarVisible ? 70 : 0,
+        margin: _isBottomBarVisible
+            ? const EdgeInsets.fromLTRB(16, 0, 16, 20)
+            : EdgeInsets.zero,
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          child: Container(
+            height: 70,
+            decoration: BoxDecoration(
+              color: AppColors.homeNavBackground,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _navIcon(
-              context,
-              Icons.home_outlined,
-              // نستخدم nav_shop مؤقتاً أو يمكنك إضافة nav_home في ملفات الترجمة
-              AppLocalizations.of(context)!.translate('nav_shop'),
-              0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _navIcon(
+                  context,
+                  Icons.home_outlined,
+                  // نستخدم nav_shop مؤقتاً أو يمكنك إضافة nav_home في ملفات الترجمة
+                  AppLocalizations.of(context)!.translate('nav_shop'),
+                  0,
+                ),
+                _navIcon(
+                  context,
+                  Icons.search,
+                  AppLocalizations.of(context)!.translate('nav_search'),
+                  1,
+                ),
+                _navIcon(
+                  context,
+                  Icons.shopping_bag_outlined,
+                  AppLocalizations.of(context)!.translate('nav_cart'),
+                  2,
+                ),
+                _navIcon(
+                  context,
+                  Icons.favorite_border,
+                  AppLocalizations.of(context)!.translate('nav_wishlist'),
+                  3,
+                ),
+                _navIcon(
+                  context,
+                  Icons.person_outline,
+                  AppLocalizations.of(context)!.translate('nav_account'),
+                  4,
+                ),
+              ],
             ),
-            _navIcon(
-              context,
-              Icons.search,
-              AppLocalizations.of(context)!.translate('nav_search'),
-              1,
-            ),
-            _navIcon(
-              context,
-              Icons.shopping_bag_outlined,
-              AppLocalizations.of(context)!.translate('nav_cart'),
-              2,
-            ),
-            _navIcon(
-              context,
-              Icons.favorite_border,
-              AppLocalizations.of(context)!.translate('nav_wishlist'),
-              3,
-            ),
-            _navIcon(
-              context,
-              Icons.person_outline,
-              AppLocalizations.of(context)!.translate('nav_account'),
-              4,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -102,7 +138,7 @@ class MainScreen extends StatelessWidget {
     String label,
     int index,
   ) {
-    final isSelected = navigationShell.currentIndex == index;
+    final isSelected = widget.navigationShell.currentIndex == index;
 
     return GestureDetector(
       onTap: () => _onTap(context, index),
@@ -154,9 +190,9 @@ class MainScreen extends StatelessWidget {
       }
     }
 
-    navigationShell.goBranch(
+    widget.navigationShell.goBranch(
       index,
-      initialLocation: index == navigationShell.currentIndex,
+      initialLocation: index == widget.navigationShell.currentIndex,
     );
   }
 

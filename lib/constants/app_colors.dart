@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 class AppColors {
   // --- Base Palette (الألوان الأساسية) ---
   static const Color primary = Color(0xFF800020); // خمري بارد
-  static const Color secondary = Color(
-    0xFFD4AF37,
-  ); // ذهبي (يتناسق مع الخمري والبيج)
-  static const Color background = Color(0xFFF5F5DC); // بيج
+  static const Color secondary = Color(0xFFD4AF37); // ذهبي (يتناسق مع الخمري)
+  static const Color background = Color(
+    0xFFFAFAFA,
+  ); // أوف وايت (أنظف وأفخم مع الخمري)
   static const Color white = Colors.white;
   static const Color black = Color(0xFF2D3436); // أسود ناعم
   static const Color grey = Color(0xFF636E72); // رمادي متوسط
