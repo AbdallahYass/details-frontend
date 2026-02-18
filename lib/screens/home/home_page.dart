@@ -609,9 +609,12 @@ class _HomePageState extends State<HomePage> {
                               await file.writeAsBytes(response.bodyBytes);
 
                               // مشاركة الصورة مع النص
-                              await Share.shareXFiles([
-                                XFile(imagePath),
-                              ], text: text);
+                              await SharePlus.instance.share(
+                                ShareParams(
+                                  files: [XFile(imagePath)],
+                                  text: text,
+                                ),
+                              );
                             } catch (e) {
                               debugPrint('Error sharing: $e');
                             }

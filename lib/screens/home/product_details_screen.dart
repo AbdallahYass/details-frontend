@@ -231,6 +231,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         icon: const Icon(Icons.share, color: AppColors.grey),
                         onPressed: () async {
                           try {
+                            // 1. تحضير النص والبيانات
                             final currency = AppLocalizations.of(
                               context,
                             )!.translate('currency');
@@ -241,20 +242,25 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                 '🔗 Link: https://details-store.com/product/${_product!.id}\n\n'
                                 '_Sent from Details Store App_';
 
-                            // تحميل الصورة وحفظها مؤقتاً
+                            // 2. تحميل الصورة من الرابط
                             final response = await http.get(
                               Uri.parse(_product!.imageUrl),
                             );
+
+                            // 3. حفظ الصورة مؤقتاً في الجهاز
                             final directory = await getTemporaryDirectory();
                             final imagePath =
                                 '${directory.path}/product_${_product!.id}.jpg';
                             final file = File(imagePath);
                             await file.writeAsBytes(response.bodyBytes);
 
-                            // مشاركة الصورة مع النص
-                            await Share.shareXFiles([
-                              XFile(imagePath),
-                            ], text: text);
+                            // 4. تنفيذ عملية المشاركة
+                            await SharePlus.instance.share(
+                              ShareParams(
+                                files: [XFile(imagePath)],
+                                text: text,
+                              ),
+                            );
                           } catch (e) {
                             debugPrint('Error sharing: $e');
                           }
