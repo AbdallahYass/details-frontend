@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -9,7 +10,8 @@ import 'package:details_app/providers/wishlist_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:details_app/providers/cart_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   final Product? product;
@@ -228,23 +230,33 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       IconButton(
                         icon: const Icon(Icons.share, color: AppColors.grey),
                         onPressed: () async {
-                          final currency = AppLocalizations.of(
-                            context,
-                          )!.translate('currency');
-                          final text =
-                              '🌟 *Check out this amazing product!* 🌟\n\n'
-                              '🛍️ *${_product!.getName(context)}*\n'
-                              '💰 Price: *${_product!.price} $currency*\n\n'
-                              '🔗 ${_product!.imageUrl}\n\n'
-                              '_Sent from Details Store App_';
-                          final url = Uri.parse(
-                            'https://wa.me/?text=${Uri.encodeComponent(text)}',
-                          );
-                          if (!await launchUrl(
-                            url,
-                            mode: LaunchMode.externalApplication,
-                          )) {
-                            debugPrint('Could not launch $url');
+                          try {
+                            final currency = AppLocalizations.of(
+                              context,
+                            )!.translate('currency');
+                            final text =
+                                '🌟 *Check out this amazing product!* 🌟\n\n'
+                                '🛍️ *${_product!.getName(context)}*\n'
+                                '💰 Price: *${_product!.price} $currency*\n\n'
+                                '🔗 Link: https://details-store.com/product/${_product!.id}\n\n'
+                                '_Sent from Details Store App_';
+
+                            // تحميل الصورة وحفظها مؤقتاً
+                            final response = await http.get(
+                              Uri.parse(_product!.imageUrl),
+                            );
+                            final directory = await getTemporaryDirectory();
+                            final imagePath =
+                                '${directory.path}/product_${_product!.id}.jpg';
+                            final file = File(imagePath);
+                            await file.writeAsBytes(response.bodyBytes);
+
+                            // مشاركة الصورة مع النص
+                            await Share.shareXFiles([
+                              XFile(imagePath),
+                            ], text: text);
+                          } catch (e) {
+                            debugPrint('Error sharing: $e');
                           }
                         },
                       ),

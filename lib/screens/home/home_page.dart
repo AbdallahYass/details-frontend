@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -18,6 +19,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:details_app/providers/settings_provider.dart';
 import 'package:details_app/providers/auth_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -584,22 +587,33 @@ class _HomePageState extends State<HomePage> {
                           Icons.share,
                           isWhite: true,
                           onTap: () async {
-                            final currency = AppLocalizations.of(context)!
-                                .translate('currency');
-                            final text =
-                                '🌟 *Check out this amazing product!* 🌟\n\n'
-                                '🛍️ *${p.getName(context)}*\n'
-                                '💰 Price: *${p.price} $currency*\n\n'
-                                '🔗 ${p.imageUrl}\n\n'
-                                '_Sent from Details Store App_';
-                            final url = Uri.parse(
-                              'https://wa.me/?text=${Uri.encodeComponent(text)}',
-                            );
-                            if (!await launchUrl(
-                              url,
-                              mode: LaunchMode.externalApplication,
-                            )) {
-                              debugPrint('Could not launch $url');
+                            try {
+                              final currency = AppLocalizations.of(
+                                context,
+                              )!.translate('currency');
+                              final text =
+                                  '🌟 *Check out this amazing product!* 🌟\n\n'
+                                  '🛍️ *${p.getName(context)}*\n'
+                                  '💰 Price: *${p.price} $currency*\n\n'
+                                  '🔗 Link: https://details-store.com/product/${p.id}\n\n'
+                                  '_Sent from Details Store App_';
+
+                              // تحميل الصورة وحفظها مؤقتاً
+                              final response = await http.get(
+                                Uri.parse(p.imageUrl),
+                              );
+                              final directory = await getTemporaryDirectory();
+                              final imagePath =
+                                  '${directory.path}/product_${p.id}.jpg';
+                              final file = File(imagePath);
+                              await file.writeAsBytes(response.bodyBytes);
+
+                              // مشاركة الصورة مع النص
+                              await Share.shareXFiles([
+                                XFile(imagePath),
+                              ], text: text);
+                            } catch (e) {
+                              debugPrint('Error sharing: $e');
                             }
                           },
                         ),
