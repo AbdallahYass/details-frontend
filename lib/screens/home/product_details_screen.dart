@@ -10,6 +10,7 @@ import 'package:details_app/l10n/app_localizations.dart';
 import 'package:details_app/providers/wishlist_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:details_app/providers/cart_provider.dart';
+import 'package:details_app/providers/auth_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -131,7 +132,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
         ),
         actions: [
           IconButton(
@@ -467,6 +474,51 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           ],
         ),
       ),
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+        height: 70,
+        decoration: BoxDecoration(
+          color: AppColors.homeNavBackground,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _navIcon(
+              Icons.home_outlined,
+              AppLocalizations.of(context)!.translate('nav_shop'),
+              0,
+            ),
+            _navIcon(
+              Icons.search,
+              AppLocalizations.of(context)!.translate('nav_search'),
+              1,
+            ),
+            _navIcon(
+              Icons.shopping_bag_outlined,
+              AppLocalizations.of(context)!.translate('nav_cart'),
+              2,
+            ),
+            _navIcon(
+              Icons.favorite_border,
+              AppLocalizations.of(context)!.translate('nav_wishlist'),
+              3,
+            ),
+            _navIcon(
+              Icons.person_outline,
+              AppLocalizations.of(context)!.translate('nav_account'),
+              4,
+            ),
+          ],
+        ),
+      ),
       bottomSheet: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -634,5 +686,74 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         ),
       ),
     );
+  }
+
+  Widget _navIcon(IconData icon, String label, int index) {
+    // نعتبر الصفحة الحالية هي المتجر (Shop)
+    final isSelected = index == 0;
+
+    return GestureDetector(
+      onTap: () => _onNavTap(index),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        padding: isSelected
+            ? const EdgeInsets.symmetric(horizontal: 12, vertical: 8)
+            : const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary.withValues(alpha: 0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? AppColors.primary : AppColors.homeNavInactive,
+              size: 24,
+            ),
+            if (isSelected) ...[
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onNavTap(int index) {
+    switch (index) {
+      case 0:
+        context.go('/');
+        break;
+      case 1:
+        context.go('/search');
+        break;
+      case 2:
+        context.go('/cart');
+        break;
+      case 3:
+        context.go('/wishlist');
+        break;
+      case 4:
+        final auth = Provider.of<AuthProvider>(context, listen: false);
+        if (!auth.isAuthenticated) {
+          context.push('/login');
+        } else {
+          context.go('/profile');
+        }
+        break;
+    }
   }
 }
