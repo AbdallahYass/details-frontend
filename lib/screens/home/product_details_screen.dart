@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -242,25 +243,31 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                 '🔗 Link: https://details-store.com/product/${_product!.id}\n\n'
                                 '_Sent from Details Store App_';
 
-                            // 2. تحميل الصورة من الرابط
-                            final response = await http.get(
-                              Uri.parse(_product!.imageUrl),
-                            );
+                            if (kIsWeb) {
+                              await SharePlus.instance.share(
+                                ShareParams(text: text),
+                              );
+                            } else {
+                              // 2. تحميل الصورة من الرابط
+                              final response = await http.get(
+                                Uri.parse(_product!.imageUrl),
+                              );
 
-                            // 3. حفظ الصورة مؤقتاً في الجهاز
-                            final directory = await getTemporaryDirectory();
-                            final imagePath =
-                                '${directory.path}/product_${_product!.id}.jpg';
-                            final file = File(imagePath);
-                            await file.writeAsBytes(response.bodyBytes);
+                              // 3. حفظ الصورة مؤقتاً في الجهاز
+                              final directory = await getTemporaryDirectory();
+                              final imagePath =
+                                  '${directory.path}/product_${_product!.id}.jpg';
+                              final file = File(imagePath);
+                              await file.writeAsBytes(response.bodyBytes);
 
-                            // 4. تنفيذ عملية المشاركة
-                            await SharePlus.instance.share(
-                              ShareParams(
-                                files: [XFile(imagePath)],
-                                text: text,
-                              ),
-                            );
+                              // 4. تنفيذ عملية المشاركة
+                              await SharePlus.instance.share(
+                                ShareParams(
+                                  files: [XFile(imagePath)],
+                                  text: text,
+                                ),
+                              );
+                            }
                           } catch (e) {
                             debugPrint('Error sharing: $e');
                           }
