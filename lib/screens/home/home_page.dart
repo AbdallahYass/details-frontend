@@ -596,7 +596,7 @@ class _HomePageState extends State<HomePage> {
                                   '🌟 *Check out this amazing product!* 🌟\n\n'
                                   '🛍️ *${p.getName(context)}*\n'
                                   '💰 Price: *${p.price} $currency*\n\n'
-                                  '🔗 Link: https://details-store.com/product/${p.id}\n\n'
+                                  '🔗 Link: https://details-store.com/#/product/${p.id}\n\n'
                                   '_Sent from Details Store App_';
 
                               if (kIsWeb) {
