@@ -240,7 +240,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                 '🌟 *Check out this amazing product!* 🌟\n\n'
                                 '🛍️ *${_product!.getName(context)}*\n'
                                 '💰 Price: *${_product!.price} $currency*\n\n'
-                                '🔗 Link: https://details-store.com/#/product/${_product!.id}\n\n'
+                                '🔗 Link: https://details-store.com/product/${_product!.id}\n\n'
                                 '_Sent from Details Store App_';
 
                             if (kIsWeb) {
