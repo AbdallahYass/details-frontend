@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:url_strategy/url_strategy.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:details_app/l10n/app_localizations.dart';
@@ -12,7 +12,7 @@ import 'package:details_app/constants/app_theme.dart';
 import 'package:details_app/providers/router.dart';
 
 Future<void> main() async {
-  usePathUrlStrategy();
+  setPathUrlStrategy();
   runApp(
     MultiProvider(
       providers: [

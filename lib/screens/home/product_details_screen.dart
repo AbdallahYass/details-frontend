@@ -1,19 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
-import 'package:details_app/models/product.dart';
-import 'package:details_app/constants/app_colors.dart';
-import 'package:details_app/l10n/app_localizations.dart';
-import 'package:details_app/providers/wishlist_provider.dart';
-import 'package:go_router/go_router.dart';
-import 'package:details_app/providers/cart_provider.dart';
-import 'package:details_app/providers/auth_provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:details_app/app_imports.dart';
 
 class ProductDetailsScreen extends StatefulWidget {
   final Product? product;
@@ -247,7 +234,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                 '🌟 *Check out this amazing product!* 🌟\n\n'
                                 '🛍️ *${_product!.getName(context)}*\n'
                                 '💰 Price: *${_product!.price} $currency*\n\n'
-                                '🔗 Link: https://details-store.com/product/${_product!.id}\n\n'
+                                '🔗 Link: ${AppConstants.shareBaseUrl}/product/${_product!.id}\n\n'
                                 '_Sent from Details Store App_';
 
                             if (kIsWeb) {
@@ -255,22 +242,14 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                 ShareParams(text: text),
                               );
                             } else {
-                              // 2. تحميل الصورة من الرابط
-                              final response = await http.get(
-                                Uri.parse(_product!.imageUrl),
-                              );
-
-                              // 3. حفظ الصورة مؤقتاً في الجهاز
-                              final directory = await getTemporaryDirectory();
-                              final imagePath =
-                                  '${directory.path}/product_${_product!.id}.jpg';
-                              final file = File(imagePath);
-                              await file.writeAsBytes(response.bodyBytes);
+                              // استخدام الكاش لجلب الصورة
+                              final file = await DefaultCacheManager()
+                                  .getSingleFile(_product!.imageUrl);
 
                               // 4. تنفيذ عملية المشاركة
                               await SharePlus.instance.share(
                                 ShareParams(
-                                  files: [XFile(imagePath)],
+                                  files: [XFile(file.path)],
                                   text: text,
                                 ),
                               );
@@ -317,13 +296,17 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         },
                       ),
                       const Spacer(),
-                      Text(
-                        _product!.brand,
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.5,
+                      Flexible(
+                        child: Text(
+                          _product!.brand,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1.5,
+                          ),
                         ),
                       ),
                     ],
@@ -339,7 +322,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    "\$${_product!.price}",
+                    "${_product!.price} ${AppLocalizations.of(context)!.translate('currency')}",
                     style: TextStyle(
                       fontSize: 22,
                       color: AppColors.primary,
@@ -352,9 +335,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     children: [
                       const Icon(Icons.star, color: AppColors.gold, size: 18),
                       const SizedBox(width: 4),
-                      const Text(
-                        "4.8 (120 reviews)",
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                      Text(
+                        "4.8 (120 ${AppLocalizations.of(context)!.translate('reviews')})",
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -398,8 +384,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   ],
                   if (_product!.sizes.isNotEmpty) ...[
                     const SizedBox(height: 20),
-                    const Text(
-                      'المقاس (Size)',
+                    Text(
+                      AppLocalizations.of(context)!.translate('size'),
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -439,7 +425,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   ],
                   const SizedBox(height: 20),
                   Text(
-                    'متوفر: $_availableQuantity',
+                    '${AppLocalizations.of(context)!.translate('available')} $_availableQuantity',
                     style: const TextStyle(
                       fontSize: 14,
                       color: Colors.grey,
@@ -511,11 +497,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               AppLocalizations.of(context)!.translate('nav_wishlist'),
               3,
             ),
-            _navIcon(
-              Icons.person_outline,
-              AppLocalizations.of(context)!.translate('nav_account'),
-              4,
-            ),
           ],
         ),
       ),
@@ -573,7 +554,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         if (_product!.sizes.isNotEmpty &&
                             _selectedSize == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('يرجى اختيار المقاس')),
+                            SnackBar(
+                              content: Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.translate('select_size'),
+                              ),
+                            ),
                           );
                           return;
                         }
@@ -593,8 +580,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         }
                         ScaffoldMessenger.of(context).hideCurrentSnackBar();
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('تمت الإضافة للسلة بنجاح'),
+                          SnackBar(
+                            content: Text(
+                              AppLocalizations.of(
+                                context,
+                              )!.translate('added_to_cart'),
+                            ),
                             duration: Duration(seconds: 1),
                           ),
                         );
@@ -672,7 +663,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "\$${p.price}",
+                    "${p.price} ${AppLocalizations.of(context)!.translate('currency')}",
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.gold,
@@ -745,14 +736,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         break;
       case 3:
         context.go('/wishlist');
-        break;
-      case 4:
-        final auth = Provider.of<AuthProvider>(context, listen: false);
-        if (!auth.isAuthenticated) {
-          context.push('/login');
-        } else {
-          context.go('/profile');
-        }
         break;
     }
   }

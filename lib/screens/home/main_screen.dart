@@ -1,15 +1,5 @@
-// ignore_for_file: deprecated_member_use
-
-import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:go_router/go_router.dart';
-import 'package:details_app/constants/app_colors.dart';
-import 'package:details_app/l10n/app_localizations.dart';
-import 'package:provider/provider.dart';
-import 'package:details_app/providers/auth_provider.dart';
-import 'package:details_app/providers/settings_provider.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:details_app/app_imports.dart';
 
 class MainScreen extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
@@ -62,7 +52,7 @@ class _MainScreenState extends State<MainScreen> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -95,12 +85,6 @@ class _MainScreenState extends State<MainScreen> {
                   Icons.favorite_border,
                   AppLocalizations.of(context)!.translate('nav_wishlist'),
                   3,
-                ),
-                _navIcon(
-                  context,
-                  Icons.person_outline,
-                  AppLocalizations.of(context)!.translate('nav_account'),
-                  4,
                 ),
               ],
             ),
@@ -149,7 +133,7 @@ class _MainScreenState extends State<MainScreen> {
             : const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withOpacity(0.1)
+              ? AppColors.primary.withValues(alpha: 0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
@@ -179,15 +163,6 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _onTap(BuildContext context, int index) {
-    // عند الضغط على تبويب الحساب، نتحقق من تسجيل الدخول
-    if (index == 4) {
-      final auth = Provider.of<AuthProvider>(context, listen: false);
-      if (!auth.isAuthenticated) {
-        context.push('/login');
-        return;
-      }
-    }
-
     widget.navigationShell.goBranch(
       index,
       initialLocation: index == widget.navigationShell.currentIndex,
@@ -199,131 +174,254 @@ class _MainScreenState extends State<MainScreen> {
     final settings = Provider.of<SettingsProvider>(context);
 
     return Drawer(
+      backgroundColor: Colors.white,
       child: Column(
         children: [
-          UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(color: AppColors.homeDrawerHeader),
-            accountName: Text(
-              auth.isAuthenticated ? (auth.user?.name ?? 'User') : 'Guest',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            accountEmail: Text(
-              auth.isAuthenticated
-                  ? (auth.user?.email ?? '')
-                  : 'Welcome to Details',
-            ),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: AppColors.homeDrawerAvatarBg,
-              child: Text(
-                auth.isAuthenticated
-                    ? (auth.user?.name[0].toUpperCase() ?? 'U')
-                    : 'G',
-                style: const TextStyle(
-                  fontSize: 24,
-                  color: AppColors.homeDrawerAvatarText,
-                ),
+          // Custom Header
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 60, 20, 30),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
               ),
-            ),
-          ),
-          ListTile(
-            leading: const Icon(
-              Icons.language,
-              color: AppColors.homeDrawerIcon,
-            ),
-            title: Text(AppLocalizations.of(context)!.translate('language')),
-            trailing: DropdownButton<Locale>(
-              value: settings.locale,
-              underline: const SizedBox(),
-              icon: const Icon(
-                Icons.arrow_drop_down,
-                color: AppColors.homeDrawerIcon,
-              ),
-              onChanged: (Locale? newLocale) {
-                if (newLocale != null) {
-                  settings.setLocale(newLocale);
-                  Navigator.pop(context); // إغلاق القائمة
-                }
-              },
-              items: const [
-                DropdownMenuItem(
-                  value: Locale('ar', ''),
-                  child: Text('العربية'),
-                ),
-                DropdownMenuItem(
-                  value: Locale('en', ''),
-                  child: Text('English'),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 10),
                 ),
               ],
             ),
-          ),
-          const Divider(),
-          ListTile(
-            leading: const FaIcon(
-              FontAwesomeIcons.whatsapp,
-              color: AppColors.whatsapp,
-              size: 24,
-            ),
-            title: const Text('WhatsApp'),
-            onTap: () async {
-              Navigator.pop(context);
-              final Uri url = Uri.parse('https://wa.me/972598723438');
-              if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-                debugPrint('Could not launch $url');
-              }
-            },
-          ),
-          ListTile(
-            leading: const Icon(
-              Icons.info_outline,
-              color: AppColors.homeDrawerIcon,
-            ),
-            title: Text(
-              AppLocalizations.of(context)!.translate('footer_about_title'),
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              context.push('/about');
-            },
-          ),
-          // رابط لوحة التحكم (يظهر فقط للأدمن)
-          if (auth.isAuthenticated && (auth.user?.isAdmin ?? false))
-            ListTile(
-              leading: const Icon(
-                Icons.dashboard_customize,
-                color: AppColors.homeDrawerIcon,
-              ),
-              title: const Text('لوحة التحكم'),
-              onTap: () {
-                Navigator.pop(context);
-                context.push('/admin');
-              },
-            ),
-          const Spacer(),
-          const Divider(),
-          if (auth.isAuthenticated)
-            ListTile(
-              leading: const Icon(
-                Icons.logout,
-                color: AppColors.homeDrawerLogout,
-              ),
-              title: Text(
-                AppLocalizations.of(context)!.translate('logout'),
-                style: const TextStyle(
-                  color: AppColors.homeDrawerLogout,
-                  fontWeight: FontWeight.bold,
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: CircleAvatar(
+                    radius: 35,
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                    child: Text(
+                      auth.isAuthenticated
+                          ? (auth.user?.name[0].toUpperCase() ?? 'U')
+                          : 'G',
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                auth.logout();
-                context.go('/');
-              },
-            )
-          else
-            const SizedBox(),
-          const SizedBox(height: 20),
+                const SizedBox(height: 15),
+                Text(
+                  auth.isAuthenticated
+                      ? (auth.user?.name ?? 'User')
+                      : AppLocalizations.of(
+                          context,
+                        )!.translate('welcome_guest'),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (auth.isAuthenticated)
+                  Text(
+                    auth.user?.email ?? '',
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              children: [
+                if (!auth.isAuthenticated) ...[
+                  _drawerTile(
+                    context,
+                    icon: Icons.login,
+                    title: AppLocalizations.of(
+                      context,
+                    )!.translate('login_button'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push('/login');
+                    },
+                  ),
+                  _drawerTile(
+                    context,
+                    icon: Icons.person_add_outlined,
+                    title: AppLocalizations.of(
+                      context,
+                    )!.translate('create_account_link'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push('/register');
+                    },
+                  ),
+                  const Divider(height: 30),
+                ] else ...[
+                  _drawerTile(
+                    context,
+                    icon: Icons.person_outline,
+                    title: AppLocalizations.of(
+                      context,
+                    )!.translate('profile_title'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push('/profile');
+                    },
+                  ),
+                  _drawerTile(
+                    context,
+                    icon: Icons.shopping_bag_outlined,
+                    title: AppLocalizations.of(context)!.translate('my_orders'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push('/orders');
+                    },
+                  ),
+                  const Divider(height: 30),
+                ],
+
+                // Settings Section
+                _drawerTile(
+                  context,
+                  icon: Icons.language,
+                  title: AppLocalizations.of(context)!.translate('language'),
+                  trailing: DropdownButton<Locale>(
+                    value: settings.locale,
+                    underline: const SizedBox(),
+                    icon: const Icon(
+                      Icons.arrow_drop_down,
+                      color: AppColors.primary,
+                    ),
+                    onChanged: (Locale? newLocale) {
+                      if (newLocale != null) {
+                        settings.setLocale(newLocale);
+                        Navigator.pop(context);
+                      }
+                    },
+                    items: const [
+                      DropdownMenuItem(
+                        value: Locale('ar', ''),
+                        child: Text('العربية'),
+                      ),
+                      DropdownMenuItem(
+                        value: Locale('en', ''),
+                        child: Text('English'),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Support Section
+                _drawerTile(
+                  context,
+                  icon: FontAwesomeIcons.whatsapp,
+                  title: 'WhatsApp',
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final Uri url = Uri.parse('https://wa.me/972598723438');
+                    if (!await launchUrl(
+                      url,
+                      mode: LaunchMode.externalApplication,
+                    )) {
+                      debugPrint('Could not launch $url');
+                    }
+                  },
+                ),
+                _drawerTile(
+                  context,
+                  icon: Icons.info_outline,
+                  title: AppLocalizations.of(
+                    context,
+                  )!.translate('footer_about_title'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    context.push('/about');
+                  },
+                ),
+
+                if (auth.isAuthenticated && (auth.user?.isAdmin ?? false)) ...[
+                  const Divider(height: 30),
+                  _drawerTile(
+                    context,
+                    icon: Icons.dashboard_customize,
+                    title: AppLocalizations.of(
+                      context,
+                    )!.translate('admin_panel'),
+                    color: AppColors.primary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.push('/admin');
+                    },
+                  ),
+                ],
+
+                if (auth.isAuthenticated) ...[
+                  const Divider(height: 30),
+                  _drawerTile(
+                    context,
+                    icon: Icons.logout,
+                    title: AppLocalizations.of(context)!.translate('logout'),
+                    color: AppColors.red,
+                    onTap: () {
+                      Navigator.pop(context);
+                      auth.logout();
+                      context.go('/');
+                    },
+                  ),
+                ],
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _drawerTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    VoidCallback? onTap,
+    Widget? trailing,
+    Color? color,
+  }) {
+    final themeColor = color ?? AppColors.primary;
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: themeColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: themeColor, size: 20),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          color: color ?? Colors.black87,
+          fontSize: 14,
+        ),
+      ),
+      trailing:
+          trailing ??
+          const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+      onTap: onTap,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
     );
   }
 }

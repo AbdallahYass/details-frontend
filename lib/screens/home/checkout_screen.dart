@@ -1,13 +1,4 @@
-// ignore_for_file: deprecated_member_use
-
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
-import 'package:details_app/constants/app_colors.dart';
-import 'package:details_app/l10n/app_localizations.dart';
-import 'package:details_app/providers/cart_provider.dart';
-import 'package:details_app/providers/auth_provider.dart';
-import 'package:details_app/providers/orders_provider.dart';
+import 'package:details_app/app_imports.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -154,6 +145,46 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+        height: 70,
+        decoration: BoxDecoration(
+          color: AppColors.homeNavBackground,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _navIcon(
+              Icons.home_outlined,
+              AppLocalizations.of(context)!.translate('nav_shop'),
+              0,
+            ),
+            _navIcon(
+              Icons.search,
+              AppLocalizations.of(context)!.translate('nav_search'),
+              1,
+            ),
+            _navIcon(
+              Icons.shopping_bag_outlined,
+              AppLocalizations.of(context)!.translate('nav_cart'),
+              2,
+            ),
+            _navIcon(
+              Icons.favorite_border,
+              AppLocalizations.of(context)!.translate('nav_wishlist'),
+              3,
+            ),
+          ],
+        ),
+      ),
       body: cart.items.isEmpty
           ? Center(
               child: Text(
@@ -182,7 +213,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       icon: Icons.location_city,
                       validator: (value) {
                         if (value == null || value.trim().length < 2) {
-                          return 'يرجى إدخال اسم مدينة صحيح';
+                          return AppLocalizations.of(
+                            context,
+                          )!.translate('enter_valid_city');
                         }
                         return null;
                       },
@@ -214,7 +247,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           )!.translate('required_field');
                         }
                         if (value.length < 9) {
-                          return 'يرجى إدخال رقم هاتف صحيح';
+                          return AppLocalizations.of(
+                            context,
+                          )!.translate('enter_valid_phone');
                         }
                         return null;
                       },
@@ -271,7 +306,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             ),
                           ),
                           Text(
-                            '\$${total.toStringAsFixed(2)}',
+                            '${total.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -350,7 +385,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withOpacity(0.05)
+              ? AppColors.primary.withValues(alpha: 0.05)
               : AppColors.white,
           border: Border.all(
             color: isSelected ? AppColors.primary : AppColors.arrowInactive,
@@ -379,5 +414,66 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ),
       ),
     );
+  }
+
+  Widget _navIcon(IconData icon, String label, int index) {
+    // نعتبر الصفحة الحالية هي السلة (Checkout تابع للسلة)
+    final isSelected = index == 2;
+
+    return GestureDetector(
+      onTap: () => _onNavTap(index),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        padding: isSelected
+            ? const EdgeInsets.symmetric(horizontal: 12, vertical: 8)
+            : const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary.withValues(alpha: 0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? AppColors.primary : AppColors.homeNavInactive,
+              size: 24,
+            ),
+            if (isSelected) ...[
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onNavTap(int index) {
+    switch (index) {
+      case 0:
+        context.go('/');
+        break;
+      case 1:
+        context.go('/search');
+        break;
+      case 2:
+        context.go('/cart');
+        break;
+      case 3:
+        context.go('/wishlist');
+        break;
+    }
   }
 }

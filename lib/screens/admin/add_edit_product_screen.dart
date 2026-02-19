@@ -1,12 +1,6 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
-import 'package:details_app/constants/app_colors.dart';
-import 'package:details_app/providers/auth_provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:details_app/screens/home/cloudinary_service.dart';
-import 'package:details_app/models/product.dart';
+import 'package:details_app/app_imports.dart';
 
 class AddEditProductScreen extends StatefulWidget {
   final dynamic product; // If null, we are adding
@@ -127,8 +121,10 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم رفع الصورة بنجاح'),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.translate('image_uploaded'),
+            ),
             backgroundColor: AppColors.adminDashCoupons,
           ),
         );
@@ -136,8 +132,10 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('فشل رفع الصورة'),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.translate('image_upload_failed'),
+            ),
             backgroundColor: AppColors.adminDelete,
           ),
         );
@@ -157,8 +155,10 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم إضافة الصورة للمعرض'),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.translate('image_added_to_gallery'),
+            ),
             backgroundColor: AppColors.adminDashCoupons,
           ),
         );
@@ -166,8 +166,10 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('فشل رفع الصورة'),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.translate('image_upload_failed'),
+            ),
             backgroundColor: AppColors.adminDelete,
           ),
         );
@@ -228,8 +230,10 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('تم حفظ المنتج بنجاح'),
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)!.translate('product_saved'),
+              ),
               backgroundColor: AppColors.success,
             ),
           );
@@ -240,8 +244,10 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('حدث خطأ'),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.translate('error_occurred'),
+            ),
             backgroundColor: AppColors.error,
           ),
         );
@@ -270,6 +276,30 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+        height: 70,
+        decoration: BoxDecoration(
+          color: AppColors.homeNavBackground,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _navIcon(context, Icons.home_outlined, 0),
+            _navIcon(context, Icons.search, 1),
+            _navIcon(context, Icons.shopping_bag_outlined, 2),
+            _navIcon(context, Icons.favorite_border, 3),
+          ],
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -278,46 +308,78 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
             children: [
               TextFormField(
                 controller: _nameArController,
-                decoration: const InputDecoration(
-                  labelText: 'اسم المنتج (عربي)',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(
+                    context,
+                  )!.translate('product_name_ar'),
                 ),
-                validator: (v) => v!.isEmpty ? 'مطلوب' : null,
+                validator: (v) => v!.isEmpty
+                    ? AppLocalizations.of(context)!.translate('required_field')
+                    : null,
               ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _nameEnController,
-                decoration: const InputDecoration(
-                  labelText: 'اسم المنتج (إنجليزي)',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(
+                    context,
+                  )!.translate('product_name_en'),
                 ),
-                validator: (v) => v!.isEmpty ? 'مطلوب' : null,
+                validator: (v) => v!.isEmpty
+                    ? AppLocalizations.of(context)!.translate('required_field')
+                    : null,
               ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _priceController,
-                decoration: const InputDecoration(labelText: 'السعر'),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.translate('price'),
+                ),
                 keyboardType: TextInputType.number,
                 validator: (v) {
-                  if (v == null || v.isEmpty) return 'مطلوب';
-                  if (double.tryParse(v) == null) return 'أدخل رقم صحيح';
+                  if (v == null || v.isEmpty) {
+                    return AppLocalizations.of(
+                      context,
+                    )!.translate('required_field');
+                  }
+                  if (double.tryParse(v) == null) {
+                    return AppLocalizations.of(
+                      context,
+                    )!.translate('enter_valid_number');
+                  }
                   return null;
                 },
               ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _oldPriceController,
-                decoration: const InputDecoration(
-                  labelText: 'السعر القديم (اختياري)',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(
+                    context,
+                  )!.translate('old_price'),
                 ),
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _quantityController,
-                decoration: const InputDecoration(labelText: 'الكمية المتوفرة'),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(
+                    context,
+                  )!.translate('quantity_available'),
+                ),
                 keyboardType: TextInputType.number,
                 validator: (v) {
-                  if (v == null || v.isEmpty) return 'مطلوب';
-                  if (int.tryParse(v) == null) return 'أدخل رقم صحيح';
+                  if (v == null || v.isEmpty) {
+                    return AppLocalizations.of(
+                      context,
+                    )!.translate('required_field');
+                  }
+                  if (int.tryParse(v) == null) {
+                    return AppLocalizations.of(
+                      context,
+                    )!.translate('enter_valid_number');
+                  }
                   return null;
                 },
               ),
@@ -327,9 +389,13 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _sizeInputController,
-                      decoration: const InputDecoration(
-                        labelText: 'إضافة مقاس (Size)',
-                        hintText: 'مثال: S, M, 42',
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(
+                          context,
+                        )!.translate('add_size'),
+                        hintText: AppLocalizations.of(
+                          context,
+                        )!.translate('size_example'),
                       ),
                     ),
                   ),
@@ -338,7 +404,11 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                     width: 80,
                     child: TextFormField(
                       controller: _sizeQtyController,
-                      decoration: const InputDecoration(labelText: 'الكمية'),
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(
+                          context,
+                        )!.translate('quantity'),
+                      ),
                       keyboardType: TextInputType.number,
                     ),
                   ),
@@ -390,16 +460,22 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
               SizedBox(
                 width: double.infinity,
                 child: SegmentedButton<bool>(
-                  segments: const [
+                  segments: [
                     ButtonSegment<bool>(
                       value: false,
-                      label: Text('تصنيف موجود'),
-                      icon: Icon(Icons.category),
+                      label: Text(
+                        AppLocalizations.of(
+                          context,
+                        )!.translate('existing_category'),
+                      ),
+                      icon: const Icon(Icons.category),
                     ),
                     ButtonSegment<bool>(
                       value: true,
-                      label: Text('تصنيف جديد'),
-                      icon: Icon(Icons.add),
+                      label: Text(
+                        AppLocalizations.of(context)!.translate('new_category'),
+                      ),
+                      icon: const Icon(Icons.add),
                     ),
                   ],
                   selected: {_isNewCategory},
@@ -419,32 +495,49 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                           _categories.any((c) => c['_id'] == _selectedCategory)
                       ? _selectedCategory
                       : null,
-                  decoration: const InputDecoration(labelText: 'اختر التصنيف'),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(
+                      context,
+                    )!.translate('select_category'),
+                  ),
                   items: _categories.map<DropdownMenuItem<String>>((c) {
                     final name = c['name'] is Map ? c['name']['ar'] : c['name'];
                     return DropdownMenuItem(
                       value: c['_id'],
-                      child: Text(name ?? 'بدون اسم'),
+                      child: Text(
+                        name ??
+                            AppLocalizations.of(context)!.translate('no_name'),
+                      ),
                     );
                   }).toList(),
                   onChanged: (v) => setState(() => _selectedCategory = v),
-                  validator: (v) =>
-                      !_isNewCategory && v == null ? 'مطلوب' : null,
+                  validator: (v) => !_isNewCategory && v == null
+                      ? AppLocalizations.of(
+                          context,
+                        )!.translate('required_field')
+                      : null,
                 )
               else
                 TextFormField(
                   controller: _newCategoryController,
-                  decoration: const InputDecoration(
-                    labelText: 'اسم التصنيف الجديد',
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(
+                      context,
+                    )!.translate('new_category_name'),
                   ),
-                  validator: (v) =>
-                      _isNewCategory && v!.isEmpty ? 'مطلوب' : null,
+                  validator: (v) => _isNewCategory && v!.isEmpty
+                      ? AppLocalizations.of(
+                          context,
+                        )!.translate('required_field')
+                      : null,
                 ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _imageController,
                 decoration: InputDecoration(
-                  labelText: 'رابط الصورة',
+                  labelText: AppLocalizations.of(
+                    context,
+                  )!.translate('image_url'),
                   suffixIcon: _isImageUploading
                       ? const Padding(
                           padding: EdgeInsets.all(12.0),
@@ -461,7 +554,9 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                           onPressed: _pickMainImage,
                         ),
                 ),
-                validator: (v) => v!.isEmpty ? 'مطلوب' : null,
+                validator: (v) => v!.isEmpty
+                    ? AppLocalizations.of(context)!.translate('required_field')
+                    : null,
               ),
               if (_imageController.text.isNotEmpty) ...[
                 const SizedBox(height: 15),
@@ -483,18 +578,20 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                           color: AppColors.primary,
                         ),
                       ),
-                      errorWidget: (context, url, error) => const Center(
+                      errorWidget: (context, url, error) => Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.broken_image,
                               color: AppColors.grey,
                               size: 40,
                             ),
                             Text(
-                              "رابط غير صالح",
-                              style: TextStyle(color: AppColors.grey),
+                              AppLocalizations.of(
+                                context,
+                              )!.translate('invalid_url'),
+                              style: const TextStyle(color: AppColors.grey),
                             ),
                           ],
                         ),
@@ -509,9 +606,12 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'صور إضافية (Gallery)',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  Text(
+                    AppLocalizations.of(context)!.translate('gallery_images'),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   IconButton(
                     onPressed: _isImageUploading ? null : _pickGalleryImage,
@@ -574,18 +674,28 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
               const SizedBox(height: 10),
               TextFormField(
                 controller: _descArController,
-                decoration: const InputDecoration(labelText: 'الوصف (عربي)'),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(
+                    context,
+                  )!.translate('description_ar'),
+                ),
                 maxLines: 3,
               ),
               const SizedBox(height: 10),
               SwitchListTile(
-                title: const Text('نفذت الكمية (Sold Out)'),
+                title: Text(
+                  AppLocalizations.of(context)!.translate('is_sold_out'),
+                ),
                 value: _isSoldOut,
                 onChanged: (val) => setState(() => _isSoldOut = val),
               ),
               SwitchListTile(
-                title: const Text('منتج مميز (Featured)'),
-                subtitle: const Text('يظهر في الأقسام المميزة'),
+                title: Text(
+                  AppLocalizations.of(context)!.translate('is_featured'),
+                ),
+                subtitle: Text(
+                  AppLocalizations.of(context)!.translate('featured_subtitle'),
+                ),
                 value: _isFeatured,
                 onChanged: (val) => setState(() => _isFeatured = val),
               ),
@@ -600,9 +710,9 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                 ),
                 child: _isLoading
                     ? const CircularProgressIndicator(color: AppColors.white)
-                    : const Text(
-                        'حفظ',
-                        style: TextStyle(color: AppColors.white),
+                    : Text(
+                        AppLocalizations.of(context)!.translate('save'),
+                        style: const TextStyle(color: AppColors.white),
                       ),
               ),
             ],
@@ -610,5 +720,39 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         ),
       ),
     );
+  }
+
+  Widget _navIcon(BuildContext context, IconData icon, int index) {
+    return GestureDetector(
+      onTap: () => _onNavTap(context, index),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Icon(icon, color: AppColors.homeNavInactive, size: 24),
+      ),
+    );
+  }
+
+  void _onNavTap(BuildContext context, int index) {
+    switch (index) {
+      case 0:
+        context.go('/');
+        break;
+      case 1:
+        context.go('/search');
+        break;
+      case 2:
+        context.go('/cart');
+        break;
+      case 3:
+        context.go('/wishlist');
+        break;
+    }
   }
 }

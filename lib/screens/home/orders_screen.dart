@@ -1,14 +1,4 @@
-// ignore_for_file: deprecated_member_use
-
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
-import 'package:details_app/providers/orders_provider.dart';
-import 'package:details_app/constants/app_colors.dart';
-import 'package:details_app/l10n/app_localizations.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:details_app/providers/auth_provider.dart';
+import 'package:details_app/app_imports.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
@@ -40,6 +30,52 @@ class _OrdersScreenState extends State<OrdersScreen> {
     // التحقق مما إذا كان المستخدم مسجلاً للدخول
     if (!authProvider.isAuthenticated) {
       return Scaffold(
+        appBar: AppBar(
+          title: Image.asset('assets/images/logo1.png', height: 40),
+          backgroundColor: AppColors.appBarBackground,
+          foregroundColor: AppColors.appBarForeground,
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/');
+              }
+            },
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined),
+              onPressed: () {},
+            ),
+          ],
+        ),
+        bottomNavigationBar: Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+          height: 70,
+          decoration: BoxDecoration(
+            color: AppColors.homeNavBackground,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _navIcon(Icons.home_outlined, 0),
+              _navIcon(Icons.search, 1),
+              _navIcon(Icons.shopping_bag_outlined, 2),
+              _navIcon(Icons.favorite_border, 3),
+            ],
+          ),
+        ),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -123,6 +159,30 @@ class _OrdersScreenState extends State<OrdersScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+        height: 70,
+        decoration: BoxDecoration(
+          color: AppColors.homeNavBackground,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _navIcon(Icons.home_outlined, 0),
+            _navIcon(Icons.search, 1),
+            _navIcon(Icons.shopping_bag_outlined, 2),
+            _navIcon(Icons.favorite_border, 3),
+          ],
+        ),
+      ),
       body: Column(
         children: [
           Expanded(
@@ -159,7 +219,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                 ).format(order.dateTime),
                               ),
                               trailing: Text(
-                                '\$${order.amount.toStringAsFixed(2)}',
+                                '${order.amount.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.homeOrderPrice,
@@ -176,29 +236,34 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          (order.status == 'تم التوصيل'
-                                                  ? AppColors
-                                                        .homeOrderStatusDelivered
-                                                  : AppColors
-                                                        .homeOrderStatusPending)
-                                              .withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      order.status,
-                                      style: TextStyle(
-                                        color: order.status == 'تم التوصيل'
-                                            ? AppColors.homeOrderStatusDelivered
-                                            : AppColors.homeOrderStatusPending,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
+                                  Flexible(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            (order.status == 'تم التوصيل'
+                                                    ? AppColors
+                                                          .homeOrderStatusDelivered
+                                                    : AppColors
+                                                          .homeOrderStatusPending)
+                                                .withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        order.status,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: order.status == 'تم التوصيل'
+                                              ? AppColors
+                                                    .homeOrderStatusDelivered
+                                              : AppColors
+                                                    .homeOrderStatusPending,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -244,5 +309,39 @@ class _OrdersScreenState extends State<OrdersScreen> {
         ],
       ),
     );
+  }
+
+  Widget _navIcon(IconData icon, int index) {
+    return GestureDetector(
+      onTap: () => _onNavTap(index),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Icon(icon, color: AppColors.homeNavInactive, size: 24),
+      ),
+    );
+  }
+
+  void _onNavTap(int index) {
+    switch (index) {
+      case 0:
+        context.go('/');
+        break;
+      case 1:
+        context.go('/search');
+        break;
+      case 2:
+        context.go('/cart');
+        break;
+      case 3:
+        context.go('/wishlist');
+        break;
+    }
   }
 }

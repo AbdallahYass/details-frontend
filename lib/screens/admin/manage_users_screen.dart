@@ -1,11 +1,6 @@
-// ignore_for_file: deprecated_member_use
-
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
-import 'package:details_app/constants/app_colors.dart';
-import 'package:details_app/providers/auth_provider.dart';
+import 'package:details_app/app_imports.dart';
 
 class ManageUsersScreen extends StatefulWidget {
   const ManageUsersScreen({super.key});
@@ -45,27 +40,36 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
   Future<void> _deleteUser(String id) async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     try {
-      await http.delete(
+      final response = await http.delete(
         Uri.parse('https://api.details-store.com/api/admin/users/$id'),
         headers: {'Authorization': 'Bearer ${auth.token}'},
       );
-      setState(() {
-        _users.removeWhere((user) => user['_id'] == id);
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم حذف المستخدم بنجاح'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _users.removeWhere((user) => user['_id'] == id);
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)!.translate('user_deleted'),
+              ),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } else {
+        throw Exception('Failed to delete user');
       }
     } catch (e) {
       debugPrint('Error deleting user: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('فشل الحذف'),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.translate('delete_failed'),
+            ),
             backgroundColor: AppColors.error,
           ),
         );
@@ -91,6 +95,30 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
             onPressed: () {},
           ),
         ],
+      ),
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+        height: 70,
+        decoration: BoxDecoration(
+          color: AppColors.homeNavBackground,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _navIcon(context, Icons.home_outlined, 0),
+            _navIcon(context, Icons.search, 1),
+            _navIcon(context, Icons.shopping_bag_outlined, 2),
+            _navIcon(context, Icons.favorite_border, 3),
+          ],
+        ),
       ),
       body: _isLoading
           ? const Center(
@@ -118,14 +146,18 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                     subtitle: Text(user['email']),
                     trailing: user['isAdmin'] == true
                         ? Chip(
-                            label: const Text(
-                              'Admin',
-                              style: TextStyle(
+                            label: Text(
+                              AppLocalizations.of(
+                                context,
+                              )!.translate('admin_role'),
+                              style: const TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            backgroundColor: AppColors.primary.withOpacity(0.1),
+                            backgroundColor: AppColors.primary.withValues(
+                              alpha: 0.1,
+                            ),
                             side: BorderSide.none,
                           )
                         : IconButton(
@@ -136,16 +168,24 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                             onPressed: () => showDialog(
                               context: context,
                               builder: (c) => AlertDialog(
-                                title: const Text('تأكيد الحذف'),
-                                content: const Text(
-                                  'هل أنت متأكد من حذف هذا المستخدم؟',
+                                title: Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.translate('confirm_delete'),
+                                ),
+                                content: Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.translate('delete_user_confirmation'),
                                 ),
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.pop(c),
-                                    child: const Text(
-                                      'إلغاء',
-                                      style: TextStyle(
+                                    child: Text(
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.translate('cancel'),
+                                      style: const TextStyle(
                                         color: AppColors.textSecondary,
                                       ),
                                     ),
@@ -155,9 +195,11 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                                       Navigator.pop(c);
                                       _deleteUser(user['_id']);
                                     },
-                                    child: const Text(
-                                      'حذف',
-                                      style: TextStyle(
+                                    child: Text(
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.translate('delete'),
+                                      style: const TextStyle(
                                         color: AppColors.adminDelete,
                                       ),
                                     ),
@@ -171,5 +213,39 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
               },
             ),
     );
+  }
+
+  Widget _navIcon(BuildContext context, IconData icon, int index) {
+    return GestureDetector(
+      onTap: () => _onNavTap(context, index),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Icon(icon, color: AppColors.homeNavInactive, size: 24),
+      ),
+    );
+  }
+
+  void _onNavTap(BuildContext context, int index) {
+    switch (index) {
+      case 0:
+        context.go('/');
+        break;
+      case 1:
+        context.go('/search');
+        break;
+      case 2:
+        context.go('/cart');
+        break;
+      case 3:
+        context.go('/wishlist');
+        break;
+    }
   }
 }

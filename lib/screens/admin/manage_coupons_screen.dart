@@ -1,10 +1,7 @@
 import 'dart:math';
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
-import 'package:details_app/constants/app_colors.dart';
-import 'package:details_app/providers/auth_provider.dart';
+import 'package:details_app/app_imports.dart';
 
 class ManageCouponsScreen extends StatefulWidget {
   const ManageCouponsScreen({super.key});
@@ -76,7 +73,11 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
         if (mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تم إضافة الكوبون بنجاح')),
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)!.translate('coupon_added'),
+              ),
+            ),
           );
           _codeController.clear();
           _valueController.clear();
@@ -88,7 +89,11 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('حدث خطأ أثناء إضافة الكوبون')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.translate('coupon_add_error'),
+            ),
+          ),
         );
       }
     } finally {
@@ -105,16 +110,24 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
       );
       setState(() => _coupons.removeWhere((c) => c['_id'] == id));
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('تم حذف الكوبون بنجاح')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.translate('coupon_deleted'),
+            ),
+          ),
+        );
       }
     } catch (e) {
       debugPrint('Error deleting coupon: $e');
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('فشل حذف الكوبون')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.translate('coupon_delete_error'),
+            ),
+          ),
+        );
       }
     }
   }
@@ -131,7 +144,7 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('إضافة كوبون جديد'),
+        title: Text(AppLocalizations.of(context)!.translate('add_new_coupon')),
         content: Form(
           key: _formKey,
           child: Column(
@@ -140,33 +153,50 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
               TextFormField(
                 controller: _codeController,
                 decoration: InputDecoration(
-                  labelText: 'كود الكوبون',
+                  labelText: AppLocalizations.of(
+                    context,
+                  )!.translate('coupon_code'),
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.autorenew),
-                    tooltip: 'توليد كود تلقائي',
+                    tooltip: AppLocalizations.of(
+                      context,
+                    )!.translate('generate_auto_code'),
                     onPressed: () {
                       _codeController.text = _generateRandomCode();
                     },
                   ),
                 ),
                 textCapitalization: TextCapitalization.characters,
-                validator: (v) => v!.isEmpty ? 'مطلوب' : null,
+                validator: (v) => v!.isEmpty
+                    ? AppLocalizations.of(context)!.translate('required_field')
+                    : null,
               ),
               TextFormField(
                 controller: _valueController,
-                decoration: const InputDecoration(labelText: 'القيمة'),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.translate('value'),
+                ),
                 keyboardType: TextInputType.number,
-                validator: (v) => v!.isEmpty ? 'مطلوب' : null,
+                validator: (v) => v!.isEmpty
+                    ? AppLocalizations.of(context)!.translate('required_field')
+                    : null,
               ),
               DropdownButtonFormField<String>(
                 // ignore: deprecated_member_use
                 value: _discountType,
-                items: const [
+                items: [
                   DropdownMenuItem(
                     value: 'percentage',
-                    child: Text('نسبة مئوية %'),
+                    child: Text(
+                      AppLocalizations.of(context)!.translate('percentage'),
+                    ),
                   ),
-                  DropdownMenuItem(value: 'fixed', child: Text('مبلغ ثابت')),
+                  DropdownMenuItem(
+                    value: 'fixed',
+                    child: Text(
+                      AppLocalizations.of(context)!.translate('fixed_amount'),
+                    ),
+                  ),
                 ],
                 onChanged: (v) => setState(() => _discountType = v!),
               ),
@@ -176,11 +206,11 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('إلغاء'),
+            child: Text(AppLocalizations.of(context)!.translate('cancel')),
           ),
           ElevatedButton(
             onPressed: _isLoading ? null : _addCoupon,
-            child: const Text('إضافة'),
+            child: Text(AppLocalizations.of(context)!.translate('add')),
           ),
         ],
       ),
@@ -191,7 +221,7 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('إدارة الكوبونات'),
+        title: Text(AppLocalizations.of(context)!.translate('manage_coupons')),
         backgroundColor: AppColors.appBarBackground,
         foregroundColor: AppColors.appBarForeground,
         centerTitle: true,
@@ -218,11 +248,69 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
           );
         },
       ),
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+        height: 70,
+        decoration: BoxDecoration(
+          color: AppColors.homeNavBackground,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _navIcon(context, Icons.home_outlined, 0),
+            _navIcon(context, Icons.search, 1),
+            _navIcon(context, Icons.shopping_bag_outlined, 2),
+            _navIcon(context, Icons.favorite_border, 3),
+          ],
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddCouponDialog,
         backgroundColor: AppColors.adminAdd,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
+  }
+
+  Widget _navIcon(BuildContext context, IconData icon, int index) {
+    return GestureDetector(
+      onTap: () => _onNavTap(context, index),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Icon(icon, color: AppColors.homeNavInactive, size: 24),
+      ),
+    );
+  }
+
+  void _onNavTap(BuildContext context, int index) {
+    switch (index) {
+      case 0:
+        context.go('/');
+        break;
+      case 1:
+        context.go('/search');
+        break;
+      case 2:
+        context.go('/cart');
+        break;
+      case 3:
+        context.go('/wishlist');
+        break;
+    }
   }
 }

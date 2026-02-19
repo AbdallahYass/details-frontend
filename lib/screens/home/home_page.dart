@@ -1,27 +1,4 @@
-import 'dart:convert';
-import 'dart:io';
-import 'dart:async';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
-import 'package:details_app/models/product.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:details_app/models/banner_model.dart';
-import 'package:details_app/models/category_model.dart';
-import 'package:details_app/widgets/reveal_on_scroll.dart';
-import 'package:details_app/widgets/animated_banner_item.dart';
-import 'package:details_app/widgets/animated_product_image.dart';
-import 'package:details_app/constants/app_colors.dart';
-import 'package:details_app/l10n/app_localizations.dart';
-import 'package:details_app/providers/wishlist_provider.dart';
-import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:details_app/providers/settings_provider.dart';
-import 'package:details_app/providers/auth_provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:details_app/app_imports.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -29,44 +6,112 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   List<Product> products = [];
   List<BannerModel> banners = [];
   List<CategoryModel> categories = [];
   List<Product> popularProducts = [];
+  Set<String> _popularIds = {};
   bool isLoading = true;
+  String? errorMessage;
+  int _requestId = 0; // لمنع Race Condition
 
   final ValueNotifier<int> _bannerIndexNotifier = ValueNotifier(0);
   final PageController _heroController = PageController();
   Timer? _heroTimer;
 
   String? _selectedCategory;
-  final Map<String, int> _categoryPageIndices = {};
+  final Map<String, List<Product>> _groupedProducts = {};
+  final Map<String, PageController> _categoryControllers = {};
+  final HomeRepository _homeRepository = HomeRepository();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadAllData();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _heroTimer?.cancel();
     _bannerIndexNotifier.dispose();
     _heroController.dispose();
+    for (var controller in _categoryControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
-  Future<void> _loadAllData() async {
-    await Future.wait([
-      fetchProducts(),
-      fetchBanners(),
-      fetchCategories(),
-      fetchPopularProducts(),
-    ]);
-    if (mounted) {
-      setState(() => isLoading = false);
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      _heroTimer?.cancel();
+    } else if (state == AppLifecycleState.resumed) {
       _startHeroScroll();
+    }
+  }
+
+  Future<void> _loadAllData({bool forceRefresh = false}) async {
+    final int currentRequest = ++_requestId;
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      final results = await _homeRepository.loadHomeData(
+        forceRefresh: forceRefresh,
+      );
+      if (mounted && currentRequest == _requestId) {
+        setState(() {
+          products = results[0] as List<Product>;
+          banners = results[1] as List<BannerModel>;
+          categories = results[2] as List<CategoryModel>;
+          popularProducts = results[3] as List<Product>;
+          _popularIds = popularProducts.map((e) => e.id).toSet();
+          _groupProducts();
+          _syncCategoryControllers(); // تنظيف الذاكرة
+          isLoading = false;
+          _bannerIndexNotifier.value = 0;
+          if (_heroController.hasClients) {
+            _heroController.jumpToPage(0);
+          }
+        });
+        _startHeroScroll();
+      }
+    } catch (e) {
+      debugPrint("Error loading data: $e");
+      if (mounted && currentRequest == _requestId) {
+        setState(() {
+          isLoading = false;
+          errorMessage = AppLocalizations.of(
+            context,
+          )!.translate('error_occurred');
+        });
+      }
+    }
+  }
+
+  void _syncCategoryControllers() {
+    final currentIds = categories.map((e) => e.id).toSet();
+    _categoryControllers.removeWhere((key, controller) {
+      if (!currentIds.contains(key)) {
+        controller.dispose();
+        return true;
+      }
+      return false;
+    });
+  }
+
+  void _groupProducts() {
+    _groupedProducts.clear();
+    for (var product in products) {
+      if (!_groupedProducts.containsKey(product.categoryId)) {
+        _groupedProducts[product.categoryId] = [];
+      }
+      _groupedProducts[product.categoryId]!.add(product);
     }
   }
 
@@ -84,136 +129,139 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Future<void> fetchProducts({String? category}) async {
-    try {
-      String url = 'https://api.details-store.com/api/products';
-      if (category != null) {
-        url += '?category=$category';
-      }
-      final res = await http.get(Uri.parse(url));
-      if (res.statusCode == 200) {
-        setState(() {
-          products = (json.decode(res.body) as List)
-              .map((j) => Product.fromJson(j))
-              .toList();
-        });
-      }
-    } catch (e) {
-      debugPrint("Error: $e");
-    }
-  }
-
-  Future<void> fetchBanners({
-    String location = 'home',
-    String? category,
-  }) async {
-    try {
-      String url =
-          'https://api.details-store.com/api/banners?location=$location';
-      if (category != null) {
-        url += '&category=$category';
-      }
-      final res = await http.get(Uri.parse(url));
-      if (res.statusCode == 200) {
-        setState(() {
-          banners = (json.decode(res.body) as List)
-              .map((j) => BannerModel.fromJson(j))
-              .toList();
-          _bannerIndexNotifier.value = 0;
-          if (_heroController.hasClients) {
-            _heroController.jumpToPage(0);
-          }
-        });
-      }
-    } catch (e) {
-      debugPrint("Error: $e");
-    }
-  }
-
-  Future<void> fetchCategories() async {
-    try {
-      final res = await http.get(
-        Uri.parse('https://api.details-store.com/api/categories'),
-      );
-      if (res.statusCode == 200) {
-        setState(() {
-          categories = (json.decode(res.body) as List)
-              .map((j) => CategoryModel.fromJson(j))
-              .toList();
-        });
-      }
-    } catch (e) {
-      debugPrint("Error fetching categories: $e");
-    }
-  }
-
-  Future<void> fetchPopularProducts() async {
-    try {
-      final res = await http.get(
-        Uri.parse('https://api.details-store.com/api/popular-products'),
-      );
-      if (res.statusCode == 200) {
-        setState(() {
-          popularProducts = (json.decode(res.body) as List)
-              .map((j) => Product.fromJson(j))
-              .toList();
-        });
-      }
-    } catch (e) {
-      debugPrint("Error fetching popular products: $e");
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: AppColors.primary,
-                strokeWidth: 1,
+    return RefreshIndicator(
+      onRefresh: () => _loadAllData(forceRefresh: true),
+      color: AppColors.primary,
+      child: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverAppBar(
+            floating: true,
+            pinned: true,
+            backgroundColor: AppColors.appBarBackground,
+            foregroundColor: AppColors.appBarForeground,
+            elevation: 0,
+            centerTitle: true,
+            leading: Builder(
+              builder: (context) {
+                return IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                );
+              },
+            ),
+            title: Image.asset('assets/images/logo1.png', height: 40),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined),
+                onPressed: () {},
+              ),
+            ],
+          ),
+          if (errorMessage != null)
+            SliverFillRemaining(
+              child: CommonErrorWidget(
+                message: errorMessage!,
+                onRetry: () => _loadAllData(forceRefresh: true),
               ),
             )
-          : RefreshIndicator(
-              onRefresh: _loadAllData,
-              color: AppColors.primary,
-              child: CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
-                  SliverAppBar(
-                    floating: true,
-                    pinned: true,
-                    backgroundColor: AppColors.appBarBackground,
-                    foregroundColor: AppColors.appBarForeground,
-                    elevation: 0,
-                    centerTitle: true,
-                    leading: IconButton(
-                      icon: const Icon(Icons.menu),
-                      onPressed: () {
-                        Scaffold.of(context).openDrawer();
-                      },
-                    ),
-                    title: Image.asset('assets/images/logo1.png', height: 40),
-                    actions: [
-                      IconButton(
-                        icon: const Icon(Icons.notifications_outlined),
-                        onPressed: () {},
-                      ),
-                    ],
-                  ),
-                  SliverToBoxAdapter(child: _buildHeroSlider()),
-                  SliverToBoxAdapter(child: _buildCategoriesSection()),
-                  if (popularProducts.isNotEmpty && _selectedCategory == null)
-                    SliverToBoxAdapter(child: _buildPopularSection()),
-                  // هنا نستدعي الدالة التي تبني الأقسام
-                  ..._buildCategoryGrids(),
-                  const SliverToBoxAdapter(child: SizedBox(height: 50)),
-                  SliverToBoxAdapter(
-                    child: RevealOnScroll(child: _buildFooter()),
-                  ),
-                ],
+          else ...[
+            // Hero Section (Show Skeleton only if loading AND empty)
+            SliverToBoxAdapter(
+              child: (isLoading && banners.isEmpty)
+                  ? _buildHeroSkeleton()
+                  : _buildHeroSlider(),
+            ),
+
+            // Categories Section (Show Skeleton only if loading AND empty)
+            SliverToBoxAdapter(
+              child: (isLoading && categories.isEmpty)
+                  ? _buildCategoriesSkeleton()
+                  : _buildCategoriesSection(),
+            ),
+
+            // Popular Section (Keep visible if data exists, even during loading)
+            if (popularProducts.isNotEmpty && _selectedCategory == null)
+              SliverToBoxAdapter(child: _buildPopularSection()),
+
+            // Products Grid (Show Skeleton OVER content if loading, otherwise content)
+            if (isLoading && products.isEmpty)
+              SliverToBoxAdapter(child: _buildProductsSkeleton())
+            else
+              ..._buildCategoryGrids(),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 50)),
+            SliverToBoxAdapter(child: RevealOnScroll(child: _buildFooter())),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroSkeleton() {
+    return Container(
+      height: 220,
+      width: double.infinity,
+      color: Colors.grey.shade200,
+    );
+  }
+
+  Widget _buildCategoriesSkeleton() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.homeBackground,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Container(height: 20, width: 100, color: Colors.grey.shade200),
+          const SizedBox(height: 15),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 6,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 15,
+              childAspectRatio: 0.85,
+            ),
+            itemBuilder: (c, i) => Container(
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                shape: BoxShape.circle,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductsSkeleton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: 4,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.65,
+          crossAxisSpacing: 15,
+          mainAxisSpacing: 25,
+        ),
+        itemBuilder: (context, index) => Container(
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
     );
   }
 
@@ -240,12 +288,16 @@ class _HomePageState extends State<HomePage> {
             children: [
               const Icon(Icons.star, color: AppColors.starColor, size: 24),
               const SizedBox(width: 8),
-              Text(
-                AppLocalizations.of(context)!.translate('most_popular'),
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.homeSectionTitle,
+              Flexible(
+                child: Text(
+                  AppLocalizations.of(context)!.translate('most_popular'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.homeSectionTitle,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -308,39 +360,37 @@ class _HomePageState extends State<HomePage> {
     // إذا لم يتم اختيار كاتيجوري، نعرض كل قسم ومنتجاته داخل بطاقات
     List<Widget> slivers = [];
 
+    // حساب أبعاد PageView
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double availableWidth = screenWidth - 32; // margin 16 * 2
+    final double viewportFraction = 0.92;
+    final double pageWidth = availableWidth * viewportFraction;
+    final double itemWidth =
+        (pageWidth - 16 - 10) / 2; // padding 8*2 + spacing 10
+    final double itemHeight = itemWidth / 0.65;
+    final double pageViewHeight = (itemHeight * 2) + 10;
+
     for (var category in categories) {
       // تصفية المنتجات التابعة لهذا القسم
-      final categoryProducts = products
-          .where((p) => p.categoryId == category.id)
-          .toList();
+      final categoryProducts = _groupedProducts[category.id] ?? [];
 
       // إذا لم يكن هناك منتجات في هذا القسم، لا نعرضه
       if (categoryProducts.isEmpty) continue;
 
-      // تحديد الصفحة الحالية لهذا القسم
-      int pageIndex = _categoryPageIndices[category.id] ?? 0;
-      int itemsPerPage = 4;
-      int totalItems = categoryProducts.length;
-
-      // حساب بداية ونهاية القائمة المعروضة
-      int startIndex = pageIndex * itemsPerPage;
-      // إذا كان الفهرس خارج النطاق (مثلاً بعد تحديث البيانات)، نعيده للصفر
-      if (startIndex >= totalItems) {
-        startIndex = 0;
-        pageIndex = 0;
-        _categoryPageIndices[category.id] = 0;
+      if (!_categoryControllers.containsKey(category.id)) {
+        _categoryControllers[category.id] = PageController(
+          viewportFraction: viewportFraction,
+        );
       }
 
-      int endIndex = startIndex + itemsPerPage;
-      if (endIndex > totalItems) endIndex = totalItems;
-
-      final currentProducts = categoryProducts.sublist(startIndex, endIndex);
+      int itemsPerPage = 4;
+      int totalPages = (categoryProducts.length / itemsPerPage).ceil();
 
       slivers.add(
         SliverToBoxAdapter(
           child: Container(
             margin: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(vertical: 16),
             decoration: BoxDecoration(
               color: AppColors.homeBackground,
               borderRadius: BorderRadius.circular(16),
@@ -365,70 +415,42 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 15),
 
-                // شبكة المنتجات (4 منتجات)
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: currentProducts.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.65,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                  ),
-                  itemBuilder: (c, i) => _buildProductCard(currentProducts[i]),
-                ),
+                SizedBox(
+                  height: pageViewHeight,
+                  child: PageView.builder(
+                    controller: _categoryControllers[category.id],
+                    itemCount: totalPages,
+                    itemBuilder: (context, pageIndex) {
+                      int startIndex = pageIndex * itemsPerPage;
+                      int endIndex = startIndex + itemsPerPage;
+                      if (endIndex > categoryProducts.length) {
+                        endIndex = categoryProducts.length;
+                      }
+                      final currentProducts = categoryProducts.sublist(
+                        startIndex,
+                        endIndex,
+                      );
 
-                // أزرار التنقل (السابق / التالي)
-                if (totalItems > itemsPerPage) ...[
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        onPressed: pageIndex > 0
-                            ? () {
-                                setState(() {
-                                  _categoryPageIndices[category.id] =
-                                      pageIndex - 1;
-                                });
-                              }
-                            : null,
-                        icon: Icon(
-                          Icons.arrow_back_ios,
-                          size: 20,
-                          color: pageIndex > 0
-                              ? AppColors.homeArrowActive
-                              : AppColors.arrowInactive,
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        child: GridView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: currentProducts.length,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 0.65,
+                                crossAxisSpacing: 10,
+                                mainAxisSpacing: 10,
+                              ),
+                          itemBuilder: (c, i) =>
+                              _buildProductCard(currentProducts[i]),
                         ),
-                      ),
-                      Text(
-                        '${pageIndex + 1} / ${(totalItems / itemsPerPage).ceil()}',
-                        style: const TextStyle(
-                          color: AppColors.homePageNumber,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: endIndex < totalItems
-                            ? () {
-                                setState(() {
-                                  _categoryPageIndices[category.id] =
-                                      pageIndex + 1;
-                                });
-                              }
-                            : null,
-                        icon: Icon(
-                          Icons.arrow_forward_ios,
-                          size: 20,
-                          color: endIndex < totalItems
-                              ? AppColors.homeArrowActive
-                              : AppColors.arrowInactive,
-                        ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
-                ],
+                ),
               ],
             ),
           ),
@@ -462,9 +484,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildProductCard(Product p) {
-    final wishlistProvider = Provider.of<WishlistProvider>(context);
-    final isFav = wishlistProvider.isInWishlist(p.id);
-    final isHot = popularProducts.any((element) => element.id == p.id);
+    final isFav = context.select<WishlistProvider, bool>(
+      (w) => w.isInWishlist(p.id),
+    );
+    final isHot = _popularIds.contains(p.id);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -518,7 +541,11 @@ class _HomePageState extends State<HomePage> {
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(ctx),
-                                  child: const Text("Cancel"),
+                                  child: Text(
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.translate('cancel'),
+                                  ),
                                 ),
                                 ElevatedButton(
                                   onPressed: () {
@@ -536,6 +563,10 @@ class _HomePageState extends State<HomePage> {
                           );
                           return;
                         }
+                        final wishlistProvider = Provider.of<WishlistProvider>(
+                          context,
+                          listen: false,
+                        );
                         bool added = await wishlistProvider.toggleWishlist(p);
                         if (!mounted) return;
                         ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -596,7 +627,7 @@ class _HomePageState extends State<HomePage> {
                                   '🌟 *Check out this amazing product!* 🌟\n\n'
                                   '🛍️ *${p.getName(context)}*\n'
                                   '💰 Price: *${p.price} $currency*\n\n'
-                                  '🔗 Link: https://details-store.com/product/${p.id}\n\n'
+                                  '🔗 Link: ${AppConstants.shareBaseUrl}/product/${p.id}\n\n'
                                   '_Sent from Details Store App_';
 
                               if (kIsWeb) {
@@ -604,20 +635,14 @@ class _HomePageState extends State<HomePage> {
                                   ShareParams(text: text),
                                 );
                               } else {
-                                // تحميل الصورة وحفظها مؤقتاً
-                                final response = await http.get(
-                                  Uri.parse(p.imageUrl),
-                                );
-                                final directory = await getTemporaryDirectory();
-                                final imagePath =
-                                    '${directory.path}/product_${p.id}.jpg';
-                                final file = File(imagePath);
-                                await file.writeAsBytes(response.bodyBytes);
+                                // استخدام الكاش لجلب الصورة
+                                final file = await DefaultCacheManager()
+                                    .getSingleFile(p.imageUrl);
 
                                 // مشاركة الصورة مع النص
                                 await SharePlus.instance.share(
                                   ShareParams(
-                                    files: [XFile(imagePath)],
+                                    files: [XFile(file.path)],
                                     text: text,
                                   ),
                                 );
@@ -672,7 +697,7 @@ class _HomePageState extends State<HomePage> {
                             bottomRight: Radius.circular(20),
                           ),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
                             Icon(
                               Icons.local_fire_department,
@@ -681,7 +706,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                             SizedBox(width: 2),
                             Text(
-                              "HOT",
+                              AppLocalizations.of(context)!.translate('hot'),
                               style: TextStyle(
                                 color: AppColors.homeBadgeText,
                                 fontSize: 10,
@@ -715,6 +740,8 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 6),
               Text(
                 "${p.price.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}",
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w800,
@@ -765,7 +792,11 @@ class _HomePageState extends State<HomePage> {
               PageView.builder(
                 controller: _heroController,
                 itemCount: banners.length,
-                onPageChanged: (i) => _bannerIndexNotifier.value = i,
+                onPageChanged: (i) {
+                  _bannerIndexNotifier.value = i;
+                  _heroTimer?.cancel();
+                  _startHeroScroll();
+                },
                 itemBuilder: (c, i) => GestureDetector(
                   onTap: () => _onBannerTap(banners[i]),
                   child: AnimatedBannerItem(banner: banners[i]),
@@ -796,32 +827,62 @@ class _HomePageState extends State<HomePage> {
         // البحث عن القسم المطابق للـ ID الموجود في الإعلان
         final cat = categories.firstWhere((c) => c.id == banner.category);
 
+        final int currentRequest = ++_requestId;
         // تفعيل القسم وتحديث الصفحة (نفس منطق الضغط على دائرة القسم)
         setState(() {
           _selectedCategory = cat.slug;
           isLoading = true;
+          errorMessage = null;
         });
 
-        Future.wait([
-          fetchProducts(category: _selectedCategory),
-          fetchBanners(location: 'category', category: _selectedCategory),
-        ]).then((_) {
-          if (mounted) setState(() => isLoading = false);
-        });
+        Future.wait<dynamic>([
+              _homeRepository.fetchProducts(category: _selectedCategory),
+              _homeRepository.fetchBanners(
+                location: 'category',
+                category: _selectedCategory,
+              ),
+            ])
+            .then((results) {
+              if (mounted && currentRequest == _requestId) {
+                setState(() {
+                  products = results[0] as List<Product>;
+                  banners = results[1] as List<BannerModel>;
+                  _groupProducts();
+                  _syncCategoryControllers();
+                  isLoading = false;
+                  _bannerIndexNotifier.value = 0;
+                  if (_heroController.hasClients) {
+                    _heroController.jumpToPage(0);
+                  }
+                });
+                _startHeroScroll();
+              }
+            })
+            .catchError((e) {
+              debugPrint("Error loading category data: $e");
+              if (mounted && currentRequest == _requestId) {
+                setState(() {
+                  isLoading = false;
+                  errorMessage = AppLocalizations.of(
+                    context,
+                  )!.translate('error_occurred');
+                });
+              }
+            });
       } catch (e) {
         debugPrint('Category not found for banner: ${banner.category}');
       }
     }
   }
 
-  Widget _dot(bool a) => Container(
+  Widget _dot(bool active) => AnimatedContainer(
+    duration: const Duration(milliseconds: 300),
     margin: const EdgeInsets.symmetric(horizontal: 4),
-    width: 8,
+    width: active ? 16 : 8,
     height: 8,
     decoration: BoxDecoration(
-      color: a ? AppColors.homeDotActive : AppColors.homeDotInactive,
-      shape: BoxShape.circle,
-      border: Border.all(color: AppColors.homeDotActive),
+      color: active ? AppColors.homeDotActive : AppColors.homeDotInactive,
+      borderRadius: BorderRadius.circular(20),
     ),
   );
   Widget _buildCategoriesSection() => Column(
@@ -874,7 +935,8 @@ class _HomePageState extends State<HomePage> {
   Widget _buildCategoryItem({required CategoryModel category}) {
     bool isSelected = _selectedCategory == category.slug;
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
+        final int currentRequest = ++_requestId;
         setState(() {
           if (_selectedCategory == category.slug) {
             _selectedCategory = null;
@@ -882,18 +944,43 @@ class _HomePageState extends State<HomePage> {
             _selectedCategory = category.slug;
           }
           isLoading = true;
+          errorMessage = null;
         });
-        Future.wait([
-          fetchProducts(category: _selectedCategory),
-          fetchBanners(
-            location: _selectedCategory == null ? 'home' : 'category',
-            category: _selectedCategory,
-          ),
-        ]).then((_) {
-          if (mounted) {
-            setState(() => isLoading = false);
+
+        try {
+          final results = await Future.wait([
+            _homeRepository.fetchProducts(category: _selectedCategory),
+            _homeRepository.fetchBanners(
+              location: _selectedCategory == null ? 'home' : 'category',
+              category: _selectedCategory,
+            ),
+          ]);
+          if (mounted && currentRequest == _requestId) {
+            setState(() {
+              products = results[0] as List<Product>;
+              banners = results[1] as List<BannerModel>;
+              if (_selectedCategory == null) {
+                _groupProducts();
+              }
+              _syncCategoryControllers();
+              isLoading = false;
+              _bannerIndexNotifier.value = 0;
+              if (_heroController.hasClients) {
+                _heroController.jumpToPage(0);
+              }
+            });
           }
-        });
+        } catch (e) {
+          debugPrint("Error loading category data: $e");
+          if (mounted && currentRequest == _requestId) {
+            setState(() {
+              isLoading = false;
+              errorMessage = AppLocalizations.of(
+                context,
+              )!.translate('error_occurred');
+            });
+          }
+        }
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -937,6 +1024,9 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 8),
             Text(
               category.getName(context),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
@@ -1098,7 +1188,7 @@ class _HomePageState extends State<HomePage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(c),
-                child: const Text("OK"),
+                child: Text(AppLocalizations.of(context)!.translate('ok')),
               ),
             ],
           ),
@@ -1191,9 +1281,9 @@ class _HomePageState extends State<HomePage> {
                 color: AppColors.subscribeBg,
                 borderRadius: BorderRadius.circular(25),
               ),
-              child: const Center(
+              child: Center(
                 child: Text(
-                  "Subscribe",
+                  AppLocalizations.of(context)!.translate('subscribe_button'),
                   style: TextStyle(
                     color: AppColors.white,
                     fontWeight: FontWeight.bold,

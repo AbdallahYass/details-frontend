@@ -1,11 +1,6 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
-import 'package:details_app/constants/app_colors.dart';
-import 'package:details_app/providers/auth_provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:details_app/screens/home/cloudinary_service.dart';
+import 'package:details_app/app_imports.dart';
 
 class ManageCategoriesScreen extends StatefulWidget {
   const ManageCategoriesScreen({super.key});

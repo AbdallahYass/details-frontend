@@ -1,9 +1,6 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
-import 'package:details_app/providers/auth_provider.dart';
-import 'package:details_app/constants/app_colors.dart';
+import 'package:details_app/app_imports.dart';
 
 class AdminOrdersScreen extends StatefulWidget {
   const AdminOrdersScreen({super.key});
@@ -68,8 +65,10 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
       // لا داعي لإعادة تحميل الطلبات بالكامل إذا نجح الطلب
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم تحديث حالة الطلب'),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.translate('order_status_updated'),
+            ),
             backgroundColor: AppColors.success,
           ),
         );
@@ -79,8 +78,12 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
       _fetchOrders(); // إعادة التحميل في حالة الخطأ فقط للتصحيح
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('فشل تحديث الحالة'),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(
+                context,
+              )!.translate('order_status_update_failed'),
+            ),
             backgroundColor: AppColors.error,
           ),
         );
@@ -107,6 +110,30 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+        height: 70,
+        decoration: BoxDecoration(
+          color: AppColors.homeNavBackground,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _navIcon(context, Icons.home_outlined, 0),
+            _navIcon(context, Icons.search, 1),
+            _navIcon(context, Icons.shopping_bag_outlined, 2),
+            _navIcon(context, Icons.favorite_border, 3),
+          ],
+        ),
+      ),
       body: _isLoading
           ? const Center(
               child: CircularProgressIndicator(color: AppColors.primary),
@@ -127,7 +154,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                     margin: const EdgeInsets.all(10),
                     child: ExpansionTile(
                       title: Text(
-                        'طلب #${orderId.length > 8 ? orderId.substring(0, 8) : orderId}',
+                        '${AppLocalizations.of(context)!.translate('order_number')}${orderId.length > 8 ? orderId.substring(0, 8) : orderId}',
                       ),
                       subtitle: Text(
                         '${order['totalAmount']} - ${order['status']}',
@@ -145,7 +172,11 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                             Icons.edit_attributes,
                             color: AppColors.adminEdit,
                           ),
-                          title: const Text('تغيير الحالة'),
+                          title: Text(
+                            AppLocalizations.of(
+                              context,
+                            )!.translate('change_status'),
+                          ),
                           trailing: DropdownButton<String>(
                             value: _orderStatuses.contains(order['status'])
                                 ? order['status']
@@ -170,8 +201,10 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'معلومات العميل:',
+                                Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.translate('customer_info'),
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.textSecondary,
@@ -179,13 +212,15 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                 ),
                                 const SizedBox(height: 5),
                                 if (user != null && user['name'] != null)
-                                  Text('👤 الاسم: ${user['name']}'),
+                                  Text(
+                                    '👤 ${AppLocalizations.of(context)!.translate('name')} ${user['name']}',
+                                  ),
                                 if (shipping != null &&
                                     shipping['phone'] != null)
                                   Text('📞 الهاتف: ${shipping['phone']}'),
                                 if (shipping != null)
                                   Text(
-                                    '📍 العنوان: ${shipping['city'] ?? ''} - ${shipping['street'] ?? ''}',
+                                    '📍 ${AppLocalizations.of(context)!.translate('address')} ${shipping['city'] ?? ''} - ${shipping['street'] ?? ''}',
                                   ),
                               ],
                             ),
@@ -197,8 +232,10 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  'المنتجات:',
+                                Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.translate('products'),
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.textSecondary,
@@ -207,7 +244,10 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                 const SizedBox(height: 5),
                                 ...items.map((item) {
                                   final productName =
-                                      item['title'] ?? 'منتج غير معروف';
+                                      item['title'] ??
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.translate('unknown_product');
                                   return Padding(
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 4,
@@ -243,5 +283,39 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
               ),
             ),
     );
+  }
+
+  Widget _navIcon(BuildContext context, IconData icon, int index) {
+    return GestureDetector(
+      onTap: () => _onNavTap(context, index),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Icon(icon, color: AppColors.homeNavInactive, size: 24),
+      ),
+    );
+  }
+
+  void _onNavTap(BuildContext context, int index) {
+    switch (index) {
+      case 0:
+        context.go('/');
+        break;
+      case 1:
+        context.go('/search');
+        break;
+      case 2:
+        context.go('/cart');
+        break;
+      case 3:
+        context.go('/wishlist');
+        break;
+    }
   }
 }
