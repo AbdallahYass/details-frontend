@@ -157,7 +157,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                         '${AppLocalizations.of(context)!.translate('order_number')}${orderId.length > 8 ? orderId.substring(0, 8) : orderId}',
                       ),
                       subtitle: Text(
-                        '${order['totalAmount']} - ${order['status']}',
+                        '${order['amount']} - ${order['status']}',
                         style: TextStyle(
                           color: order['status'] == 'تم التوصيل'
                               ? AppColors

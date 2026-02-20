@@ -182,6 +182,7 @@ class AppLocalizations {
       'admin_role': 'Admin',
       'retry': 'Retry',
       'no_orders': 'No orders yet',
+      'brand': 'Brand',
     },
     'ar': {
       'top_announcement_1': 'توصيل مجاني للطلبات فوق 500 شيكل',
@@ -352,6 +353,7 @@ class AppLocalizations {
       'admin_role': 'مسؤول',
       'retry': 'إعادة المحاولة',
       'no_orders': 'لا توجد طلبات بعد',
+      'brand': 'الماركة',
     },
   };
 

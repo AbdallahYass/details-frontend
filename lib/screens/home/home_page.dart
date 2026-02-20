@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:details_app/app_imports.dart';
 
 class HomePage extends StatefulWidget {
@@ -25,6 +27,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final Map<String, PageController> _categoryControllers = {};
   final HomeRepository _homeRepository = HomeRepository();
 
+  final TextEditingController _subscribeController = TextEditingController();
+  bool _isSubscribing = false;
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +46,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     for (var controller in _categoryControllers.values) {
       controller.dispose();
     }
+    _subscribeController.dispose();
     super.dispose();
   }
 
@@ -129,88 +135,131 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     });
   }
 
+  Future<void> _subscribe() async {
+    final email = _subscribeController.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context)!.translate('enter_valid_email'),
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSubscribing = true);
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://api.details-store.com/api/subscribe'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'email': email}),
+      );
+
+      if (!mounted) return;
+
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(data['message'] ?? 'تم الاشتراك بنجاح'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        _subscribeController.clear();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(data['message'] ?? 'فشل الاشتراك'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.translate('error_occurred'),
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSubscribing = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: () => _loadAllData(forceRefresh: true),
       color: AppColors.primary,
-      child: Stack(
-        children: [
-          CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              SliverAppBar(
-                floating: true,
-                pinned: true,
-                backgroundColor: AppColors.appBarBackground,
-                foregroundColor: AppColors.appBarForeground,
-                elevation: 0,
-                centerTitle: true,
-                leading: Builder(
-                  builder: (context) {
-                    return IconButton(
-                      icon: const Icon(Icons.menu),
-                      onPressed: () => Scaffold.of(context).openDrawer(),
-                    );
-                  },
-                ),
-                title: Image.asset('assets/images/logo1.png', height: 40),
-                actions: [
-                  IconButton(
-                    icon: const Icon(Icons.notifications_outlined),
-                    onPressed: () {},
-                  ),
-                ],
+      child: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverAppBar(
+            floating: true,
+            pinned: true,
+            backgroundColor: AppColors.appBarBackground,
+            foregroundColor: AppColors.appBarForeground,
+            elevation: 0,
+            centerTitle: true,
+            leading: Builder(
+              builder: (context) {
+                return IconButton(
+                  icon: const Icon(Icons.menu),
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                );
+              },
+            ),
+            title: Image.asset('assets/images/logo1.png', height: 40),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined),
+                onPressed: () {},
               ),
-              if (errorMessage != null)
-                SliverFillRemaining(
-                  child: CommonErrorWidget(
-                    message: errorMessage!,
-                    onRetry: () => _loadAllData(forceRefresh: true),
-                  ),
-                )
-              else ...[
-                // Hero Section (Show Skeleton only if loading AND empty)
-                SliverToBoxAdapter(
-                  child: (isLoading && banners.isEmpty)
-                      ? _buildHeroSkeleton()
-                      : _buildHeroSlider(),
-                ),
-
-                // Categories Section (Show Skeleton only if loading AND empty)
-                SliverToBoxAdapter(
-                  child: (isLoading && categories.isEmpty)
-                      ? _buildCategoriesSkeleton()
-                      : _buildCategoriesSection(),
-                ),
-
-                // Popular Section (Keep visible if data exists, even during loading)
-                if (popularProducts.isNotEmpty && _selectedCategory == null)
-                  SliverToBoxAdapter(child: _buildPopularSection()),
-
-                // Products Grid (Show Skeleton OVER content if loading AND empty, otherwise content)
-                if (isLoading && products.isEmpty)
-                  SliverToBoxAdapter(child: _buildProductsSkeleton())
-                else
-                  ..._buildCategoryGrids(),
-
-                const SliverToBoxAdapter(child: SizedBox(height: 50)),
-                SliverToBoxAdapter(
-                  child: RevealOnScroll(child: _buildFooter()),
-                ),
-              ],
             ],
           ),
-          if (isLoading && products.isNotEmpty)
-            const Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: LinearProgressIndicator(
-                color: AppColors.primary,
-                backgroundColor: Colors.transparent,
+          if (errorMessage != null)
+            SliverFillRemaining(
+              child: CommonErrorWidget(
+                message: errorMessage!,
+                onRetry: () => _loadAllData(forceRefresh: true),
               ),
+            )
+          else ...[
+            // Hero Section (Show Skeleton only if loading AND empty)
+            SliverToBoxAdapter(
+              child: (isLoading && banners.isEmpty)
+                  ? _buildHeroSkeleton()
+                  : _buildHeroSlider(),
             ),
+
+            // Categories Section (Show Skeleton only if loading AND empty)
+            SliverToBoxAdapter(
+              child: (isLoading && categories.isEmpty)
+                  ? _buildCategoriesSkeleton()
+                  : _buildCategoriesSection(),
+            ),
+
+            // Popular Section (Keep visible if data exists, even during loading)
+            if (popularProducts.isNotEmpty && _selectedCategory == null)
+              SliverToBoxAdapter(child: _buildPopularSection()),
+
+            // Products Grid (Show Skeleton OVER content if loading, otherwise content)
+            if (isLoading && products.isEmpty)
+              SliverToBoxAdapter(child: _buildProductsSkeleton())
+            else
+              ..._buildCategoryGrids(),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 50)),
+            SliverToBoxAdapter(child: RevealOnScroll(child: _buildFooter())),
+          ],
         ],
       ),
     );
@@ -1330,25 +1379,40 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         ),
         child: Row(
           children: [
-            Container(
-              margin: const EdgeInsets.all(4),
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              decoration: BoxDecoration(
-                color: AppColors.subscribeBg,
-                borderRadius: BorderRadius.circular(25),
-              ),
-              child: Center(
-                child: Text(
-                  AppLocalizations.of(context)!.translate('subscribe_button'),
-                  style: TextStyle(
-                    color: AppColors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
+            GestureDetector(
+              onTap: _isSubscribing ? null : _subscribe,
+              child: Container(
+                margin: const EdgeInsets.all(4),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: AppColors.subscribeBg,
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: Center(
+                  child: _isSubscribing
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.white,
+                          ),
+                        )
+                      : Text(
+                          AppLocalizations.of(
+                            context,
+                          )!.translate('subscribe_button'),
+                          style: const TextStyle(
+                            color: AppColors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
             ),
             Expanded(
               child: TextField(
+                controller: _subscribeController,
                 textAlign: TextAlign.right,
                 style: const TextStyle(
                   color: AppColors.white,

@@ -19,6 +19,8 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
   final _quantityController = TextEditingController();
   final _descArController = TextEditingController();
   final _descEnController = TextEditingController();
+  final _brandController = TextEditingController();
+  final _dimensionsController = TextEditingController();
   final _imageController = TextEditingController();
   final _newCategoryController = TextEditingController(); // للكاتيجوري الجديد
   final _sizeInputController = TextEditingController();
@@ -51,6 +53,8 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
       _descEnController.text = p['description'] is Map
           ? (p['description']['en'] ?? '')
           : '';
+      _brandController.text = p['brand'] ?? 'DETAILS';
+      _dimensionsController.text = p['dimensions'] ?? '';
       _imageController.text = p['imageUrl'] ?? '';
       _selectedCategory = p['category'] is Map
           ? p['category']['_id']
@@ -81,6 +85,8 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     _quantityController.dispose();
     _descArController.dispose();
     _descEnController.dispose();
+    _brandController.dispose();
+    _dimensionsController.dispose();
     _imageController.dispose();
     _newCategoryController.dispose();
     _sizeInputController.dispose();
@@ -217,6 +223,10 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
           'ar': _descArController.text,
           'en': _descEnController.text,
         },
+        'brand': _brandController.text.isNotEmpty
+            ? _brandController.text
+            : 'DETAILS',
+        'dimensions': _dimensionsController.text,
         'imageUrl': finalImageUrl,
         'category': categoryValue,
         'isSoldOut': _isSoldOut,
@@ -359,6 +369,23 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                   )!.translate('old_price'),
                 ),
                 keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _brandController,
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.translate('brand'),
+                  hintText: 'DETAILS',
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextFormField(
+                controller: _dimensionsController,
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(
+                    context,
+                  )!.translate('dimensions'),
+                ),
               ),
               const SizedBox(height: 10),
               TextFormField(
