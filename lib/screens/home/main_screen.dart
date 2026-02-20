@@ -104,7 +104,7 @@ class _MainScreenState extends State<MainScreen> {
         icon: const Icon(Icons.menu),
         onPressed: () => Scaffold.of(context).openDrawer(),
       ),
-      title: Image.asset('assets/images/logo2.png', height: 60),
+      title: Image.asset('assets/images/logo2.png', height: 80),
       actions: [
         IconButton(
           icon: const Icon(Icons.notifications_outlined),
