@@ -217,7 +217,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 );
               },
             ),
-            title: Image.asset('assets/images/logo1.png', height: 40),
+            title: Image.asset('assets/images/logo2.png', height: 40),
             actions: [
               IconButton(
                 icon: const Icon(Icons.notifications_outlined),
@@ -269,7 +269,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     return Container(
       height: 220,
       width: double.infinity,
-      color: Colors.grey.shade200,
+      color: AppColors.imagePlaceholder,
     );
   }
 
@@ -283,7 +283,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       ),
       child: Column(
         children: [
-          Container(height: 20, width: 100, color: Colors.grey.shade200),
+          Container(height: 20, width: 100, color: AppColors.imagePlaceholder),
           const SizedBox(height: 15),
           GridView.builder(
             shrinkWrap: true,
@@ -297,7 +297,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             ),
             itemBuilder: (c, i) => Container(
               decoration: BoxDecoration(
-                color: Colors.grey.shade200,
+                color: AppColors.imagePlaceholder,
                 shape: BoxShape.circle,
               ),
             ),
@@ -322,7 +322,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         ),
         itemBuilder: (context, index) => Container(
           decoration: BoxDecoration(
-            color: Colors.grey.shade200,
+            color: AppColors.imagePlaceholder,
             borderRadius: BorderRadius.circular(16),
           ),
         ),
