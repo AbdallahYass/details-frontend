@@ -130,7 +130,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Image.asset('assets/images/logo1.png', height: 40),
+        title: Image.asset('assets/images/logo2.png', height: 100),
         centerTitle: true,
         backgroundColor: AppColors.appBarBackground,
         foregroundColor: AppColors.appBarForeground,

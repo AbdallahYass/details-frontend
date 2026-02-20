@@ -217,7 +217,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                 );
               },
             ),
-            title: Image.asset('assets/images/logo2.png', height: 80),
+            title: Image.asset('assets/images/logo2.png', height: 100),
             actions: [
               IconButton(
                 icon: const Icon(Icons.notifications_outlined),
