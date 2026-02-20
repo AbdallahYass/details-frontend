@@ -12,6 +12,7 @@ export 'package:cached_network_image/cached_network_image.dart';
 export 'package:share_plus/share_plus.dart';
 export 'package:flutter_cache_manager/flutter_cache_manager.dart';
 export 'package:intl/intl.dart' hide TextDirection;
+export 'package:visibility_detector/visibility_detector.dart';
 
 // App Constants & Localization
 export 'package:details_app/constants/app_colors.dart';

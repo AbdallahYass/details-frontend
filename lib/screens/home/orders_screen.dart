@@ -8,18 +8,26 @@ class OrdersScreen extends StatefulWidget {
 }
 
 class _OrdersScreenState extends State<OrdersScreen> {
+  bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
-    // جلب الطلبات عند فتح الشاشة
-    Future.microtask(() {
-      if (mounted) {
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        if (authProvider.isAuthenticated) {
-          Provider.of<OrdersProvider>(context, listen: false).fetchOrders();
-        }
+    _fetchOrders();
+  }
+
+  Future<void> _fetchOrders() async {
+    if (!mounted) return;
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.isAuthenticated) {
+      try {
+        await Provider.of<OrdersProvider>(context, listen: false).fetchOrders();
+      } catch (e) {
+        debugPrint("Error fetching orders: $e");
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
       }
-    });
+    }
   }
 
   @override
@@ -111,10 +119,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
                     listen: false,
                   );
                   if (auth.isAuthenticated) {
-                    Provider.of<OrdersProvider>(
-                      context,
-                      listen: false,
-                    ).fetchOrders();
+                    Provider.of<OrdersProvider>(context, listen: false)
+                        .fetchOrders()
+                        .then((_) => setState(() => _isLoading = false));
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -186,9 +193,19 @@ class _OrdersScreenState extends State<OrdersScreen> {
       body: Column(
         children: [
           Expanded(
-            child: ordersData.orders.isEmpty
+            child: _isLoading
                 ? const Center(
                     child: CircularProgressIndicator(color: AppColors.primary),
+                  )
+                : ordersData.orders.isEmpty
+                ? Center(
+                    child: Text(
+                      AppLocalizations.of(context)!.translate('no_orders'),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   )
                 : ListView.builder(
                     itemCount: ordersData.orders.length,

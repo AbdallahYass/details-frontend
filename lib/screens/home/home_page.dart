@@ -48,7 +48,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
       _heroTimer?.cancel();
-    } else if (state == AppLifecycleState.resumed) {
+    } else if (state == AppLifecycleState.resumed && banners.isNotEmpty) {
       _startHeroScroll();
     }
   }
@@ -134,67 +134,83 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     return RefreshIndicator(
       onRefresh: () => _loadAllData(forceRefresh: true),
       color: AppColors.primary,
-      child: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          SliverAppBar(
-            floating: true,
-            pinned: true,
-            backgroundColor: AppColors.appBarBackground,
-            foregroundColor: AppColors.appBarForeground,
-            elevation: 0,
-            centerTitle: true,
-            leading: Builder(
-              builder: (context) {
-                return IconButton(
-                  icon: const Icon(Icons.menu),
-                  onPressed: () => Scaffold.of(context).openDrawer(),
-                );
-              },
-            ),
-            title: Image.asset('assets/images/logo1.png', height: 40),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.notifications_outlined),
-                onPressed: () {},
+      child: Stack(
+        children: [
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverAppBar(
+                floating: true,
+                pinned: true,
+                backgroundColor: AppColors.appBarBackground,
+                foregroundColor: AppColors.appBarForeground,
+                elevation: 0,
+                centerTitle: true,
+                leading: Builder(
+                  builder: (context) {
+                    return IconButton(
+                      icon: const Icon(Icons.menu),
+                      onPressed: () => Scaffold.of(context).openDrawer(),
+                    );
+                  },
+                ),
+                title: Image.asset('assets/images/logo1.png', height: 40),
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications_outlined),
+                    onPressed: () {},
+                  ),
+                ],
               ),
+              if (errorMessage != null)
+                SliverFillRemaining(
+                  child: CommonErrorWidget(
+                    message: errorMessage!,
+                    onRetry: () => _loadAllData(forceRefresh: true),
+                  ),
+                )
+              else ...[
+                // Hero Section (Show Skeleton only if loading AND empty)
+                SliverToBoxAdapter(
+                  child: (isLoading && banners.isEmpty)
+                      ? _buildHeroSkeleton()
+                      : _buildHeroSlider(),
+                ),
+
+                // Categories Section (Show Skeleton only if loading AND empty)
+                SliverToBoxAdapter(
+                  child: (isLoading && categories.isEmpty)
+                      ? _buildCategoriesSkeleton()
+                      : _buildCategoriesSection(),
+                ),
+
+                // Popular Section (Keep visible if data exists, even during loading)
+                if (popularProducts.isNotEmpty && _selectedCategory == null)
+                  SliverToBoxAdapter(child: _buildPopularSection()),
+
+                // Products Grid (Show Skeleton OVER content if loading AND empty, otherwise content)
+                if (isLoading && products.isEmpty)
+                  SliverToBoxAdapter(child: _buildProductsSkeleton())
+                else
+                  ..._buildCategoryGrids(),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 50)),
+                SliverToBoxAdapter(
+                  child: RevealOnScroll(child: _buildFooter()),
+                ),
+              ],
             ],
           ),
-          if (errorMessage != null)
-            SliverFillRemaining(
-              child: CommonErrorWidget(
-                message: errorMessage!,
-                onRetry: () => _loadAllData(forceRefresh: true),
+          if (isLoading && products.isNotEmpty)
+            const Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: LinearProgressIndicator(
+                color: AppColors.primary,
+                backgroundColor: Colors.transparent,
               ),
-            )
-          else ...[
-            // Hero Section (Show Skeleton only if loading AND empty)
-            SliverToBoxAdapter(
-              child: (isLoading && banners.isEmpty)
-                  ? _buildHeroSkeleton()
-                  : _buildHeroSlider(),
             ),
-
-            // Categories Section (Show Skeleton only if loading AND empty)
-            SliverToBoxAdapter(
-              child: (isLoading && categories.isEmpty)
-                  ? _buildCategoriesSkeleton()
-                  : _buildCategoriesSection(),
-            ),
-
-            // Popular Section (Keep visible if data exists, even during loading)
-            if (popularProducts.isNotEmpty && _selectedCategory == null)
-              SliverToBoxAdapter(child: _buildPopularSection()),
-
-            // Products Grid (Show Skeleton OVER content if loading, otherwise content)
-            if (isLoading && products.isEmpty)
-              SliverToBoxAdapter(child: _buildProductsSkeleton())
-            else
-              ..._buildCategoryGrids(),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 50)),
-            SliverToBoxAdapter(child: RevealOnScroll(child: _buildFooter())),
-          ],
         ],
       ),
     );
@@ -433,19 +449,48 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
                       return Container(
                         margin: const EdgeInsets.symmetric(horizontal: 4),
-                        child: GridView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: currentProducts.length,
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                childAspectRatio: 0.65,
-                                crossAxisSpacing: 10,
-                                mainAxisSpacing: 10,
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildProductCard(
+                                      currentProducts[0],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: currentProducts.length > 1
+                                        ? _buildProductCard(currentProducts[1])
+                                        : const SizedBox(),
+                                  ),
+                                ],
                               ),
-                          itemBuilder: (c, i) =>
-                              _buildProductCard(currentProducts[i]),
+                            ),
+                            if (currentProducts.length > 2) ...[
+                              const SizedBox(height: 10),
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildProductCard(
+                                        currentProducts[2],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: currentProducts.length > 3
+                                          ? _buildProductCard(
+                                              currentProducts[3],
+                                            )
+                                          : const SizedBox(),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       );
                     },
@@ -520,6 +565,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                           ? AppColors.homeFavActive
                           : AppColors.homeFavInactive,
                       onTap: () async {
+                        final messenger = ScaffoldMessenger.of(context);
                         final auth = Provider.of<AuthProvider>(
                           context,
                           listen: false,
@@ -569,8 +615,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                         );
                         bool added = await wishlistProvider.toggleWishlist(p);
                         if (!mounted) return;
-                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        messenger.hideCurrentSnackBar();
+                        messenger.showSnackBar(
                           SnackBar(
                             content: Text(
                               added
@@ -707,7 +753,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                             SizedBox(width: 2),
                             Text(
                               AppLocalizations.of(context)!.translate('hot'),
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: AppColors.homeBadgeText,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
@@ -786,37 +832,47 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       ? const SizedBox()
       : SizedBox(
           height: 220,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              PageView.builder(
-                controller: _heroController,
-                itemCount: banners.length,
-                onPageChanged: (i) {
-                  _bannerIndexNotifier.value = i;
-                  _heroTimer?.cancel();
-                  _startHeroScroll();
-                },
-                itemBuilder: (c, i) => GestureDetector(
-                  onTap: () => _onBannerTap(banners[i]),
-                  child: AnimatedBannerItem(banner: banners[i]),
-                ),
-              ),
-              Positioned(
-                bottom: 20,
-                child: ValueListenableBuilder<int>(
-                  valueListenable: _bannerIndexNotifier,
-                  builder: (context, currentIndex, child) {
-                    return Row(
-                      children: List.generate(
-                        banners.length,
-                        (i) => _dot(i == currentIndex),
-                      ),
-                    );
+          child: VisibilityDetector(
+            key: const Key('hero-slider'),
+            onVisibilityChanged: (info) {
+              if (info.visibleFraction == 0) {
+                _heroTimer?.cancel();
+              } else {
+                _startHeroScroll();
+              }
+            },
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                PageView.builder(
+                  controller: _heroController,
+                  itemCount: banners.length,
+                  onPageChanged: (i) {
+                    _bannerIndexNotifier.value = i;
+                    _heroTimer?.cancel();
+                    _startHeroScroll();
                   },
+                  itemBuilder: (c, i) => GestureDetector(
+                    onTap: () => _onBannerTap(banners[i]),
+                    child: AnimatedBannerItem(banner: banners[i]),
+                  ),
                 ),
-              ),
-            ],
+                Positioned(
+                  bottom: 20,
+                  child: ValueListenableBuilder<int>(
+                    valueListenable: _bannerIndexNotifier,
+                    builder: (context, currentIndex, child) {
+                      return Row(
+                        children: List.generate(
+                          banners.length,
+                          (i) => _dot(i == currentIndex),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         );
 
