@@ -34,7 +34,7 @@ class AppLocalizations {
       'policy_shipping': 'Shipping Policy',
       'footer_about_title': 'Who are we?',
       'footer_about_desc':
-          'Details launched to be the premier destination for luxury bags and watches.',
+          'Details launched to be the premier destination for everything a female needs in one place.\nWe care about the finest details to offer you pieces that reflect your refined taste.',
       'subscribe_text': 'Subscribe to get the latest offers via email',
       'email_hint': 'Your Email',
       'nav_search': 'Search',
@@ -206,7 +206,7 @@ class AppLocalizations {
       'policy_shipping': 'سياسة الشحن',
       'footer_about_title': 'من نحن ؟',
       'footer_about_desc':
-          'ديتيلز انطلق ليكون الوجهة الأولى للحقائب والساعات الفاخرة، نهتم بأدق التفاصيل لنقدم لكم قطعاً تعكس ذوقكم الرفيع.',
+          'ديتيلز انطلق ليكون الوجهة الاولى لكل ما تحتاجه الانثى في موقع واحد\nنهتم بأدق التفاصيل لنقدم لكم قطعاً تعكس ذوقكم الرفيع',
       'subscribe_text': 'إشترك لتصل آخر العروض والمنتجات عبر بريدك الإلكتروني',
       'email_hint': 'بريدك الإلكتروني',
       'nav_search': 'بحث',

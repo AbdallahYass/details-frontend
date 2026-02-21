@@ -18,9 +18,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      appBar: widget.navigationShell.currentIndex == 0
-          ? null
-          : _buildAppBar(context),
+      appBar: _buildAppBar(context),
       drawer: _buildDrawer(context),
       body: NotificationListener<UserScrollNotification>(
         onNotification: (notification) {
@@ -102,9 +100,13 @@ class _MainScreenState extends State<MainScreen> {
       foregroundColor: AppColors.appBarForeground,
       elevation: 0,
       centerTitle: true,
-      leading: IconButton(
-        icon: const Icon(Icons.menu),
-        onPressed: () => Scaffold.of(context).openDrawer(),
+      leading: Builder(
+        builder: (context) {
+          return IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          );
+        },
       ),
       title: Image.asset('assets/images/logo2.png', height: 100),
       actions: [

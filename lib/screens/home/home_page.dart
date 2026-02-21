@@ -202,30 +202,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       child: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          SliverAppBar(
-            floating: true,
-            pinned: true,
-            toolbarHeight: 110,
-            backgroundColor: AppColors.appBarBackground,
-            foregroundColor: AppColors.appBarForeground,
-            elevation: 0,
-            centerTitle: true,
-            leading: Builder(
-              builder: (context) {
-                return IconButton(
-                  icon: const Icon(Icons.menu),
-                  onPressed: () => Scaffold.of(context).openDrawer(),
-                );
-              },
-            ),
-            title: Image.asset('assets/images/logo2.png', height: 100),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.notifications_outlined),
-                onPressed: () {},
-              ),
-            ],
-          ),
           if (errorMessage != null)
             SliverFillRemaining(
               child: CommonErrorWidget(
