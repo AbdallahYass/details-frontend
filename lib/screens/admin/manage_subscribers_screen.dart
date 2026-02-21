@@ -54,34 +54,108 @@ class _ManageSubscribersScreenState extends State<ManageSubscribersScreen> {
   }
 
   Future<void> _sendEmail() async {
-    if (_subscribers.isEmpty) return;
+    final subjectController = TextEditingController();
+    final messageController = TextEditingController();
 
-    final emails = _subscribers.map((s) => s['email']).join(',');
-
-    final Uri emailLaunchUri = Uri(
-      scheme: 'mailto',
-      query: _encodeQueryParameters({
-        'bcc': emails, // استخدام BCC لحماية خصوصية العملاء
-        'subject': 'Details Store Update',
-      }),
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          AppLocalizations.of(context)!.translate('send_email_to_subscribers'),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: subjectController,
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.translate('subject'),
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: messageController,
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.translate('message'),
+                border: const OutlineInputBorder(),
+              ),
+              maxLines: 4,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(AppLocalizations.of(context)!.translate('cancel')),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _sendBulkEmail(subjectController.text, messageController.text);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            child: Text(
+              AppLocalizations.of(context)!.translate('send'),
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
     );
-
-    try {
-      if (!await launchUrl(emailLaunchUri)) {
-        throw 'Could not launch';
-      }
-    } catch (e) {
-      if (mounted) _copyAllEmails(); // في حال الفشل ننسخ الإيميلات
-    }
   }
 
-  String? _encodeQueryParameters(Map<String, String> params) {
-    return params.entries
-        .map(
-          (e) =>
-              '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}',
-        )
-        .join('&');
+  Future<void> _sendBulkEmail(String subject, String message) async {
+    if (subject.isEmpty || message.isEmpty) return;
+
+    setState(() => _isLoading = true);
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+
+    try {
+      final response = await http.post(
+        Uri.parse('https://api.details-store.com/api/admin/send-email'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${auth.token}',
+        },
+        body: json.encode({'subject': subject, 'message': message}),
+      );
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+        if (response.statusCode == 200) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)!.translate('email_sent_success'),
+              ),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)!.translate('email_sent_failed'),
+              ),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.translate('error_occurred'),
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   @override
