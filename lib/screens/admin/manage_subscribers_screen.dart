@@ -25,7 +25,7 @@ class _ManageSubscribersScreenState extends State<ManageSubscribersScreen> {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     try {
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:3000/api/admin/subscribers'),
+        Uri.parse('https://api.details-store.com/api/admin/subscribers'),
         headers: {'Authorization': 'Bearer ${auth.token}'},
       );
       if (response.statusCode == 200) {
@@ -114,7 +114,7 @@ class _ManageSubscribersScreenState extends State<ManageSubscribersScreen> {
     try {
       final response = await http
           .post(
-            Uri.parse('http://10.0.2.2:3000/api/admin/send-email'),
+            Uri.parse('https://api.details-store.com/api/admin/send-email'),
             headers: {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer ${auth.token}',
