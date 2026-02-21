@@ -30,15 +30,17 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await http.post(
-        Uri.parse('https://api.details-store.com/api/contact'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'name': _nameController.text,
-          'email': _emailController.text,
-          'message': _messageController.text,
-        }),
-      );
+      final response = await http
+          .post(
+            Uri.parse('https://api.details-store.com/api/contact'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({
+              'name': _nameController.text,
+              'email': _emailController.text,
+              'message': _messageController.text,
+            }),
+          )
+          .timeout(const Duration(seconds: 20));
 
       if (mounted) {
         setState(() => _isLoading = false);
@@ -66,6 +68,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
         }
       }
     } catch (e) {
+      debugPrint('Contact Error: $e');
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
