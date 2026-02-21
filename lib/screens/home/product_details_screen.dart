@@ -113,6 +113,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        toolbarHeight: 110,
         title: Image.asset('assets/images/logo2.png', height: 100),
         backgroundColor: AppColors.appBarBackground,
         foregroundColor: AppColors.appBarForeground,

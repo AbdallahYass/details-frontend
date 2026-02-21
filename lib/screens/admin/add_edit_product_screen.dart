@@ -271,6 +271,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: 110,
         title: Image.asset('assets/images/logo2.png', height: 100),
         backgroundColor: AppColors.appBarBackground,
         foregroundColor: AppColors.appBarForeground,

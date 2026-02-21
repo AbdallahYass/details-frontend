@@ -129,7 +129,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final total = cart.totalAmount;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
+        toolbarHeight: 110,
         title: Image.asset('assets/images/logo2.png', height: 100),
         centerTitle: true,
         backgroundColor: AppColors.appBarBackground,
@@ -198,71 +200,81 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      AppLocalizations.of(context)!.translate('shipping_info'),
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
+                    _buildSectionTitle(context, 'shipping_info'),
+                    const SizedBox(height: 15),
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.shadowColor,
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    _buildTextField(
-                      controller: _cityController,
-                      label: AppLocalizations.of(context)!.translate('city'),
-                      icon: Icons.location_city,
-                      validator: (value) {
-                        if (value == null || value.trim().length < 2) {
-                          return AppLocalizations.of(
-                            context,
-                          )!.translate('enter_valid_city');
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 15),
-                    _buildTextField(
-                      controller: _streetController,
-                      label: AppLocalizations.of(context)!.translate('street'),
-                      icon: Icons.map,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return AppLocalizations.of(
-                            context,
-                          )!.translate('required_field');
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 15),
-                    _buildTextField(
-                      controller: _phoneController,
-                      label: AppLocalizations.of(context)!.translate('phone'),
-                      icon: Icons.phone,
-                      keyboardType: TextInputType.phone,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return AppLocalizations.of(
-                            context,
-                          )!.translate('required_field');
-                        }
-                        if (value.length < 9) {
-                          return AppLocalizations.of(
-                            context,
-                          )!.translate('enter_valid_phone');
-                        }
-                        return null;
-                      },
+                      child: Column(
+                        children: [
+                          _buildTextField(
+                            controller: _cityController,
+                            label: AppLocalizations.of(
+                              context,
+                            )!.translate('city'),
+                            icon: Icons.location_city,
+                            validator: (value) {
+                              if (value == null || value.trim().length < 2) {
+                                return AppLocalizations.of(
+                                  context,
+                                )!.translate('enter_valid_city');
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 15),
+                          _buildTextField(
+                            controller: _streetController,
+                            label: AppLocalizations.of(
+                              context,
+                            )!.translate('street'),
+                            icon: Icons.map,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return AppLocalizations.of(
+                                  context,
+                                )!.translate('required_field');
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 15),
+                          _buildTextField(
+                            controller: _phoneController,
+                            label: AppLocalizations.of(
+                              context,
+                            )!.translate('phone'),
+                            icon: Icons.phone,
+                            keyboardType: TextInputType.phone,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return AppLocalizations.of(
+                                  context,
+                                )!.translate('required_field');
+                              }
+                              if (value.length < 9) {
+                                return AppLocalizations.of(
+                                  context,
+                                )!.translate('enter_valid_phone');
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 30),
-                    Text(
-                      AppLocalizations.of(context)!.translate('payment_method'),
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                    ),
+                    _buildSectionTitle(context, 'payment_method'),
                     const SizedBox(height: 15),
                     Row(
                       children: [
@@ -292,8 +304,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: AppColors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.lightGrey),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.shadowColor,
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -303,14 +321,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
                             ),
                           ),
                           Text(
                             '${total.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
                             style: const TextStyle(
-                              fontSize: 20,
+                              fontSize: 22,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.secondary,
+                              color: AppColors.primary,
                             ),
                           ),
                         ],
@@ -319,9 +338,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     const SizedBox(height: 30),
                     SizedBox(
                       width: double.infinity,
-                      height: 50,
+                      height: 55,
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _submitOrder,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 5,
+                          shadowColor: AppColors.primary.withValues(alpha: 0.3),
+                        ),
                         child: _isLoading
                             ? const CircularProgressIndicator(
                                 color: AppColors.white,
@@ -330,6 +357,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 AppLocalizations.of(
                                   context,
                                 )!.translate('confirm_order'),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
                       ),
                     ),
@@ -337,6 +369,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildSectionTitle(BuildContext context, String key) {
+    return Text(
+      AppLocalizations.of(context)!.translate(key),
+      style: const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: AppColors.primary,
+      ),
     );
   }
 
@@ -355,17 +398,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         prefixIcon: Icon(icon, color: AppColors.primary),
         filled: true,
         fillColor: AppColors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16,
+          horizontal: 20,
+        ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.arrowInactive),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.lightGrey),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.arrowInactive),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: AppColors.lightGrey),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
       ),
       validator: validator,
@@ -384,14 +431,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary.withValues(alpha: 0.05)
-              : AppColors.white,
+          color: isSelected ? AppColors.white : AppColors.white,
           border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.arrowInactive,
+            color: isSelected ? AppColors.primary : AppColors.transparent,
             width: isSelected ? 2 : 1,
           ),
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            if (!isSelected)
+              BoxShadow(
+                color: AppColors.shadowColor,
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+          ],
         ),
         child: Column(
           children: [

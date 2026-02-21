@@ -1,5 +1,6 @@
 import 'package:flutter/rendering.dart';
 import 'package:details_app/app_imports.dart';
+import 'package:details_app/screens/admin/manage_subscribers_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
@@ -96,6 +97,7 @@ class _MainScreenState extends State<MainScreen> {
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
+      toolbarHeight: 110,
       backgroundColor: AppColors.appBarBackground,
       foregroundColor: AppColors.appBarForeground,
       elevation: 0,
@@ -363,6 +365,22 @@ class _MainScreenState extends State<MainScreen> {
                     onTap: () {
                       Navigator.pop(context);
                       context.push('/admin');
+                    },
+                  ),
+                  _drawerTile(
+                    context,
+                    icon: Icons.people_alt_outlined,
+                    title: AppLocalizations.of(
+                      context,
+                    )!.translate('subscribers_list'),
+                    color: AppColors.primary,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const ManageSubscribersScreen(),
+                        ),
+                      );
                     },
                   ),
                 ],

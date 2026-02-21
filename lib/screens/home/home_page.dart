@@ -205,6 +205,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           SliverAppBar(
             floating: true,
             pinned: true,
+            toolbarHeight: 110,
             backgroundColor: AppColors.appBarBackground,
             foregroundColor: AppColors.appBarForeground,
             elevation: 0,
