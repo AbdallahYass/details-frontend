@@ -27,7 +27,7 @@ class _ManageSubscribersScreenState extends State<ManageSubscribersScreen> {
       final response = await http.get(
         Uri.parse('https://api.details-store.com/api/admin/subscribers'),
         headers: {'Authorization': 'Bearer ${auth.token}'},
-      );
+      ); //
       if (response.statusCode == 200) {
         setState(() {
           _subscribers = json.decode(response.body);
