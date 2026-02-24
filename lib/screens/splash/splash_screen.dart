@@ -26,12 +26,13 @@ class _SplashScreenState extends State<SplashScreen> {
       );
 
       await _controller.initialize();
+      await _controller.setVolume(0.0); // كتم الصوت يساعد في بدء الفيديو فوراً
 
       if (mounted) {
         setState(() {
           _isInitialized = true;
         });
-        _controller.play();
+        await _controller.play();
       }
 
       _controller.addListener(() {
