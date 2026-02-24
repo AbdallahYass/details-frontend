@@ -38,4 +38,5 @@ dev_dependencies:
 flutter:
   assets:
     - assets/images/logo2.png
+    - assets/videos/splash_video.mp4
   uses-material-design: true

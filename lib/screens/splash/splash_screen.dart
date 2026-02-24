@@ -21,8 +21,8 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _initializeVideo() async {
     try {
-      _controller = VideoPlayerController.networkUrl(
-        Uri.parse('https://h.top4top.io/m_3706dg51x1.mp4'),
+      _controller = VideoPlayerController.asset(
+        'assets/videos/splash_video.mp4',
       );
 
       await _controller.initialize();
