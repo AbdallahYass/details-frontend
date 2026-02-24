@@ -23,31 +23,36 @@ class _SplashScreenState extends State<SplashScreen> {
     try {
       _controller = VideoPlayerController.asset(
         'assets/videos/splash_video.mp4',
-        // إضافة هذه الإعدادات خصيصاً لـ Safari والويب
-        videoPlayerOptions: VideoPlayerOptions(
-          allowBackgroundPlayback: false,
-          mixWithOthers: true,
-        ),
       );
 
-      await _controller.initialize();
+      // 1. مهلة زمنية للتهيئة (إذا كان النت أو الجهاز بطيئاً)
+      await _controller.initialize().timeout(const Duration(seconds: 4));
 
-      // إعدادات ضرورية جداً للايفون
-      await _controller.setVolume(0.0); // كتم الصوت إجباري للـ Autoplay
+      await _controller.setVolume(0.0); // ضروري جداً للأيفون
       await _controller.setLooping(false);
 
       if (mounted) {
-        setState(() {
-          _isInitialized = true;
-        });
+        setState(() => _isInitialized = true);
 
-        // في الويب و Safari، يفضل البدء بالتشغيل فوراً بعد الـ Initialize
+        // 2. محاولة تشغيل الفيديو
         await _controller.play();
+
+        // 3. الحل الذكي لوضع توفير الطاقة:
+        // ننتظر ثانية واحدة ونفحص.. هل الفيديو شغال فعلاً؟
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted && !_controller.value.isPlaying) {
+            // إذا لم يبدأ الفيديو (غالباً بسبب Low Power Mode في الأيفون)
+            debugPrint(
+              "Autoplay blocked: Low Power Mode detected or Safari restriction.",
+            );
+            _navigateToNextScreen(); // ننتقل فوراً بدل التعليق
+          }
+        });
 
         _controller.addListener(_videoListener);
       }
     } catch (e) {
-      debugPrint('Error: $e');
+      // في حال حدوث أي خطأ (مثل عدم دعم الصيغة أو تأخر التحميل)
       _navigateToNextScreen();
     }
   }
@@ -89,14 +94,15 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      // استخدم لون خلفية الفيديو (أبيض مثلاً) عشان لو الشاشة أعرض من الفيديو ما تلاحظ فرق
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // عرض الفيديو لملء كامل الشاشة
           if (_isInitialized)
             SizedBox.expand(
+              // يخلي المساحة كامل الشاشة
               child: FittedBox(
-                fit: BoxFit.cover, // يضمن ملء الشاشة بالكامل مثل خلفية الموبايل
+                fit: BoxFit.contain, // الحل هنا: يعرض الفيديو كامل بدون أي قص
                 child: SizedBox(
                   width: _controller.value.size.width,
                   height: _controller.value.size.height,
@@ -105,29 +111,15 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
             )
           else
-            const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            ),
+            const Center(child: CircularProgressIndicator()),
 
-          // زر التخطي (Skip)
+          // زر التخطي
           Positioned(
-            top: MediaQuery.of(context).padding.top + 10,
+            top: 40,
             right: 20,
             child: TextButton(
               onPressed: _navigateToNextScreen,
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.black26, // خلفية خفيفة لضمان الرؤية
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              child: const Text(
-                'Skip',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: const Text('Skip', style: TextStyle(color: Colors.grey)),
             ),
           ),
         ],
