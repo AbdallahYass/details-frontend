@@ -15,6 +15,7 @@ import 'package:details_app/screens/home/orders_screen.dart';
 import 'package:details_app/screens/home/about_screen.dart';
 import 'package:details_app/screens/home/wishlist_screen.dart';
 import 'package:details_app/screens/login/account_screen.dart';
+import 'package:details_app/screens/splash/splash_screen.dart';
 
 // Admin Screens
 import 'package:details_app/screens/admin/admin_dashboard_screen.dart';
@@ -31,8 +32,9 @@ final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final router = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: '/',
+  initialLocation: '/splash',
   routes: [
+    GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
         return MainScreen(navigationShell: navigationShell);

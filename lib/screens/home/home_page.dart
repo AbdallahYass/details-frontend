@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:details_app/app_imports.dart';
 
 class HomePage extends StatefulWidget {
@@ -27,9 +25,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final Map<String, PageController> _categoryControllers = {};
   final HomeRepository _homeRepository = HomeRepository();
 
-  final TextEditingController _subscribeController = TextEditingController();
-  bool _isSubscribing = false;
-
   @override
   void initState() {
     super.initState();
@@ -46,7 +41,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     for (var controller in _categoryControllers.values) {
       controller.dispose();
     }
-    _subscribeController.dispose();
     super.dispose();
   }
 
@@ -133,65 +127,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         );
       }
     });
-  }
-
-  Future<void> _subscribe() async {
-    final email = _subscribeController.text.trim();
-    if (email.isEmpty || !email.contains('@')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context)!.translate('enter_valid_email'),
-          ),
-          backgroundColor: AppColors.error,
-        ),
-      );
-      return;
-    }
-
-    setState(() => _isSubscribing = true);
-
-    try {
-      final response = await http.post(
-        Uri.parse('https://api.details-store.com/api/subscribe'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({'email': email}),
-      );
-
-      if (!mounted) return;
-
-      final data = json.decode(response.body);
-
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(data['message'] ?? 'تم الاشتراك بنجاح'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-        _subscribeController.clear();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(data['message'] ?? 'فشل الاشتراك'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context)!.translate('error_occurred'),
-            ),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSubscribing = false);
-    }
   }
 
   @override
@@ -1155,12 +1090,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             ),
           ],
         ),
-        const Divider(color: AppColors.footerDivider, height: 1),
-        _footerAccordion(
-          AppLocalizations.of(context)!.translate('stay_updated'),
-          [],
-          isSubscribe: true,
-        ),
         const SizedBox(height: 40),
         const Divider(color: AppColors.footerDivider),
         const SizedBox(height: 20),
@@ -1295,7 +1224,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Widget _footerAccordion(
     String t,
     List<String> i, {
-    bool isSubscribe = false,
     List<Widget>? customChildren,
   }) => Theme(
     data: ThemeData().copyWith(dividerColor: AppColors.transparent),
@@ -1314,105 +1242,25 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       trailing: const Icon(Icons.add, color: AppColors.white, size: 20),
       childrenPadding: const EdgeInsets.only(bottom: 20, right: 16, left: 16),
       expandedCrossAxisAlignment: CrossAxisAlignment.center,
-      children: isSubscribe
-          ? [_buildSubscribeField()]
-          : customChildren ??
-                i
-                    .map(
-                      (item) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 5),
-                        child: Text(
-                          item,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: AppColors.footerText,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList(),
-    ),
-  );
-  Widget _buildSubscribeField() => Column(
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      Text(
-        AppLocalizations.of(context)!.translate('subscribe_text'),
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: AppColors.footerText,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      const SizedBox(height: 15),
-      Container(
-        height: 50,
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.inputBorder),
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Row(
-          children: [
-            GestureDetector(
-              onTap: _isSubscribing ? null : _subscribe,
-              child: Container(
-                margin: const EdgeInsets.all(4),
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                decoration: BoxDecoration(
-                  color: AppColors.subscribeBg,
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: Center(
-                  child: _isSubscribing
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.white,
-                          ),
-                        )
-                      : Text(
-                          AppLocalizations.of(
-                            context,
-                          )!.translate('subscribe_button'),
-                          style: const TextStyle(
-                            color: AppColors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: TextField(
-                controller: _subscribeController,
-                textAlign: TextAlign.right,
-                style: const TextStyle(
-                  color: AppColors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                ),
-                decoration: InputDecoration(
-                  hintText: AppLocalizations.of(
-                    context,
-                  )!.translate('email_hint'),
-                  hintStyle: const TextStyle(
-                    color: AppColors.hintText,
-                    fontWeight: FontWeight.bold,
+      children:
+          customChildren ??
+          i
+              .map(
+                (item) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 5),
+                  child: Text(
+                    item,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AppColors.footerText,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20),
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ],
+              )
+              .toList(),
+    ),
   );
   Widget _contactRow(IconData i, String t) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 5),
