@@ -23,43 +23,46 @@ class _SplashScreenState extends State<SplashScreen> {
     try {
       _controller = VideoPlayerController.asset(
         'assets/videos/splash_video.mp4',
+        // إضافة هذه الإعدادات خصيصاً لـ Safari والويب
+        videoPlayerOptions: VideoPlayerOptions(
+          allowBackgroundPlayback: false,
+          mixWithOthers: true,
+        ),
       );
 
-      // إضافة مهلة زمنية للتهيئة لتجنب التعليق إذا كان النت ضعيفاً أو الملف ثقيلاً
-      await _controller.initialize().timeout(const Duration(seconds: 3));
-      await _controller.setVolume(0.0); // كتم الصوت يساعد في بدء الفيديو فوراً
+      await _controller.initialize();
+
+      // إعدادات ضرورية جداً للايفون
+      await _controller.setVolume(0.0); // كتم الصوت إجباري للـ Autoplay
+      await _controller.setLooping(false);
 
       if (mounted) {
         setState(() {
           _isInitialized = true;
         });
+
+        // في الويب و Safari، يفضل البدء بالتشغيل فوراً بعد الـ Initialize
         await _controller.play();
 
-        // إصلاح مشكلة الآيفون: التحقق بعد ثانية، إذا لم يبدأ الفيديو (بسبب الحظر)، انتقل للتطبيق
-        Future.delayed(const Duration(seconds: 1), () {
-          if (mounted &&
-              _controller.value.isInitialized &&
-              !_controller.value.isPlaying) {
-            debugPrint('Autoplay blocked by browser, skipping splash.');
-            _navigateToNextScreen();
-          }
-        });
+        _controller.addListener(_videoListener);
       }
-
-      _controller.addListener(() {
-        // التحقق من انتهاء الفيديو
-        if (_controller.value.isInitialized &&
-            !_controller.value.isPlaying &&
-            _controller.value.position >= _controller.value.duration) {
-          _navigateToNextScreen();
-        }
-        if (_controller.value.hasError) {
-          _navigateToNextScreen();
-        }
-      });
     } catch (e) {
-      debugPrint('Error initializing video splash: $e');
-      // في حال فشل الفيديو، ننتقل مباشرة
+      debugPrint('Error: $e');
+      _navigateToNextScreen();
+    }
+  }
+
+  void _videoListener() {
+    if (!mounted) return;
+
+    // التحقق من انتهاء الفيديو أو حدوث خطأ
+    if (_controller.value.hasError) {
+      debugPrint("Video Error: ${_controller.value.errorDescription}");
+      _navigateToNextScreen();
+    }
+
+    // إذا وصل الفيديو للنهاية
+    if (_controller.value.position >= _controller.value.duration) {
       _navigateToNextScreen();
     }
   }
@@ -67,11 +70,18 @@ class _SplashScreenState extends State<SplashScreen> {
   void _navigateToNextScreen() {
     if (!mounted || _isNavigated) return;
     _isNavigated = true;
+
+    // إيقاف المستمع قبل الانتقال
+    _controller.removeListener(_videoListener);
+
+    // الانتقال للصفحة الرئيسية
     context.go('/');
   }
 
   @override
   void dispose() {
+    // إلغاء المستمع والتخلص من المتحكم بشكل آمن
+    _controller.removeListener(_videoListener);
     _controller.dispose();
     super.dispose();
   }
@@ -82,10 +92,11 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
+          // عرض الفيديو لملء كامل الشاشة
           if (_isInitialized)
             SizedBox.expand(
               child: FittedBox(
-                fit: BoxFit.cover,
+                fit: BoxFit.cover, // يضمن ملء الشاشة بالكامل مثل خلفية الموبايل
                 child: SizedBox(
                   width: _controller.value.size.width,
                   height: _controller.value.size.height,
@@ -97,11 +108,19 @@ class _SplashScreenState extends State<SplashScreen> {
             const Center(
               child: CircularProgressIndicator(color: AppColors.primary),
             ),
+
+          // زر التخطي (Skip)
           Positioned(
-            top: 50,
+            top: MediaQuery.of(context).padding.top + 10,
             right: 20,
             child: TextButton(
               onPressed: _navigateToNextScreen,
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.black26, // خلفية خفيفة لضمان الرؤية
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
               child: const Text(
                 'Skip',
                 style: TextStyle(
