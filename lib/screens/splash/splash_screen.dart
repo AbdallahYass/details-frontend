@@ -94,32 +94,53 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // استخدم لون خلفية الفيديو (أبيض مثلاً) عشان لو الشاشة أعرض من الفيديو ما تلاحظ فرق
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.white, // لون خلفية التطبيق
       body: Stack(
+        alignment: Alignment.center,
         children: [
+          // 1. صورة اللوجو (تظهر دائماً كخلفية احتياطية)
+          // إذا لم يعمل الفيديو، ستكون هذه الصورة هي الظاهرة للمستخدم
+          Center(
+            child: Image.asset(
+              'assets/icons/logo2.png', // مسار اللوجو تبعك
+              width: 200, // تحكم في حجم اللوجو بما يناسبك
+              fit: BoxFit.contain,
+            ),
+          ),
+
+          // 2. الفيديو (يظهر فوق الصورة إذا اشتغل)
           if (_isInitialized)
             SizedBox.expand(
-              // يخلي المساحة كامل الشاشة
               child: FittedBox(
-                fit: BoxFit.contain, // الحل هنا: يعرض الفيديو كامل بدون أي قص
+                fit: BoxFit.contain,
                 child: SizedBox(
                   width: _controller.value.size.width,
                   height: _controller.value.size.height,
                   child: VideoPlayer(_controller),
                 ),
               ),
-            )
-          else
-            const Center(child: CircularProgressIndicator()),
+            ),
 
-          // زر التخطي
+          // 3. مؤشر التحميل (يظهر فقط حتى يتم تهيئة الفيديو)
+          if (!_isInitialized)
+            const Positioned(
+              bottom: 50,
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
+
+          // 4. زر التخطي
           Positioned(
-            top: 40,
+            top: MediaQuery.of(context).padding.top + 10,
             right: 20,
             child: TextButton(
               onPressed: _navigateToNextScreen,
-              child: const Text('Skip', style: TextStyle(color: Colors.grey)),
+              child: const Text(
+                'Skip',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ),
         ],
