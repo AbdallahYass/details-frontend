@@ -25,7 +25,8 @@ class _SplashScreenState extends State<SplashScreen> {
         'assets/videos/splash_video.mp4',
       );
 
-      await _controller.initialize();
+      // إضافة مهلة زمنية للتهيئة لتجنب التعليق إذا كان النت ضعيفاً أو الملف ثقيلاً
+      await _controller.initialize().timeout(const Duration(seconds: 3));
       await _controller.setVolume(0.0); // كتم الصوت يساعد في بدء الفيديو فوراً
 
       if (mounted) {
@@ -33,6 +34,16 @@ class _SplashScreenState extends State<SplashScreen> {
           _isInitialized = true;
         });
         await _controller.play();
+
+        // إصلاح مشكلة الآيفون: التحقق بعد ثانية، إذا لم يبدأ الفيديو (بسبب الحظر)، انتقل للتطبيق
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted &&
+              _controller.value.isInitialized &&
+              !_controller.value.isPlaying) {
+            debugPrint('Autoplay blocked by browser, skipping splash.');
+            _navigateToNextScreen();
+          }
+        });
       }
 
       _controller.addListener(() {
@@ -40,6 +51,9 @@ class _SplashScreenState extends State<SplashScreen> {
         if (_controller.value.isInitialized &&
             !_controller.value.isPlaying &&
             _controller.value.position >= _controller.value.duration) {
+          _navigateToNextScreen();
+        }
+        if (_controller.value.hasError) {
           _navigateToNextScreen();
         }
       });
@@ -68,14 +82,21 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          Center(
-            child: _isInitialized
-                ? AspectRatio(
-                    aspectRatio: _controller.value.aspectRatio,
-                    child: VideoPlayer(_controller),
-                  )
-                : const CircularProgressIndicator(color: AppColors.primary),
-          ),
+          if (_isInitialized)
+            SizedBox.expand(
+              child: FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: _controller.value.size.width,
+                  height: _controller.value.size.height,
+                  child: VideoPlayer(_controller),
+                ),
+              ),
+            )
+          else
+            const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
           Positioned(
             top: 50,
             right: 20,
