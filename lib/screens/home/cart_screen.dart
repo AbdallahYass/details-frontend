@@ -1,4 +1,5 @@
 import 'package:details_app/app_imports.dart';
+import 'package:details_app/widgets/custom_loading_overlay.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -9,6 +10,7 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   final TextEditingController _couponController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -21,7 +23,9 @@ class _CartScreenState extends State<CartScreen> {
     final cart = Provider.of<CartProvider>(context);
     final cartItems = cart.items.values.toList();
 
-    return Column(
+    return Stack(
+      children: [
+        Column(
       children: [
         Expanded(
           child: ListView.builder(
@@ -77,9 +81,11 @@ class _CartScreenState extends State<CartScreen> {
                       TextButton(
                         onPressed: () async {
                           if (_couponController.text.isNotEmpty) {
+                            setState(() => _isLoading = true);
                             final success = await cart.applyCoupon(
                               _couponController.text,
                             );
+                            setState(() => _isLoading = false);
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -158,6 +164,9 @@ class _CartScreenState extends State<CartScreen> {
             ),
           ),
         ),
+      ],
+    ),
+        if (_isLoading) const CustomLoadingOverlay(),
       ],
     );
   }

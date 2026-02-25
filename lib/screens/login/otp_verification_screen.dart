@@ -1,4 +1,5 @@
 import 'package:details_app/app_imports.dart';
+import 'package:details_app/widgets/custom_loading_overlay.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   final Map<String, String> userData;
@@ -87,71 +88,77 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         elevation: 0,
         foregroundColor: Colors.black,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 20),
-            Text(
-              AppLocalizations.of(context)!.translate('otp_title'),
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              '${AppLocalizations.of(context)!.translate('otp_subtitle')}\n${widget.userData['email']}',
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 40),
-            TextFormField(
-              controller: _otpController,
-              keyboardType: TextInputType.number,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 24, letterSpacing: 8),
-              maxLength: 6,
-              decoration: InputDecoration(
-                hintText: '------',
-                counterText: '',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 20),
+                Text(
+                  AppLocalizations.of(context)!.translate('otp_title'),
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-              ),
-            ),
-            const SizedBox(height: 30),
-            SizedBox(
-              height: 55,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _verifyAndRegister,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                const SizedBox(height: 10),
+                Text(
+                  '${AppLocalizations.of(context)!.translate('otp_subtitle')}\n${widget.userData['email']}',
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 40),
+                TextFormField(
+                  controller: _otpController,
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 24, letterSpacing: 8),
+                  maxLength: 6,
+                  decoration: InputDecoration(
+                    hintText: '------',
+                    counterText: '',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : Text(
-                        AppLocalizations.of(context)!.translate('verify'),
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+                const SizedBox(height: 30),
+                SizedBox(
+                  height: 55,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _verifyAndRegister,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-              ),
+                    ),
+                    child: Text(
+                      AppLocalizations.of(context)!.translate('verify'),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: _resendOtp,
+                  child: Text(
+                    AppLocalizations.of(context)!.translate('resend_code'),
+                    style: const TextStyle(color: AppColors.primary),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            TextButton(
-              onPressed: _resendOtp,
-              child: Text(
-                AppLocalizations.of(context)!.translate('resend_code'),
-                style: const TextStyle(color: AppColors.primary),
-              ),
-            ),
-          ],
-        ),
+          ),
+          if (_isLoading) const CustomLoadingOverlay(),
+        ],
       ),
     );
   }

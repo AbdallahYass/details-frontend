@@ -1,4 +1,5 @@
 import 'package:details_app/app_imports.dart';
+import 'package:details_app/widgets/custom_loading_overlay.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -131,49 +132,57 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: () => _loadAllData(forceRefresh: true),
-      color: AppColors.primary,
-      child: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          if (errorMessage != null)
-            SliverFillRemaining(
-              child: CommonErrorWidget(
-                message: errorMessage!,
-                onRetry: () => _loadAllData(forceRefresh: true),
-              ),
-            )
-          else ...[
-            // Hero Section (Show Skeleton only if loading AND empty)
-            SliverToBoxAdapter(
-              child: (isLoading && banners.isEmpty)
-                  ? _buildHeroSkeleton()
-                  : _buildHeroSlider(),
-            ),
+    return Stack(
+      children: [
+        RefreshIndicator(
+          onRefresh: () => _loadAllData(forceRefresh: true),
+          color: AppColors.primary,
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              if (errorMessage != null)
+                SliverFillRemaining(
+                  child: CommonErrorWidget(
+                    message: errorMessage!,
+                    onRetry: () => _loadAllData(forceRefresh: true),
+                  ),
+                )
+              else ...[
+                // Hero Section (Show Skeleton only if loading AND empty)
+                SliverToBoxAdapter(
+                  child: (isLoading && banners.isEmpty)
+                      ? _buildHeroSkeleton()
+                      : _buildHeroSlider(),
+                ),
 
-            // Categories Section (Show Skeleton only if loading AND empty)
-            SliverToBoxAdapter(
-              child: (isLoading && categories.isEmpty)
-                  ? _buildCategoriesSkeleton()
-                  : _buildCategoriesSection(),
-            ),
+                // Categories Section (Show Skeleton only if loading AND empty)
+                SliverToBoxAdapter(
+                  child: (isLoading && categories.isEmpty)
+                      ? _buildCategoriesSkeleton()
+                      : _buildCategoriesSection(),
+                ),
 
-            // Popular Section (Keep visible if data exists, even during loading)
-            if (popularProducts.isNotEmpty && _selectedCategory == null)
-              SliverToBoxAdapter(child: _buildPopularSection()),
+                // Popular Section (Keep visible if data exists, even during loading)
+                if (popularProducts.isNotEmpty && _selectedCategory == null)
+                  SliverToBoxAdapter(child: _buildPopularSection()),
 
-            // Products Grid (Show Skeleton OVER content if loading, otherwise content)
-            if (isLoading && products.isEmpty)
-              SliverToBoxAdapter(child: _buildProductsSkeleton())
-            else
-              ..._buildCategoryGrids(),
+                // Products Grid (Show Skeleton OVER content if loading, otherwise content)
+                if (isLoading && products.isEmpty)
+                  SliverToBoxAdapter(child: _buildProductsSkeleton())
+                else
+                  ..._buildCategoryGrids(),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 50)),
-            SliverToBoxAdapter(child: RevealOnScroll(child: _buildFooter())),
-          ],
-        ],
-      ),
+                const SliverToBoxAdapter(child: SizedBox(height: 50)),
+                SliverToBoxAdapter(
+                  child: RevealOnScroll(child: _buildFooter()),
+                ),
+              ],
+            ],
+          ),
+        ),
+        if (isLoading && products.isEmpty)
+          const CustomLoadingOverlay(isOverlay: false),
+      ],
     );
   }
 
@@ -850,6 +859,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           _selectedCategory = cat.slug;
           isLoading = true;
           errorMessage = null;
+          products = []; // تفريغ المنتجات لإجبار الـ Overlay على الظهور
         });
 
         Future.wait<dynamic>([
@@ -962,6 +972,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           }
           isLoading = true;
           errorMessage = null;
+          products = []; // تفريغ المنتجات لإجبار الـ Overlay على الظهور
         });
 
         try {

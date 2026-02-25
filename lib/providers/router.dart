@@ -15,6 +15,8 @@ import 'package:details_app/screens/home/orders_screen.dart';
 import 'package:details_app/screens/home/about_screen.dart';
 import 'package:details_app/screens/home/wishlist_screen.dart';
 import 'package:details_app/screens/login/account_screen.dart';
+import 'package:details_app/screens/login/profile_screen.dart';
+import 'package:details_app/screens/login/edit_profile_screen.dart';
 import 'package:details_app/screens/splash/splash_screen.dart';
 import 'package:details_app/screens/login/reset_password_screen.dart';
 import 'package:details_app/screens/login/otp_verification_screen.dart';
@@ -106,6 +108,14 @@ final router = GoRouter(
       builder: (context, state) => const CheckoutScreen(),
     ),
     GoRoute(path: '/orders', builder: (context, state) => const OrdersScreen()),
+    GoRoute(
+      path: '/profile',
+      builder: (context, state) => const ProfileScreen(),
+    ),
+    GoRoute(
+      path: '/edit-profile',
+      builder: (context, state) => const EditProfileScreen(),
+    ),
     GoRoute(path: '/about', builder: (context, state) => const AboutScreen()),
     GoRoute(
       path: '/reset-password/:token',

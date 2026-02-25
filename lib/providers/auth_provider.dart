@@ -8,12 +8,14 @@ class User {
   final String id;
   final String name;
   final String email;
+  final String phone;
   final bool isAdmin;
 
   User({
     required this.id,
     required this.name,
     required this.email,
+    this.phone = '',
     this.isAdmin = false,
   });
 
@@ -22,6 +24,7 @@ class User {
       id: json['_id'] ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
+      phone: json['phone'] ?? '',
       isAdmin: json['isAdmin'] ?? false,
     );
   }
@@ -30,6 +33,7 @@ class User {
     '_id': id,
     'name': name,
     'email': email,
+    'phone': phone,
     'isAdmin': isAdmin,
   };
 }
@@ -47,7 +51,11 @@ class AuthProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   // تسجيل الدخول
-  Future<bool> login(String email, String password) async {
+  Future<bool> login(
+    String email,
+    String password, {
+    bool rememberMe = true,
+  }) async {
     _isLoading = true;
     notifyListeners();
 
@@ -65,10 +73,12 @@ class AuthProvider with ChangeNotifier {
         _token = data['token'];
         _user = User.fromJson(data['user']);
 
-        // حفظ البيانات محلياً
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', _token!);
-        await prefs.setString('userData', json.encode(data['user']));
+        if (rememberMe) {
+          // حفظ البيانات محلياً
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('token', _token!);
+          await prefs.setString('userData', json.encode(data['user']));
+        }
 
         _isLoading = false;
         notifyListeners();
@@ -242,6 +252,55 @@ class AuthProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        final data = json.decode(response.body);
+        _errorMessage = data['message'];
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
+  // تحديث الملف الشخصي
+  Future<bool> updateProfile({
+    required String name,
+    required String phone,
+    String? password,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final url = Uri.parse('https://api.details-store.com/api/profile');
+      final body = <String, dynamic>{'name': name, 'phone': phone};
+      if (password != null && password.isNotEmpty) {
+        body['password'] = password;
+      }
+
+      final response = await http.put(
+        url,
+        body: json.encode(body),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        // تحديث البيانات محلياً
+        _user = User.fromJson(data);
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('userData', json.encode(_user!.toJson()));
+
         _isLoading = false;
         notifyListeners();
         return true;

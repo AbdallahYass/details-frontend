@@ -1,5 +1,6 @@
 import 'package:details_app/app_imports.dart';
 import 'package:video_player/video_player.dart';
+import 'package:details_app/widgets/custom_loading_overlay.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -122,11 +123,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
 
           // 3. مؤشر التحميل (يظهر فقط حتى يتم تهيئة الفيديو)
-          if (!_isInitialized)
-            const Positioned(
-              bottom: 50,
-              child: CircularProgressIndicator(color: AppColors.primary),
-            ),
+          if (!_isInitialized) const CustomLoadingOverlay(isOverlay: true),
 
           // 4. زر التخطي
           Positioned(

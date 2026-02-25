@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:details_app/app_imports.dart';
+import 'package:details_app/widgets/custom_loading_overlay.dart';
 
 class AddEditProductScreen extends StatefulWidget {
   final dynamic product; // If null, we are adding
@@ -311,441 +312,456 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _nameArController,
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(
-                    context,
-                  )!.translate('product_name_ar'),
-                ),
-                validator: (v) => v!.isEmpty
-                    ? AppLocalizations.of(context)!.translate('required_field')
-                    : null,
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _nameEnController,
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(
-                    context,
-                  )!.translate('product_name_en'),
-                ),
-                validator: (v) => v!.isEmpty
-                    ? AppLocalizations.of(context)!.translate('required_field')
-                    : null,
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _priceController,
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context)!.translate('price'),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (v) {
-                  if (v == null || v.isEmpty) {
-                    return AppLocalizations.of(
-                      context,
-                    )!.translate('required_field');
-                  }
-                  if (double.tryParse(v) == null) {
-                    return AppLocalizations.of(
-                      context,
-                    )!.translate('enter_valid_number');
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _oldPriceController,
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(
-                    context,
-                  )!.translate('old_price'),
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _brandController,
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(context)!.translate('brand'),
-                  hintText: 'DETAILS',
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _dimensionsController,
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(
-                    context,
-                  )!.translate('dimensions'),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _quantityController,
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(
-                    context,
-                  )!.translate('quantity_available'),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (v) {
-                  if (v == null || v.isEmpty) {
-                    return AppLocalizations.of(
-                      context,
-                    )!.translate('required_field');
-                  }
-                  if (int.tryParse(v) == null) {
-                    return AppLocalizations.of(
-                      context,
-                    )!.translate('enter_valid_number');
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 10),
-              Row(
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
                 children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _sizeInputController,
-                      decoration: InputDecoration(
-                        labelText: AppLocalizations.of(
-                          context,
-                        )!.translate('add_size'),
-                        hintText: AppLocalizations.of(
-                          context,
-                        )!.translate('size_example'),
-                      ),
+                  TextFormField(
+                    controller: _nameArController,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(
+                        context,
+                      )!.translate('product_name_ar'),
                     ),
+                    validator: (v) => v!.isEmpty
+                        ? AppLocalizations.of(
+                            context,
+                          )!.translate('required_field')
+                        : null,
                   ),
-                  const SizedBox(width: 10),
-                  SizedBox(
-                    width: 80,
-                    child: TextFormField(
-                      controller: _sizeQtyController,
-                      decoration: InputDecoration(
-                        labelText: AppLocalizations.of(
-                          context,
-                        )!.translate('quantity'),
-                      ),
-                      keyboardType: TextInputType.number,
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _nameEnController,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(
+                        context,
+                      )!.translate('product_name_en'),
                     ),
+                    validator: (v) => v!.isEmpty
+                        ? AppLocalizations.of(
+                            context,
+                          )!.translate('required_field')
+                        : null,
                   ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.add_circle,
-                      color: AppColors.adminEdit,
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _priceController,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(
+                        context,
+                      )!.translate('price'),
                     ),
-                    onPressed: () {
-                      if (_sizeInputController.text.isNotEmpty) {
-                        final qty = int.tryParse(_sizeQtyController.text) ?? 0;
-                        setState(() {
-                          _sizes.add(
-                            ProductSize(
-                              size: _sizeInputController.text.trim(),
-                              quantity: qty,
-                            ),
-                          );
-                          _sizeInputController.clear();
-                          _sizeQtyController.clear();
-                        });
+                    keyboardType: TextInputType.number,
+                    validator: (v) {
+                      if (v == null || v.isEmpty) {
+                        return AppLocalizations.of(
+                          context,
+                        )!.translate('required_field');
                       }
+                      if (double.tryParse(v) == null) {
+                        return AppLocalizations.of(
+                          context,
+                        )!.translate('enter_valid_number');
+                      }
+                      return null;
                     },
                   ),
-                ],
-              ),
-              if (_sizes.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Wrap(
-                    spacing: 8,
-                    children: _sizes
-                        .map(
-                          (s) => Chip(
-                            label: Text('${s.size} (${s.quantity})'),
-                            onDeleted: () {
-                              setState(() {
-                                _sizes.remove(s);
-                              });
-                            },
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ),
-              const SizedBox(height: 10),
-
-              // --- قسم اختيار الكاتيجوري ---
-              SizedBox(
-                width: double.infinity,
-                child: SegmentedButton<bool>(
-                  segments: [
-                    ButtonSegment<bool>(
-                      value: false,
-                      label: Text(
-                        AppLocalizations.of(
-                          context,
-                        )!.translate('existing_category'),
-                      ),
-                      icon: const Icon(Icons.category),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _oldPriceController,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(
+                        context,
+                      )!.translate('old_price'),
                     ),
-                    ButtonSegment<bool>(
-                      value: true,
-                      label: Text(
-                        AppLocalizations.of(context)!.translate('new_category'),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _brandController,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(
+                        context,
+                      )!.translate('brand'),
+                      hintText: 'DETAILS',
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _dimensionsController,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(
+                        context,
+                      )!.translate('dimensions'),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _quantityController,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(
+                        context,
+                      )!.translate('quantity_available'),
+                    ),
+                    keyboardType: TextInputType.number,
+                    validator: (v) {
+                      if (v == null || v.isEmpty) {
+                        return AppLocalizations.of(
+                          context,
+                        )!.translate('required_field');
+                      }
+                      if (int.tryParse(v) == null) {
+                        return AppLocalizations.of(
+                          context,
+                        )!.translate('enter_valid_number');
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _sizeInputController,
+                          decoration: InputDecoration(
+                            labelText: AppLocalizations.of(
+                              context,
+                            )!.translate('add_size'),
+                            hintText: AppLocalizations.of(
+                              context,
+                            )!.translate('size_example'),
+                          ),
+                        ),
                       ),
-                      icon: const Icon(Icons.add),
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        width: 80,
+                        child: TextFormField(
+                          controller: _sizeQtyController,
+                          decoration: InputDecoration(
+                            labelText: AppLocalizations.of(
+                              context,
+                            )!.translate('quantity'),
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.add_circle,
+                          color: AppColors.adminEdit,
+                        ),
+                        onPressed: () {
+                          if (_sizeInputController.text.isNotEmpty) {
+                            final qty =
+                                int.tryParse(_sizeQtyController.text) ?? 0;
+                            setState(() {
+                              _sizes.add(
+                                ProductSize(
+                                  size: _sizeInputController.text.trim(),
+                                  quantity: qty,
+                                ),
+                              );
+                              _sizeInputController.clear();
+                              _sizeQtyController.clear();
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                  if (_sizes.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Wrap(
+                        spacing: 8,
+                        children: _sizes
+                            .map(
+                              (s) => Chip(
+                                label: Text('${s.size} (${s.quantity})'),
+                                onDeleted: () {
+                                  setState(() {
+                                    _sizes.remove(s);
+                                  });
+                                },
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                  const SizedBox(height: 10),
+
+                  // --- قسم اختيار الكاتيجوري ---
+                  SizedBox(
+                    width: double.infinity,
+                    child: SegmentedButton<bool>(
+                      segments: [
+                        ButtonSegment<bool>(
+                          value: false,
+                          label: Text(
+                            AppLocalizations.of(
+                              context,
+                            )!.translate('existing_category'),
+                          ),
+                          icon: const Icon(Icons.category),
+                        ),
+                        ButtonSegment<bool>(
+                          value: true,
+                          label: Text(
+                            AppLocalizations.of(
+                              context,
+                            )!.translate('new_category'),
+                          ),
+                          icon: const Icon(Icons.add),
+                        ),
+                      ],
+                      selected: {_isNewCategory},
+                      onSelectionChanged: (Set<bool> newSelection) {
+                        setState(() {
+                          _isNewCategory = newSelection.first;
+                        });
+                      },
+                    ),
+                  ),
+                  if (!_isNewCategory)
+                    DropdownButtonFormField<String>(
+                      // ignore: deprecated_member_use
+                      // التأكد من أن القيمة المختارة موجودة في القائمة لتجنب الكراش
+                      initialValue:
+                          _selectedCategory != null &&
+                              _categories.any(
+                                (c) => c['_id'] == _selectedCategory,
+                              )
+                          ? _selectedCategory
+                          : null,
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(
+                          context,
+                        )!.translate('select_category'),
+                      ),
+                      items: _categories.map<DropdownMenuItem<String>>((c) {
+                        final name = c['name'] is Map
+                            ? c['name']['ar']
+                            : c['name'];
+                        return DropdownMenuItem(
+                          value: c['_id'],
+                          child: Text(
+                            name ??
+                                AppLocalizations.of(
+                                  context,
+                                )!.translate('no_name'),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (v) => setState(() => _selectedCategory = v),
+                      validator: (v) => !_isNewCategory && v == null
+                          ? AppLocalizations.of(
+                              context,
+                            )!.translate('required_field')
+                          : null,
+                    )
+                  else
+                    TextFormField(
+                      controller: _newCategoryController,
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(
+                          context,
+                        )!.translate('new_category_name'),
+                      ),
+                      validator: (v) => _isNewCategory && v!.isEmpty
+                          ? AppLocalizations.of(
+                              context,
+                            )!.translate('required_field')
+                          : null,
+                    ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _imageController,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(
+                        context,
+                      )!.translate('image_url'),
+                      suffixIcon: IconButton(
+                        icon: const Icon(
+                          Icons.image,
+                          color: AppColors.adminEdit,
+                        ),
+                        onPressed: _pickMainImage,
+                      ),
+                    ),
+                    validator: (v) => v!.isEmpty
+                        ? AppLocalizations.of(
+                            context,
+                          )!.translate('required_field')
+                        : null,
+                  ),
+                  if (_imageController.text.isNotEmpty) ...[
+                    const SizedBox(height: 15),
+                    Container(
+                      height: 200,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.arrowInactive),
+                        borderRadius: BorderRadius.circular(12),
+                        color: AppColors.lightGrey,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: CachedNetworkImage(
+                          imageUrl: _imageController.text,
+                          fit: BoxFit.contain,
+                          placeholder: (context, url) =>
+                              Container(color: Colors.grey[200]),
+                          errorWidget: (context, url, error) => Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.broken_image,
+                                  color: AppColors.grey,
+                                  size: 40,
+                                ),
+                                Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.translate('invalid_url'),
+                                  style: const TextStyle(color: AppColors.grey),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
-                  selected: {_isNewCategory},
-                  onSelectionChanged: (Set<bool> newSelection) {
-                    setState(() {
-                      _isNewCategory = newSelection.first;
-                    });
-                  },
-                ),
-              ),
-              if (!_isNewCategory)
-                DropdownButtonFormField<String>(
-                  // ignore: deprecated_member_use
-                  // التأكد من أن القيمة المختارة موجودة في القائمة لتجنب الكراش
-                  initialValue:
-                      _selectedCategory != null &&
-                          _categories.any((c) => c['_id'] == _selectedCategory)
-                      ? _selectedCategory
-                      : null,
-                  decoration: InputDecoration(
-                    labelText: AppLocalizations.of(
-                      context,
-                    )!.translate('select_category'),
-                  ),
-                  items: _categories.map<DropdownMenuItem<String>>((c) {
-                    final name = c['name'] is Map ? c['name']['ar'] : c['name'];
-                    return DropdownMenuItem(
-                      value: c['_id'],
-                      child: Text(
-                        name ??
-                            AppLocalizations.of(context)!.translate('no_name'),
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (v) => setState(() => _selectedCategory = v),
-                  validator: (v) => !_isNewCategory && v == null
-                      ? AppLocalizations.of(
-                          context,
-                        )!.translate('required_field')
-                      : null,
-                )
-              else
-                TextFormField(
-                  controller: _newCategoryController,
-                  decoration: InputDecoration(
-                    labelText: AppLocalizations.of(
-                      context,
-                    )!.translate('new_category_name'),
-                  ),
-                  validator: (v) => _isNewCategory && v!.isEmpty
-                      ? AppLocalizations.of(
-                          context,
-                        )!.translate('required_field')
-                      : null,
-                ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _imageController,
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(
-                    context,
-                  )!.translate('image_url'),
-                  suffixIcon: _isImageUploading
-                      ? const Padding(
-                          padding: EdgeInsets.all(12.0),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.primary,
-                          ),
-                        )
-                      : IconButton(
-                          icon: const Icon(
-                            Icons.image,
-                            color: AppColors.adminEdit,
-                          ),
-                          onPressed: _pickMainImage,
-                        ),
-                ),
-                validator: (v) => v!.isEmpty
-                    ? AppLocalizations.of(context)!.translate('required_field')
-                    : null,
-              ),
-              if (_imageController.text.isNotEmpty) ...[
-                const SizedBox(height: 15),
-                Container(
-                  height: 200,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.arrowInactive),
-                    borderRadius: BorderRadius.circular(12),
-                    color: AppColors.lightGrey,
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: CachedNetworkImage(
-                      imageUrl: _imageController.text,
-                      fit: BoxFit.contain,
-                      placeholder: (context, url) => const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.broken_image,
-                              color: AppColors.grey,
-                              size: 40,
-                            ),
-                            Text(
-                              AppLocalizations.of(
-                                context,
-                              )!.translate('invalid_url'),
-                              style: const TextStyle(color: AppColors.grey),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
 
-              // --- قسم صور المعرض (Gallery) ---
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.translate('gallery_images'),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  // --- قسم صور المعرض (Gallery) ---
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        AppLocalizations.of(
+                          context,
+                        )!.translate('gallery_images'),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: _isImageUploading ? null : _pickGalleryImage,
+                        icon: const Icon(Icons.add_photo_alternate),
+                        color: AppColors.adminEdit,
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    onPressed: _isImageUploading ? null : _pickGalleryImage,
-                    icon: const Icon(Icons.add_photo_alternate),
-                    color: AppColors.adminEdit,
+                  if (_galleryImages.isNotEmpty)
+                    SizedBox(
+                      height: 100,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _galleryImages.length,
+                        itemBuilder: (ctx, i) {
+                          return Stack(
+                            children: [
+                              Container(
+                                margin: const EdgeInsets.only(right: 10),
+                                width: 100,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: AppColors.arrowInactive,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: CachedNetworkImage(
+                                    imageUrl: _galleryImages[i],
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 0,
+                                right: 10,
+                                child: GestureDetector(
+                                  onTap: () => setState(() {
+                                    _galleryImages.removeAt(i);
+                                  }),
+                                  child: const CircleAvatar(
+                                    radius: 12,
+                                    backgroundColor: AppColors.adminDelete,
+                                    child: Icon(
+                                      Icons.close,
+                                      size: 16,
+                                      color: AppColors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _descArController,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(
+                        context,
+                      )!.translate('description_ar'),
+                    ),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 10),
+                  SwitchListTile(
+                    title: Text(
+                      AppLocalizations.of(context)!.translate('is_sold_out'),
+                    ),
+                    value: _isSoldOut,
+                    onChanged: (val) => setState(() => _isSoldOut = val),
+                  ),
+                  SwitchListTile(
+                    title: Text(
+                      AppLocalizations.of(context)!.translate('is_featured'),
+                    ),
+                    subtitle: Text(
+                      AppLocalizations.of(
+                        context,
+                      )!.translate('featured_subtitle'),
+                    ),
+                    value: _isFeatured,
+                    onChanged: (val) => setState(() => _isFeatured = val),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: (_isLoading || _isImageUploading)
+                        ? null
+                        : _saveProduct,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
+                    child: Text(
+                      AppLocalizations.of(context)!.translate('save'),
+                      style: const TextStyle(color: AppColors.white),
+                    ),
                   ),
                 ],
               ),
-              if (_galleryImages.isNotEmpty)
-                SizedBox(
-                  height: 100,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _galleryImages.length,
-                    itemBuilder: (ctx, i) {
-                      return Stack(
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.only(right: 10),
-                            width: 100,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: AppColors.arrowInactive,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: CachedNetworkImage(
-                                imageUrl: _galleryImages[i],
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            top: 0,
-                            right: 10,
-                            child: GestureDetector(
-                              onTap: () => setState(() {
-                                _galleryImages.removeAt(i);
-                              }),
-                              child: const CircleAvatar(
-                                radius: 12,
-                                backgroundColor: AppColors.adminDelete,
-                                child: Icon(
-                                  Icons.close,
-                                  size: 16,
-                                  color: AppColors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _descArController,
-                decoration: InputDecoration(
-                  labelText: AppLocalizations.of(
-                    context,
-                  )!.translate('description_ar'),
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 10),
-              SwitchListTile(
-                title: Text(
-                  AppLocalizations.of(context)!.translate('is_sold_out'),
-                ),
-                value: _isSoldOut,
-                onChanged: (val) => setState(() => _isSoldOut = val),
-              ),
-              SwitchListTile(
-                title: Text(
-                  AppLocalizations.of(context)!.translate('is_featured'),
-                ),
-                subtitle: Text(
-                  AppLocalizations.of(context)!.translate('featured_subtitle'),
-                ),
-                value: _isFeatured,
-                onChanged: (val) => setState(() => _isFeatured = val),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: (_isLoading || _isImageUploading)
-                    ? null
-                    : _saveProduct,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  minimumSize: const Size(double.infinity, 50),
-                ),
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: AppColors.white)
-                    : Text(
-                        AppLocalizations.of(context)!.translate('save'),
-                        style: const TextStyle(color: AppColors.white),
-                      ),
-              ),
-            ],
+            ),
           ),
-        ),
+          if (_isLoading || _isImageUploading) const CustomLoadingOverlay(),
+        ],
       ),
     );
   }

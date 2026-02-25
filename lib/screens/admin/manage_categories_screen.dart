@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:details_app/app_imports.dart';
+import 'package:details_app/widgets/custom_loading_overlay.dart';
 
 class ManageCategoriesScreen extends StatefulWidget {
   const ManageCategoriesScreen({super.key});
@@ -75,6 +76,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
 
   Future<void> _deleteCategory(String id) async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
+    setState(() => _isLoading = true);
     try {
       await http.delete(
         Uri.parse('https://api.details-store.com/api/categories/$id'),
@@ -82,6 +84,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
       );
       setState(() {
         _categories.removeWhere((cat) => cat['_id'] == id);
+        _isLoading = false;
       });
       if (mounted) {
         ScaffoldMessenger.of(
@@ -90,6 +93,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
       }
     } catch (e) {
       debugPrint('Error deleting category: $e');
+      setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -106,70 +110,73 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
     // نستخدم StatefulBuilder لتحديث حالة الرفع داخل الـ Dialog
     showDialog(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setState) {
-          bool isUploading = false;
-
-          Future<void> pickImage() async {
-            setState(() => isUploading = true);
-            final url = await CloudinaryService().pickAndUploadImage();
-            setState(() => isUploading = false);
-            if (url != null) {
-              imageController.text = url;
+      builder: (ctx) {
+        bool isUploading = false;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            Future<void> pickImage() async {
+              setState(() => isUploading = true);
+              final url = await CloudinaryService().pickAndUploadImage();
+              setState(() => isUploading = false);
+              if (url != null) {
+                imageController.text = url;
+              }
             }
-          }
 
-          return AlertDialog(
-            title: const Text('إضافة تصنيف جديد'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
+            return Stack(
               children: [
-                TextField(
-                  controller: nameArController,
-                  decoration: const InputDecoration(labelText: 'الاسم (عربي)'),
-                ),
-                TextField(
-                  controller: nameEnController,
-                  decoration: const InputDecoration(
-                    labelText: 'الاسم (إنجليزي)',
-                  ),
-                ),
-                TextField(
-                  controller: imageController,
-                  decoration: InputDecoration(
-                    labelText: 'رابط الصورة',
-                    suffixIcon: isUploading
-                        ? const Padding(
-                            padding: EdgeInsets.all(12.0),
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : IconButton(
-                            icon: const Icon(Icons.cloud_upload),
-                            onPressed: pickImage,
-                          ),
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('إلغاء'),
-              ),
-              ElevatedButton(
-                onPressed: isUploading
-                    ? null
-                    : () => _addCategory(
-                        nameArController.text,
-                        nameEnController.text,
-                        imageController.text,
+                AlertDialog(
+                  title: const Text('إضافة تصنيف جديد'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: nameArController,
+                        decoration: const InputDecoration(
+                          labelText: 'الاسم (عربي)',
+                        ),
                       ),
-                child: const Text('إضافة'),
-              ),
-            ],
-          );
-        },
-      ),
+                      TextField(
+                        controller: nameEnController,
+                        decoration: const InputDecoration(
+                          labelText: 'الاسم (إنجليزي)',
+                        ),
+                      ),
+                      TextField(
+                        controller: imageController,
+                        decoration: InputDecoration(
+                          labelText: 'رابط الصورة',
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.cloud_upload),
+                            onPressed: isUploading ? null : pickImage,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: isUploading ? null : () => Navigator.pop(ctx),
+                      child: const Text('إلغاء'),
+                    ),
+                    ElevatedButton(
+                      onPressed: isUploading
+                          ? null
+                          : () => _addCategory(
+                              nameArController.text,
+                              nameEnController.text,
+                              imageController.text,
+                            ),
+                      child: const Text('إضافة'),
+                    ),
+                  ],
+                ),
+                if (isUploading) const CustomLoadingOverlay(isOverlay: true),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -183,43 +190,41 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
         foregroundColor: AppColors.appBarForeground,
         centerTitle: true,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: _categories.length,
-              itemBuilder: (ctx, i) {
-                final cat = _categories[i];
-                final name = cat['name'] is Map
-                    ? cat['name']['ar']
-                    : cat['name'];
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  child: ListTile(
-                    leading: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: CachedNetworkImage(
-                        imageUrl: cat['imageUrl'] ?? '',
-                        width: 50,
-                        height: 50,
-                        fit: BoxFit.cover,
-                        errorWidget: (c, u, e) => const Icon(Icons.error),
-                      ),
-                    ),
-                    title: Text(name ?? ''),
-                    trailing: IconButton(
-                      icon: const Icon(
-                        Icons.delete,
-                        color: AppColors.adminDelete,
-                      ),
-                      onPressed: () => _deleteCategory(cat['_id']),
+      body: Stack(
+        children: [
+          ListView.builder(
+            itemCount: _categories.length,
+            itemBuilder: (ctx, i) {
+              final cat = _categories[i];
+              final name = cat['name'] is Map ? cat['name']['ar'] : cat['name'];
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                child: ListTile(
+                  leading: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: CachedNetworkImage(
+                      imageUrl: cat['imageUrl'] ?? '',
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                      errorWidget: (c, u, e) => const Icon(Icons.error),
                     ),
                   ),
-                );
-              },
-            ),
+                  title: Text(name ?? ''),
+                  trailing: IconButton(
+                    icon: const Icon(
+                      Icons.delete,
+                      color: AppColors.adminDelete,
+                    ),
+                    onPressed: () => _deleteCategory(cat['_id']),
+                  ),
+                ),
+              );
+            },
+          ),
+          if (_isLoading) const CustomLoadingOverlay(),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddDialog,
         backgroundColor: AppColors.adminAdd,

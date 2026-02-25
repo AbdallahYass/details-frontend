@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/providers/auth_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:details_app/widgets/custom_loading_overlay.dart';
 
 class ManageProductsScreen extends StatefulWidget {
   const ManageProductsScreen({super.key});
@@ -47,6 +48,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
 
   Future<void> _deleteProduct(String id) async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
+    setState(() => _isLoading = true);
     try {
       await http.delete(
         Uri.parse('https://api.details-store.com/api/products/$id'),
@@ -55,6 +57,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
       setState(() {
         _products.removeWhere((p) => p['_id'] == id);
         _filterProducts(_searchQuery);
+        _isLoading = false;
       });
       if (mounted) {
         ScaffoldMessenger.of(
@@ -63,6 +66,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
       }
     } catch (e) {
       debugPrint('Error deleting product: $e');
+      setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -104,59 +108,59 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
           onChanged: _filterProducts,
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: _filteredProducts.length,
-              itemBuilder: (ctx, i) {
-                final product = _filteredProducts[i];
-                final name = product['name'] is Map
-                    ? product['name']['ar']
-                    : product['name'];
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
+      body: Stack(
+        children: [
+          ListView.builder(
+            itemCount: _filteredProducts.length,
+            itemBuilder: (ctx, i) {
+              final product = _filteredProducts[i];
+              final name = product['name'] is Map
+                  ? product['name']['ar']
+                  : product['name'];
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                child: ListTile(
+                  leading: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: CachedNetworkImage(
+                      imageUrl: product['imageUrl'] ?? '',
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                      errorWidget: (c, u, e) => const Icon(Icons.error),
+                    ),
                   ),
-                  child: ListTile(
-                    leading: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: CachedNetworkImage(
-                        imageUrl: product['imageUrl'] ?? '',
-                        width: 50,
-                        height: 50,
-                        fit: BoxFit.cover,
-                        errorWidget: (c, u, e) => const Icon(Icons.error),
+                  title: Text(name ?? ''),
+                  subtitle: Text('\$${product['price']}'),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.edit,
+                          color: AppColors.adminEdit,
+                        ),
+                        onPressed: () => context.push(
+                          '/admin/products/edit',
+                          extra: product,
+                        ),
                       ),
-                    ),
-                    title: Text(name ?? ''),
-                    subtitle: Text('\$${product['price']}'),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(
-                            Icons.edit,
-                            color: AppColors.adminEdit,
-                          ),
-                          onPressed: () => context.push(
-                            '/admin/products/edit',
-                            extra: product,
-                          ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.delete,
+                          color: AppColors.adminDelete,
                         ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.delete,
-                            color: AppColors.adminDelete,
-                          ),
-                          onPressed: () => _deleteProduct(product['_id']),
-                        ),
-                      ],
-                    ),
+                        onPressed: () => _deleteProduct(product['_id']),
+                      ),
+                    ],
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
+          ),
+          if (_isLoading) const CustomLoadingOverlay(),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/admin/products/add'),
         backgroundColor: AppColors.adminAdd,

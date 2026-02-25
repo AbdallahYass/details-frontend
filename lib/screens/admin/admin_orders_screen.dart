@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:details_app/app_imports.dart';
+import 'package:details_app/widgets/custom_loading_overlay.dart';
 
 class AdminOrdersScreen extends StatefulWidget {
   const AdminOrdersScreen({super.key});
@@ -136,9 +137,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
         ),
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            )
+          ? const CustomLoadingOverlay(isOverlay: false)
           : RefreshIndicator(
               onRefresh: _fetchOrders,
               child: ListView.builder(

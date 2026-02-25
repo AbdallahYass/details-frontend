@@ -188,6 +188,7 @@ class AppLocalizations {
       'your_message': 'Your Message',
       'message_sent_success': 'Message sent successfully',
       'forgot_password': 'Forgot Password?',
+      'remember_me': 'Remember Me',
       'recover_account': 'Recover Account',
       'recover_desc':
           'Enter your email address associated with your account and we will send you a link to reset your password.',
@@ -202,6 +203,10 @@ class AppLocalizations {
       'enter_otp': 'Enter Code',
       'verify': 'Verify',
       'resend_code': 'Resend Code',
+      'edit_profile': 'Edit Profile',
+      'update_success': 'Profile updated successfully',
+      'leave_blank_password': 'Leave blank to keep current password',
+      'save_changes': 'Save Changes',
     },
     'ar': {
       'top_announcement_1': 'توصيل مجاني للطلبات فوق 500 شيكل',
@@ -378,6 +383,7 @@ class AppLocalizations {
       'your_message': 'رسالتك',
       'message_sent_success': 'تم إرسال الرسالة بنجاح',
       'forgot_password': 'نسيت كلمة المرور؟',
+      'remember_me': 'تذكرني',
       'recover_account': 'استرجاع الحساب',
       'recover_desc':
           'أدخل بريدك الإلكتروني المرتبط بحسابك وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.',
@@ -392,6 +398,10 @@ class AppLocalizations {
       'enter_otp': 'أدخل الرمز',
       'verify': 'تحقق',
       'resend_code': 'إعادة إرسال الرمز',
+      'edit_profile': 'تعديل الملف الشخصي',
+      'update_success': 'تم تحديث الملف الشخصي بنجاح',
+      'leave_blank_password': 'اتركه فارغاً للإبقاء على كلمة المرور الحالية',
+      'save_changes': 'حفظ التغييرات',
     },
   };
 

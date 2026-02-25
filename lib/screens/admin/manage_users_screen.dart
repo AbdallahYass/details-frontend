@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:details_app/app_imports.dart';
+import 'package:details_app/widgets/custom_loading_overlay.dart';
 
 class ManageUsersScreen extends StatefulWidget {
   const ManageUsersScreen({super.key});
@@ -39,6 +40,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
 
   Future<void> _deleteUser(String id) async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
+    setState(() => _isLoading = true);
     try {
       final response = await http.delete(
         Uri.parse('https://api.details-store.com/api/admin/users/$id'),
@@ -48,6 +50,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
       if (response.statusCode == 200) {
         setState(() {
           _users.removeWhere((user) => user['_id'] == id);
+          _isLoading = false;
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -63,6 +66,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
         throw Exception('Failed to delete user');
       }
     } catch (e) {
+      setState(() => _isLoading = false);
       debugPrint('Error deleting user: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -120,98 +124,96 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
           ],
         ),
       ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            )
-          : ListView.builder(
-              itemCount: _users.length,
-              itemBuilder: (ctx, i) {
-                final user = _users[i];
-                return Card(
-                  color: AppColors.adminSurface,
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: AppColors.primary,
-                      child: Text(
-                        user['name'][0].toUpperCase(),
-                        style: const TextStyle(color: AppColors.white),
-                      ),
+      body: Stack(
+        children: [
+          ListView.builder(
+            itemCount: _users.length,
+            itemBuilder: (ctx, i) {
+              final user = _users[i];
+              return Card(
+                color: AppColors.adminSurface,
+                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: AppColors.primary,
+                    child: Text(
+                      user['name'][0].toUpperCase(),
+                      style: const TextStyle(color: AppColors.white),
                     ),
-                    title: Text(user['name']),
-                    subtitle: Text(user['email']),
-                    trailing: user['isAdmin'] == true
-                        ? Chip(
-                            label: Text(
-                              AppLocalizations.of(
-                                context,
-                              )!.translate('admin_role'),
-                              style: const TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            backgroundColor: AppColors.primary.withValues(
-                              alpha: 0.1,
-                            ),
-                            side: BorderSide.none,
-                          )
-                        : IconButton(
-                            icon: const Icon(
-                              Icons.delete,
-                              color: AppColors.adminDelete,
-                            ),
-                            onPressed: () => showDialog(
-                              context: context,
-                              builder: (c) => AlertDialog(
-                                title: Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.translate('confirm_delete'),
-                                ),
-                                content: Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.translate('delete_user_confirmation'),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(c),
-                                    child: Text(
-                                      AppLocalizations.of(
-                                        context,
-                                      )!.translate('cancel'),
-                                      style: const TextStyle(
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(c);
-                                      _deleteUser(user['_id']);
-                                    },
-                                    child: Text(
-                                      AppLocalizations.of(
-                                        context,
-                                      )!.translate('delete'),
-                                      style: const TextStyle(
-                                        color: AppColors.adminDelete,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                  ),
+                  title: Text(user['name']),
+                  subtitle: Text(user['email']),
+                  trailing: user['isAdmin'] == true
+                      ? Chip(
+                          label: Text(
+                            AppLocalizations.of(
+                              context,
+                            )!.translate('admin_role'),
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                  ),
-                );
-              },
-            ),
+                          backgroundColor: AppColors.primary.withValues(
+                            alpha: 0.1,
+                          ),
+                          side: BorderSide.none,
+                        )
+                      : IconButton(
+                          icon: const Icon(
+                            Icons.delete,
+                            color: AppColors.adminDelete,
+                          ),
+                          onPressed: () => showDialog(
+                            context: context,
+                            builder: (c) => AlertDialog(
+                              title: Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.translate('confirm_delete'),
+                              ),
+                              content: Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.translate('delete_user_confirmation'),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(c),
+                                  child: Text(
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.translate('cancel'),
+                                    style: const TextStyle(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(c);
+                                    _deleteUser(user['_id']);
+                                  },
+                                  child: Text(
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.translate('delete'),
+                                    style: const TextStyle(
+                                      color: AppColors.adminDelete,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                ),
+              );
+            },
+          ),
+          if (_isLoading) const CustomLoadingOverlay(),
+        ],
+      ),
     );
   }
 

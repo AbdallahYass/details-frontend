@@ -1,4 +1,5 @@
 import 'package:details_app/app_imports.dart';
+import 'package:details_app/widgets/custom_loading_overlay.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -193,181 +194,187 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 AppLocalizations.of(context)!.translate('cart_empty'),
               ),
             )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSectionTitle(context, 'shipping_info'),
-                    const SizedBox(height: 15),
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.shadowColor,
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          _buildTextField(
-                            controller: _cityController,
-                            label: AppLocalizations.of(
-                              context,
-                            )!.translate('city'),
-                            icon: Icons.location_city,
-                            validator: (value) {
-                              if (value == null || value.trim().length < 2) {
-                                return AppLocalizations.of(
-                                  context,
-                                )!.translate('enter_valid_city');
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 15),
-                          _buildTextField(
-                            controller: _streetController,
-                            label: AppLocalizations.of(
-                              context,
-                            )!.translate('street'),
-                            icon: Icons.map,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return AppLocalizations.of(
-                                  context,
-                                )!.translate('required_field');
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 15),
-                          _buildTextField(
-                            controller: _phoneController,
-                            label: AppLocalizations.of(
-                              context,
-                            )!.translate('phone'),
-                            icon: Icons.phone,
-                            keyboardType: TextInputType.phone,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return AppLocalizations.of(
-                                  context,
-                                )!.translate('required_field');
-                              }
-                              if (value.length < 9) {
-                                return AppLocalizations.of(
-                                  context,
-                                )!.translate('enter_valid_phone');
-                              }
-                              return null;
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                    _buildSectionTitle(context, 'payment_method'),
-                    const SizedBox(height: 15),
-                    Row(
+          : Stack(
+              children: [
+                SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: _buildPaymentOption(
-                            value: 'cod',
-                            label: AppLocalizations.of(
-                              context,
-                            )!.translate('cash_on_delivery'),
-                            icon: Icons.money,
+                        _buildSectionTitle(context, 'shipping_info'),
+                        const SizedBox(height: 15),
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.shadowColor,
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              _buildTextField(
+                                controller: _cityController,
+                                label: AppLocalizations.of(
+                                  context,
+                                )!.translate('city'),
+                                icon: Icons.location_city,
+                                validator: (value) {
+                                  if (value == null ||
+                                      value.trim().length < 2) {
+                                    return AppLocalizations.of(
+                                      context,
+                                    )!.translate('enter_valid_city');
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 15),
+                              _buildTextField(
+                                controller: _streetController,
+                                label: AppLocalizations.of(
+                                  context,
+                                )!.translate('street'),
+                                icon: Icons.map,
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return AppLocalizations.of(
+                                      context,
+                                    )!.translate('required_field');
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 15),
+                              _buildTextField(
+                                controller: _phoneController,
+                                label: AppLocalizations.of(
+                                  context,
+                                )!.translate('phone'),
+                                icon: Icons.phone,
+                                keyboardType: TextInputType.phone,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return AppLocalizations.of(
+                                      context,
+                                    )!.translate('required_field');
+                                  }
+                                  if (value.length < 9) {
+                                    return AppLocalizations.of(
+                                      context,
+                                    )!.translate('enter_valid_phone');
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 15),
-                        Expanded(
-                          child: _buildPaymentOption(
-                            value: 'card',
-                            label: AppLocalizations.of(
-                              context,
-                            )!.translate('credit_card'),
-                            icon: Icons.credit_card,
+                        const SizedBox(height: 30),
+                        _buildSectionTitle(context, 'payment_method'),
+                        const SizedBox(height: 15),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildPaymentOption(
+                                value: 'cod',
+                                label: AppLocalizations.of(
+                                  context,
+                                )!.translate('cash_on_delivery'),
+                                icon: Icons.money,
+                              ),
+                            ),
+                            const SizedBox(width: 15),
+                            Expanded(
+                              child: _buildPaymentOption(
+                                value: 'card',
+                                label: AppLocalizations.of(
+                                  context,
+                                )!.translate('credit_card'),
+                                icon: Icons.credit_card,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 30),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.shadowColor,
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.translate('total'),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              Text(
+                                '${total.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 55,
+                          child: ElevatedButton(
+                            onPressed: _isLoading ? null : _submitOrder,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              elevation: 5,
+                              shadowColor: AppColors.primary.withValues(
+                                alpha: 0.3,
+                              ),
+                            ),
+                            child: Text(
+                              AppLocalizations.of(
+                                context,
+                              )!.translate('confirm_order'),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 30),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.shadowColor,
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            AppLocalizations.of(context)!.translate('total'),
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          Text(
-                            '${total.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 55,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _submitOrder,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 5,
-                          shadowColor: AppColors.primary.withValues(alpha: 0.3),
-                        ),
-                        child: _isLoading
-                            ? const CircularProgressIndicator(
-                                color: AppColors.white,
-                              )
-                            : Text(
-                                AppLocalizations.of(
-                                  context,
-                                )!.translate('confirm_order'),
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                if (_isLoading) const CustomLoadingOverlay(),
+              ],
             ),
     );
   }

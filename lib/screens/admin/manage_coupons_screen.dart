@@ -2,6 +2,7 @@ import 'dart:math';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:details_app/app_imports.dart';
+import 'package:details_app/widgets/custom_loading_overlay.dart';
 
 class ManageCouponsScreen extends StatefulWidget {
   const ManageCouponsScreen({super.key});
@@ -103,6 +104,7 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
 
   Future<void> _deleteCoupon(String id) async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
+    setState(() => _isLoading = true);
     try {
       await http.delete(
         Uri.parse('https://api.details-store.com/api/coupons/$id'),
@@ -119,6 +121,7 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
         );
       }
     } catch (e) {
+      setState(() => _isLoading = false);
       debugPrint('Error deleting coupon: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -129,6 +132,8 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
           ),
         );
       }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -226,27 +231,35 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
         foregroundColor: AppColors.appBarForeground,
         centerTitle: true,
       ),
-      body: ListView.builder(
-        itemCount: _coupons.length,
-        itemBuilder: (ctx, i) {
-          final coupon = _coupons[i];
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            child: ListTile(
-              title: Text(
-                coupon['code'],
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(
-                '${coupon['discountType'] == 'percentage' ? '%' : '\$'}${coupon['value']} - Used: ${coupon['usedCount']}',
-              ),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete, color: AppColors.adminDelete),
-                onPressed: () => _deleteCoupon(coupon['_id']),
-              ),
-            ),
-          );
-        },
+      body: Stack(
+        children: [
+          ListView.builder(
+            itemCount: _coupons.length,
+            itemBuilder: (ctx, i) {
+              final coupon = _coupons[i];
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                child: ListTile(
+                  title: Text(
+                    coupon['code'],
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    '${coupon['discountType'] == 'percentage' ? '%' : '\$'}${coupon['value']} - Used: ${coupon['usedCount']}',
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(
+                      Icons.delete,
+                      color: AppColors.adminDelete,
+                    ),
+                    onPressed: () => _deleteCoupon(coupon['_id']),
+                  ),
+                ),
+              );
+            },
+          ),
+          if (_isLoading) const CustomLoadingOverlay(),
+        ],
       ),
       bottomNavigationBar: Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
