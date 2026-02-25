@@ -1,6 +1,6 @@
 import 'package:details_app/app_imports.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
-import 'package:details_app/screens/notifications/notification_provider.dart';
+import 'package:details_app/providers/notification_provider.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -108,7 +108,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             ? Colors.grey[200]
                             : AppColors.primary.withValues(alpha: 0.1),
                         child: Icon(
-                          Icons.notifications,
+                          _getNotificationIcon(notification.type),
                           color: notification.isRead
                               ? Colors.grey
                               : AppColors.primary,
@@ -158,5 +158,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         },
       ),
     );
+  }
+
+  IconData _getNotificationIcon(String type) {
+    switch (type) {
+      case 'order':
+        return Icons.local_shipping_outlined;
+      case 'promo':
+        return Icons.local_offer_outlined;
+      default:
+        return Icons.notifications_outlined;
+    }
   }
 }
