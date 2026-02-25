@@ -99,6 +99,13 @@ final router = GoRouter(
     ),
     GoRoute(path: '/orders', builder: (context, state) => const OrdersScreen()),
     GoRoute(path: '/about', builder: (context, state) => const AboutScreen()),
+    GoRoute(
+      path: '/reset-password/:token',
+      builder: (context, state) {
+        final token = state.pathParameters['token'] ?? '';
+        return ResetPasswordScreen(token: token);
+      },
+    ),
     // Admin Routes
     GoRoute(
       path: '/admin',
@@ -140,13 +147,6 @@ final router = GoRouter(
         GoRoute(
           path: 'banners',
           builder: (context, state) => const ManageBannersScreen(),
-        ),
-        GoRoute(
-          path: '/reset-password/:token',
-          builder: (context, state) {
-            final token = state.pathParameters['token'] ?? '';
-            return ResetPasswordScreen(token: token);
-          },
         ),
       ],
     ),
