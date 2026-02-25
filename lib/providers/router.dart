@@ -16,6 +16,7 @@ import 'package:details_app/screens/home/about_screen.dart';
 import 'package:details_app/screens/home/wishlist_screen.dart';
 import 'package:details_app/screens/login/account_screen.dart';
 import 'package:details_app/screens/splash/splash_screen.dart';
+import 'package:details_app/screens/login/reset_password_screen.dart';
 
 // Admin Screens
 import 'package:details_app/screens/admin/admin_dashboard_screen.dart';
@@ -139,6 +140,13 @@ final router = GoRouter(
         GoRoute(
           path: 'banners',
           builder: (context, state) => const ManageBannersScreen(),
+        ),
+        GoRoute(
+          path: '/reset-password/:token',
+          builder: (context, state) {
+            final token = state.pathParameters['token'] ?? '';
+            return ResetPasswordScreen(token: token);
+          },
         ),
       ],
     ),

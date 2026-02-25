@@ -187,6 +187,16 @@ class AppLocalizations {
       'your_email': 'Your Email',
       'your_message': 'Your Message',
       'message_sent_success': 'Message sent successfully',
+      'forgot_password': 'Forgot Password?',
+      'recover_account': 'Recover Account',
+      'recover_desc':
+          'Enter your email address associated with your account and we will send you a link to reset your password.',
+      'send_reset_link': 'Send Reset Link',
+      'reset_link_sent': 'Reset link sent to your email',
+      'reset_password_title': 'Reset Password',
+      'new_password_label': 'New Password',
+      'reset_password_button': 'Set New Password',
+      'password_reset_success': 'Password reset successfully',
     },
     'ar': {
       'top_announcement_1': 'توصيل مجاني للطلبات فوق 500 شيكل',
@@ -362,6 +372,16 @@ class AppLocalizations {
       'your_email': 'بريدك الإلكتروني',
       'your_message': 'رسالتك',
       'message_sent_success': 'تم إرسال الرسالة بنجاح',
+      'forgot_password': 'نسيت كلمة المرور؟',
+      'recover_account': 'استرجاع الحساب',
+      'recover_desc':
+          'أدخل بريدك الإلكتروني المرتبط بحسابك وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.',
+      'send_reset_link': 'إرسال رابط الاستعادة',
+      'reset_link_sent': 'تم إرسال رابط الاستعادة لبريدك الإلكتروني',
+      'reset_password_title': 'إعادة تعيين كلمة المرور',
+      'new_password_label': 'كلمة المرور الجديدة',
+      'reset_password_button': 'تغيير كلمة المرور',
+      'password_reset_success': 'تم تغيير كلمة المرور بنجاح',
     },
   };
 

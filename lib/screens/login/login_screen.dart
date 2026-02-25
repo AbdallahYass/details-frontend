@@ -1,4 +1,5 @@
 import 'package:details_app/app_imports.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -186,6 +187,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       return null;
                     },
                   ),
+
+                  // زر نسيت كلمة المرور
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ForgotPasswordScreen(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        AppLocalizations.of(
+                          context,
+                        )!.translate('forgot_password'),
+                        style: const TextStyle(color: AppColors.primary),
+                      ),
+                    ),
+                  ),
+
                   const SizedBox(height: 24),
 
                   // زر تسجيل الدخول

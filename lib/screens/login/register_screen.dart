@@ -65,6 +65,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 authProvider.errorMessage ??
                     AppLocalizations.of(context)!.translate('error_occurred'),
               ),
+              backgroundColor: AppColors.error,
             ),
           );
         }
