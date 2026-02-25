@@ -17,6 +17,7 @@ import 'package:details_app/screens/home/wishlist_screen.dart';
 import 'package:details_app/screens/login/account_screen.dart';
 import 'package:details_app/screens/splash/splash_screen.dart';
 import 'package:details_app/screens/login/reset_password_screen.dart';
+import 'package:details_app/screens/login/otp_verification_screen.dart';
 
 // Admin Screens
 import 'package:details_app/screens/admin/admin_dashboard_screen.dart';
@@ -92,6 +93,13 @@ final router = GoRouter(
     GoRoute(
       path: '/register',
       builder: (context, state) => const RegisterScreen(),
+    ),
+    GoRoute(
+      path: '/verify-otp',
+      builder: (context, state) {
+        final userData = state.extra as Map<String, String>;
+        return OtpVerificationScreen(userData: userData);
+      },
     ),
     GoRoute(
       path: '/checkout',

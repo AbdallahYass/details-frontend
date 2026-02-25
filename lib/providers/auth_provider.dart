@@ -108,31 +108,33 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // تسجيل حساب جديد (يمكنك تفعيله لاحقاً)
-  Future<bool> register(
-    String name,
-    String email,
-    String password,
-    String phone,
-  ) async {
+  // تفعيل الحساب عبر OTP وتسجيل الدخول
+  Future<bool> verifyEmail(String email, String otp) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final url = Uri.parse('https://api.details-store.com/api/auth/register');
+      final url = Uri.parse(
+        'https://api.details-store.com/api/auth/verify-email',
+      );
       final response = await http.post(
         url,
-        body: json.encode({
-          'name': name,
-          'email': email,
-          'password': password,
-          'phone': phone,
-        }),
+        body: json.encode({'email': email, 'otp': otp}),
         headers: {'Content-Type': 'application/json'},
       );
 
-      if (response.statusCode == 201) {
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        // تسجيل الدخول مباشرة بعد التفعيل
+        _token = data['token'];
+        _user = User.fromJson(data['user']);
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', _token!);
+        await prefs.setString('userData', json.encode(data['user']));
+
         _isLoading = false;
         notifyListeners();
         return true;
@@ -195,6 +197,47 @@ class AuthProvider with ChangeNotifier {
       final response = await http.post(
         url,
         body: json.encode({'password': newPassword}),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        final data = json.decode(response.body);
+        _errorMessage = data['message'];
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
+  // إرسال رمز التحقق (OTP) لإنشاء الحساب
+  Future<bool> requestRegisterOtp(
+    String name,
+    String email,
+    String password,
+    String phone,
+  ) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final url = Uri.parse('https://api.details-store.com/api/auth/register');
+      final response = await http.post(
+        url,
+        body: json.encode({
+          'name': name,
+          'email': email,
+          'password': password,
+          'phone': phone,
+        }),
         headers: {'Content-Type': 'application/json'},
       );
 

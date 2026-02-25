@@ -197,6 +197,11 @@ class AppLocalizations {
       'new_password_label': 'New Password',
       'reset_password_button': 'Set New Password',
       'password_reset_success': 'Password reset successfully',
+      'otp_title': 'Verification Code',
+      'otp_subtitle': 'We have sent a verification code to your email',
+      'enter_otp': 'Enter Code',
+      'verify': 'Verify',
+      'resend_code': 'Resend Code',
     },
     'ar': {
       'top_announcement_1': 'توصيل مجاني للطلبات فوق 500 شيكل',
@@ -382,6 +387,11 @@ class AppLocalizations {
       'new_password_label': 'كلمة المرور الجديدة',
       'reset_password_button': 'تغيير كلمة المرور',
       'password_reset_success': 'تم تغيير كلمة المرور بنجاح',
+      'otp_title': 'رمز التحقق',
+      'otp_subtitle': 'لقد قمنا بإرسال رمز التحقق إلى بريدك الإلكتروني',
+      'enter_otp': 'أدخل الرمز',
+      'verify': 'تحقق',
+      'resend_code': 'إعادة إرسال الرمز',
     },
   };
 

@@ -40,7 +40,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() => _isLoading = true);
 
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final success = await authProvider.register(
+
+      // 1. إرسال الرمز أولاً
+      final success = await authProvider.requestRegisterOtp(
         _nameController.text.trim(),
         _emailController.text.trim(),
         _passwordController.text,
@@ -50,14 +52,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
         if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                AppLocalizations.of(context)!.translate('account_created'),
-              ),
-            ),
+          // 2. التوجيه لشاشة التحقق مع تمرير البيانات
+          context.push(
+            '/verify-otp',
+            extra: {
+              'name': _nameController.text.trim(),
+              'email': _emailController.text.trim(),
+              'phone': _phoneController.text.trim(),
+              'password': _passwordController.text,
+            },
           );
-          context.pop(); // العودة لشاشة تسجيل الدخول
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
