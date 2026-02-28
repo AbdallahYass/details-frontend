@@ -59,31 +59,45 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          controller: _searchController,
-          autofocus: true,
-          decoration: InputDecoration(
-            hintText: AppLocalizations.of(context)!.translate('search_hint'),
-            border: InputBorder.none,
-            hintStyle: TextStyle(color: Colors.grey[400]),
+      body: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+            color: AppColors.appBarBackground,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: TextField(
+                controller: _searchController,
+                autofocus: false,
+                decoration: InputDecoration(
+                  hintText: AppLocalizations.of(
+                    context,
+                  )!.translate('search_hint'),
+                  border: InputBorder.none,
+                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                ),
+                onSubmitted: _performSearch,
+                textInputAction: TextInputAction.search,
+              ),
+            ),
           ),
-          style: const TextStyle(color: Colors.black),
-          onSubmitted: _performSearch,
-          textInputAction: TextInputAction.search,
-        ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 1,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () => _performSearch(_searchController.text),
+          Expanded(
+            child: Stack(
+              children: [
+                _buildBody(),
+                if (_isLoading) const CustomLoadingOverlay(isOverlay: false),
+              ],
+            ),
           ),
         ],
-      ),
-      body: Stack(
-        children: [_buildBody(), if (_isLoading) const CustomLoadingOverlay()],
       ),
     );
   }

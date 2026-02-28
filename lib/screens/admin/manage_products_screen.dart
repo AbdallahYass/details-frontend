@@ -96,6 +96,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: 110,
         backgroundColor: AppColors.appBarBackground,
         foregroundColor: AppColors.appBarForeground,
         scrolledUnderElevation: 0,

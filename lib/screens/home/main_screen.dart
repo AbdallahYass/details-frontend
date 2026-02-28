@@ -19,6 +19,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       extendBody: true,
       appBar: _buildAppBar(context),
       drawer: _buildDrawer(context),
@@ -98,8 +99,8 @@ class _MainScreenState extends State<MainScreen> {
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
       toolbarHeight: 110,
-      backgroundColor: AppColors.appBarBackground,
-      foregroundColor: AppColors.appBarForeground,
+      backgroundColor: Colors.white,
+      foregroundColor: Colors.black,
       elevation: 0,
       scrolledUnderElevation: 0,
       surfaceTintColor: Colors.transparent,
@@ -112,7 +113,13 @@ class _MainScreenState extends State<MainScreen> {
           );
         },
       ),
-      title: Image.asset('assets/images/logo2.png', height: 100),
+      title: Image.asset(
+        'assets/images/logo2.png',
+        height: 100,
+        errorBuilder: (context, error, stackTrace) {
+          return const Icon(Icons.store, size: 40, color: Colors.black);
+        },
+      ),
       actions: [
         Consumer<NotificationProvider>(
           builder: (context, notifProvider, child) {

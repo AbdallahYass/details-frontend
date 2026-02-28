@@ -81,10 +81,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     child: const Icon(Icons.delete, color: Colors.white),
                   ),
                   onDismissed: (direction) {
-                    notifProvider.deleteNotification(
-                      notification.id,
-                      authProvider,
-                    );
+                    // يمكن إضافة منطق الحذف هنا
                   },
                   child: Card(
                     elevation: 2,
