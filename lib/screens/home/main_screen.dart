@@ -110,7 +110,7 @@ class _MainScreenState extends State<MainScreen> {
       foregroundColor: Colors.black,
       elevation: 0,
       scrolledUnderElevation: 0,
-      surfaceTintColor: Colors.transparent,
+      surfaceTintColor: Colors.white,
       shadowColor: Colors.transparent,
       centerTitle: true,
       leading: Builder(
@@ -128,7 +128,7 @@ class _MainScreenState extends State<MainScreen> {
           height: 50,
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) {
-            return const Icon(Icons.broken_image, size: 30, color: Colors.red);
+            return const Icon(Icons.store, size: 30, color: Colors.black);
           },
         ),
       ),

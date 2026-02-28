@@ -48,7 +48,7 @@ class _DetailsStoreAppState extends State<DetailsStoreApp> {
     return MaterialApp.router(
       routerConfig: router,
       debugShowCheckedModeBanner: false,
-      title: 'Details Store',
+      title: 'Details Store | متجر ديتيلز',
       theme: AppTheme.lightTheme,
       themeMode: ThemeMode.light,
       localizationsDelegates: const [
