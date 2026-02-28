@@ -98,7 +98,7 @@ class _MainScreenState extends State<MainScreen> {
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
-      toolbarHeight: 110,
+      toolbarHeight: 80,
       backgroundColor: Colors.white,
       foregroundColor: Colors.black,
       elevation: 0,
@@ -108,60 +108,68 @@ class _MainScreenState extends State<MainScreen> {
       leading: Builder(
         builder: (context) {
           return IconButton(
-            icon: const Icon(Icons.menu),
+            icon: const Icon(Icons.menu, size: 28),
             onPressed: () => Scaffold.of(context).openDrawer(),
           );
         },
       ),
-      title: Image.asset(
-        'assets/images/logo2.png',
-        height: 100,
-        errorBuilder: (context, error, stackTrace) {
-          return const Icon(Icons.store, size: 40, color: Colors.black);
-        },
+      title: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Image.asset(
+          'assets/images/logo2.png',
+          height: 50,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) {
+            return const Icon(Icons.store, size: 30, color: Colors.grey);
+          },
+        ),
       ),
       actions: [
         Consumer<NotificationProvider>(
           builder: (context, notifProvider, child) {
-            return Stack(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.notifications_outlined),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const NotificationsScreen(),
-                      ),
-                    );
-                  },
-                ),
-                if (notifProvider.unreadCount > 0)
-                  Positioned(
-                    right: 8,
-                    top: 8,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      constraints: const BoxConstraints(
-                        minWidth: 16,
-                        minHeight: 16,
-                      ),
-                      child: Text(
-                        '${notifProvider.unreadCount}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications_outlined, size: 28),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const NotificationsScreen(),
                         ),
-                        textAlign: TextAlign.center,
+                      );
+                    },
+                  ),
+                  if (notifProvider.unreadCount > 0)
+                    Positioned(
+                      right: 5,
+                      top: 12,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          '${notifProvider.unreadCount}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             );
           },
         ),
