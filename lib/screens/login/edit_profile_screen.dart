@@ -79,7 +79,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         toolbarHeight: 110,
         title: Image.asset('assets/images/logo2.png', height: 100),
         centerTitle: true,
-        backgroundColor: AppColors.appBarBackground,
+        backgroundColor: Colors.white,
         foregroundColor: AppColors.appBarForeground,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,

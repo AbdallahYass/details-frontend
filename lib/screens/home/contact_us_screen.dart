@@ -92,7 +92,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
       appBar: AppBar(
         toolbarHeight: 110,
         title: Image.asset('assets/images/logo2.png', height: 100),
-        backgroundColor: AppColors.appBarBackground,
+        backgroundColor: Colors.white,
         foregroundColor: AppColors.appBarForeground,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
