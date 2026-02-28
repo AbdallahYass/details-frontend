@@ -98,6 +98,8 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.appBarBackground,
         foregroundColor: AppColors.appBarForeground,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         title: TextField(
           decoration: InputDecoration(
             hintText: 'بحث عن منتج...',

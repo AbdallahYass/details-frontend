@@ -190,6 +190,8 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
         title: Image.asset('assets/images/logo2.png', height: 100),
         backgroundColor: AppColors.appBarBackground,
         foregroundColor: AppColors.appBarForeground,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: true,
         actions: [
           Consumer<NotificationProvider>(

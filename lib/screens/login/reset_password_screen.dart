@@ -68,9 +68,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(
-          AppLocalizations.of(context)!.translate('reset_password_title'),
-        ),
+        toolbarHeight: 110,
+        title: Image.asset('assets/images/logo2.png', height: 100),
         centerTitle: true,
         backgroundColor: AppColors.appBarBackground,
         elevation: 0,

@@ -32,9 +32,13 @@ class _OrdersScreenState extends State<OrdersScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.translate('my_orders')),
+        toolbarHeight: 110,
+        title: Image.asset('assets/images/logo2.png', height: 100),
+        centerTitle: true,
         backgroundColor: AppColors.appBarBackground,
         foregroundColor: AppColors.appBarForeground,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         actions: [
           Consumer<NotificationProvider>(
             builder: (context, notifProvider, child) {

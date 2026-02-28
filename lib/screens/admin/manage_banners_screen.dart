@@ -247,9 +247,12 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('إدارة الإعلانات'),
+        toolbarHeight: 110,
+        title: Image.asset('assets/images/logo2.png', height: 100),
         backgroundColor: AppColors.appBarBackground,
         foregroundColor: AppColors.appBarForeground,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: true,
         actions: [
           Consumer<NotificationProvider>(
