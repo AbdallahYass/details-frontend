@@ -19,77 +19,83 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      extendBody: true,
-      appBar: _buildAppBar(context),
-      drawer: _buildDrawer(context),
-      body: NotificationListener<UserScrollNotification>(
-        onNotification: (notification) {
-          if (notification.direction == ScrollDirection.reverse &&
-              notification.metrics.axis == Axis.vertical) {
-            if (_isBottomBarVisible) {
-              setState(() => _isBottomBarVisible = false);
-            }
-          } else if (notification.direction == ScrollDirection.forward &&
-              notification.metrics.axis == Axis.vertical) {
-            if (!_isBottomBarVisible) {
-              setState(() => _isBottomBarVisible = true);
-            }
-          }
-          return false;
-        },
-        child: widget.navigationShell,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
       ),
-      bottomNavigationBar: AnimatedOpacity(
-        duration: const Duration(milliseconds: 300),
-        opacity: _isBottomBarVisible ? 1.0 : 0.0,
-        curve: Curves.easeInOut,
-        child: IgnorePointer(
-          ignoring: !_isBottomBarVisible,
-          child: Container(
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-            height: 70,
-            decoration: BoxDecoration(
-              color: AppColors.homeNavBackground,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _navIcon(
-                  context,
-                  Icons.home_outlined,
-                  // نستخدم nav_shop مؤقتاً أو يمكنك إضافة nav_home في ملفات الترجمة
-                  AppLocalizations.of(context)!.translate('nav_shop'),
-                  0,
-                ),
-                _navIcon(
-                  context,
-                  Icons.search,
-                  AppLocalizations.of(context)!.translate('nav_search'),
-                  1,
-                ),
-                _navIcon(
-                  context,
-                  Icons.shopping_bag_outlined,
-                  AppLocalizations.of(context)!.translate('nav_cart'),
-                  2,
-                ),
-                _navIcon(
-                  context,
-                  Icons.favorite_border,
-                  AppLocalizations.of(context)!.translate('nav_wishlist'),
-                  3,
-                ),
-              ],
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        extendBody: true,
+        appBar: _buildAppBar(context),
+        drawer: _buildDrawer(context),
+        body: NotificationListener<UserScrollNotification>(
+          onNotification: (notification) {
+            if (notification.direction == ScrollDirection.reverse &&
+                notification.metrics.axis == Axis.vertical) {
+              if (_isBottomBarVisible) {
+                setState(() => _isBottomBarVisible = false);
+              }
+            } else if (notification.direction == ScrollDirection.forward &&
+                notification.metrics.axis == Axis.vertical) {
+              if (!_isBottomBarVisible) {
+                setState(() => _isBottomBarVisible = true);
+              }
+            }
+            return false;
+          },
+          child: widget.navigationShell,
+        ),
+        bottomNavigationBar: AnimatedOpacity(
+          duration: const Duration(milliseconds: 300),
+          opacity: _isBottomBarVisible ? 1.0 : 0.0,
+          curve: Curves.easeInOut,
+          child: IgnorePointer(
+            ignoring: !_isBottomBarVisible,
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+              height: 70,
+              decoration: BoxDecoration(
+                color: AppColors.homeNavBackground,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _navIcon(
+                    context,
+                    Icons.home_outlined,
+                    // نستخدم nav_shop مؤقتاً أو يمكنك إضافة nav_home في ملفات الترجمة
+                    AppLocalizations.of(context)!.translate('nav_shop'),
+                    0,
+                  ),
+                  _navIcon(
+                    context,
+                    Icons.search,
+                    AppLocalizations.of(context)!.translate('nav_search'),
+                    1,
+                  ),
+                  _navIcon(
+                    context,
+                    Icons.shopping_bag_outlined,
+                    AppLocalizations.of(context)!.translate('nav_cart'),
+                    2,
+                  ),
+                  _navIcon(
+                    context,
+                    Icons.favorite_border,
+                    AppLocalizations.of(context)!.translate('nav_wishlist'),
+                    3,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -104,12 +110,8 @@ class _MainScreenState extends State<MainScreen> {
       foregroundColor: Colors.black,
       elevation: 0,
       scrolledUnderElevation: 0,
-      surfaceTintColor: Colors.transparent,
+      surfaceTintColor: Colors.white,
       shadowColor: Colors.transparent,
-      systemOverlayStyle: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-      ),
       centerTitle: true,
       leading: Builder(
         builder: (context) {
@@ -126,7 +128,7 @@ class _MainScreenState extends State<MainScreen> {
           height: 50,
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) {
-            return const Icon(Icons.store, size: 30, color: Colors.grey);
+            return const Icon(Icons.broken_image, size: 30, color: Colors.red);
           },
         ),
       ),
