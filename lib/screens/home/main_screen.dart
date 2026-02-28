@@ -1,4 +1,5 @@
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:details_app/app_imports.dart';
 import 'package:details_app/screens/home/contact_us_screen.dart';
 import 'package:details_app/providers/notification_provider.dart';
@@ -104,6 +105,11 @@ class _MainScreenState extends State<MainScreen> {
       elevation: 0,
       scrolledUnderElevation: 0,
       surfaceTintColor: Colors.transparent,
+      shadowColor: Colors.transparent,
+      systemOverlayStyle: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+      ),
       centerTitle: true,
       leading: Builder(
         builder: (context) {

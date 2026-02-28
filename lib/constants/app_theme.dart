@@ -27,12 +27,13 @@ class AppTheme {
       // تحسين شكل الـ AppBar
       // تحسين شكل الـ AppBar
       appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.appBarBackground,
+        backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         scrolledUnderElevation: 0,
         // السطر السحري لحل مشكلة اللون الرمادي في Material 3
         surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
         iconTheme: IconThemeData(color: AppColors.appBarForeground),
         titleTextStyle: TextStyle(
           color: AppColors.appBarForeground,
