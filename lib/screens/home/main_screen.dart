@@ -110,7 +110,7 @@ class _MainScreenState extends State<MainScreen> {
       foregroundColor: Colors.black,
       elevation: 0,
       scrolledUnderElevation: 0,
-      surfaceTintColor: Colors.white,
+      surfaceTintColor: Colors.transparent,
       shadowColor: Colors.transparent,
       centerTitle: true,
       leading: Builder(
