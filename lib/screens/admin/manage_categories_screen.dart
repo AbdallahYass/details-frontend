@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:details_app/app_imports.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:details_app/providers/notification_provider.dart';
-import 'package:details_app/screens/notifications/notifications_screen.dart';
+import 'package:details_app/screens/home/notifications_screen.dart';
 
 class ManageCategoriesScreen extends StatefulWidget {
   const ManageCategoriesScreen({super.key});

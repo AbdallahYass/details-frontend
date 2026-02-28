@@ -1,6 +1,6 @@
 import 'package:details_app/app_imports.dart';
 import 'package:details_app/providers/notification_provider.dart';
-import 'package:details_app/screens/notifications/notifications_screen.dart';
+import 'package:details_app/screens/home/notifications_screen.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});

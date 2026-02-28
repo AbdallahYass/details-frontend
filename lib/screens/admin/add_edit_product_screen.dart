@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:details_app/app_imports.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:details_app/providers/notification_provider.dart';
-import 'package:details_app/screens/notifications/notifications_screen.dart';
+import 'package:details_app/screens/home/notifications_screen.dart';
 
 class AddEditProductScreen extends StatefulWidget {
   final dynamic product; // If null, we are adding
@@ -278,6 +278,8 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         title: Image.asset('assets/images/logo2.png', height: 100),
         backgroundColor: AppColors.appBarBackground,
         foregroundColor: AppColors.appBarForeground,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),

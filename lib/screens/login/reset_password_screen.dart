@@ -72,9 +72,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           AppLocalizations.of(context)!.translate('reset_password_title'),
         ),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.appBarBackground,
         elevation: 0,
-        foregroundColor: Colors.black,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        foregroundColor: AppColors.appBarForeground,
       ),
       body: Stack(
         children: [

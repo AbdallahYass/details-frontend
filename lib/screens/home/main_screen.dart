@@ -2,7 +2,7 @@ import 'package:flutter/rendering.dart';
 import 'package:details_app/app_imports.dart';
 import 'package:details_app/screens/home/contact_us_screen.dart';
 import 'package:details_app/providers/notification_provider.dart';
-import 'package:details_app/screens/notifications/notifications_screen.dart';
+import 'package:details_app/screens/home/notifications_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
@@ -35,7 +35,7 @@ class _MainScreenState extends State<MainScreen> {
               setState(() => _isBottomBarVisible = true);
             }
           }
-          return true;
+          return false;
         },
         child: widget.navigationShell,
       ),
@@ -101,6 +101,8 @@ class _MainScreenState extends State<MainScreen> {
       backgroundColor: AppColors.appBarBackground,
       foregroundColor: AppColors.appBarForeground,
       elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
       centerTitle: true,
       leading: Builder(
         builder: (context) {

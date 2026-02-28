@@ -8,7 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:details_app/screens/home/cloudinary_service.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:details_app/providers/notification_provider.dart';
-import 'package:details_app/screens/notifications/notifications_screen.dart';
+import 'package:details_app/screens/home/notifications_screen.dart';
 
 class ManageBannersScreen extends StatefulWidget {
   const ManageBannersScreen({super.key});
