@@ -119,10 +119,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       appBar: AppBar(
         toolbarHeight: 110,
         title: Image.asset('assets/images/logo2.png', height: 100),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         foregroundColor: AppColors.appBarForeground,
         scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -157,7 +157,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
-                          color: Colors.red,
+                          color: AppColors.red,
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
@@ -167,7 +167,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         child: Text(
                           '${notifProvider.unreadCount}',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -205,11 +205,11 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => Scaffold(
-                                    backgroundColor: Colors.black,
+                                    backgroundColor: AppColors.black,
                                     appBar: AppBar(
-                                      backgroundColor: Colors.black,
+                                      backgroundColor: AppColors.black,
                                       iconTheme: const IconThemeData(
-                                        color: Colors.white,
+                                        color: AppColors.white,
                                       ),
                                     ),
                                     body: Center(
@@ -230,7 +230,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                 imageUrl: _product!.images[i],
                                 fit: BoxFit.cover,
                                 placeholder: (context, url) =>
-                                    Container(color: Colors.grey[200]),
+                                    Container(color: AppColors.grey200),
                               ),
                             ),
                           );
@@ -252,10 +252,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               decoration: BoxDecoration(
                                 color: _currentImageIndex == index
                                     ? AppColors.primary
-                                    : Colors.grey.withValues(alpha: 0.5),
+                                    : AppColors.grey.withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
-                                  color: Colors.white,
+                                  color: AppColors.white,
                                   width: 1,
                                 ),
                               ),
@@ -403,7 +403,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           Text(
                             "4.8 (120 ${AppLocalizations.of(context)!.translate('reviews')})",
                             style: const TextStyle(
-                              color: Colors.grey,
+                              color: AppColors.grey,
                               fontSize: 12,
                             ),
                           ),
@@ -478,13 +478,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                       });
                                     },
                               selectedColor: AppColors.primary,
-                              disabledColor: Colors.grey.shade200,
+                              disabledColor: AppColors.grey200,
                               labelStyle: TextStyle(
                                 color: isSelected
-                                    ? Colors.white
+                                    ? AppColors.white
                                     : isOutOfStock
-                                    ? Colors.grey
-                                    : Colors.black,
+                                    ? AppColors.grey
+                                    : AppColors.black,
                               ),
                             );
                           }).toList(),
@@ -495,7 +495,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         '${AppLocalizations.of(context)!.translate('available')} $_availableQuantity',
                         style: const TextStyle(
                           fontSize: 14,
-                          color: Colors.grey,
+                          color: AppColors.grey,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -540,7 +540,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: AppColors.black.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -578,7 +578,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           color: AppColors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: AppColors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),
@@ -588,7 +588,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           children: [
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: AppColors.grey200),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -711,7 +711,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   child: CachedNetworkImage(
                     imageUrl: p.images.isNotEmpty ? p.images[0] : '',
                     placeholder: (context, url) =>
-                        Container(color: Colors.grey[200]),
+                        Container(color: AppColors.grey200),
                     fit: BoxFit.cover,
                     width: double.infinity,
                   ),
@@ -767,7 +767,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.primary.withValues(alpha: 0.1)
-              : Colors.transparent,
+              : AppColors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(

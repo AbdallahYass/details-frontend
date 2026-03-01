@@ -66,9 +66,9 @@ class _SearchScreenState extends State<SearchScreen> {
             color: AppColors.appBarBackground,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: AppColors.grey300),
               ),
               child: TextField(
                 controller: _searchController,
@@ -78,7 +78,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     context,
                   )!.translate('search_hint'),
                   border: InputBorder.none,
-                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                  prefixIcon: const Icon(Icons.search, color: AppColors.grey),
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 14,
@@ -108,11 +108,11 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.search, size: 80, color: Colors.grey),
+            const Icon(Icons.search, size: 80, color: AppColors.grey),
             const SizedBox(height: 16),
             Text(
               AppLocalizations.of(context)!.translate('start_typing'),
-              style: const TextStyle(fontSize: 18, color: Colors.grey),
+              style: const TextStyle(fontSize: 18, color: AppColors.grey),
             ),
           ],
         ),

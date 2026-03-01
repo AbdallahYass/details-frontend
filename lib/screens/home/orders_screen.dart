@@ -35,10 +35,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
         toolbarHeight: 110,
         title: Image.asset('assets/images/logo2.png', height: 100),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         foregroundColor: AppColors.appBarForeground,
         scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
         actions: [
           Consumer<NotificationProvider>(
             builder: (context, notifProvider, child) {
@@ -62,7 +62,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
-                          color: Colors.red,
+                          color: AppColors.red,
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
@@ -72,7 +72,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                         child: Text(
                           '${notifProvider.unreadCount}',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -92,7 +92,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
               ? Center(
                   child: Text(
                     AppLocalizations.of(context)!.translate('no_orders'),
-                    style: const TextStyle(fontSize: 18, color: Colors.grey),
+                    style: const TextStyle(fontSize: 18, color: AppColors.grey),
                   ),
                 )
               : ListView.builder(
@@ -176,15 +176,15 @@ class _OrdersScreenState extends State<OrdersScreen> {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'قيد التجهيز':
-        return Colors.orange;
+        return AppColors.warning;
       case 'تم الشحن':
-        return Colors.blue;
+        return AppColors.blue;
       case 'تم التوصيل':
-        return Colors.green;
+        return AppColors.success;
       case 'ملغي':
-        return Colors.red;
+        return AppColors.red;
       default:
-        return Colors.grey;
+        return AppColors.grey;
     }
   }
 }

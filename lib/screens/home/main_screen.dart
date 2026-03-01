@@ -20,7 +20,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       extendBody: true,
       appBar: _buildAppBar(context),
       drawer: _buildDrawer(context),
@@ -55,7 +55,7 @@ class _MainScreenState extends State<MainScreen> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
+                  color: AppColors.black.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
@@ -100,14 +100,14 @@ class _MainScreenState extends State<MainScreen> {
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
       toolbarHeight: 80,
-      backgroundColor: Colors.white,
-      foregroundColor: Colors.black,
+      backgroundColor: AppColors.white,
+      foregroundColor: AppColors.black,
       elevation: 0,
       scrolledUnderElevation: 0,
-      surfaceTintColor: Colors.white,
-      shadowColor: Colors.transparent,
+      surfaceTintColor: AppColors.white,
+      shadowColor: AppColors.transparent,
       systemOverlayStyle: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
+        statusBarColor: AppColors.transparent,
         statusBarIconBrightness: Brightness.dark,
       ),
       centerTitle: true,
@@ -126,7 +126,7 @@ class _MainScreenState extends State<MainScreen> {
           height: 50,
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) {
-            return const Icon(Icons.store, size: 30, color: Colors.black);
+            return const Icon(Icons.store, size: 30, color: AppColors.black);
           },
         ),
       ),
@@ -156,7 +156,7 @@ class _MainScreenState extends State<MainScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
-                          color: Colors.red,
+                          color: AppColors.red,
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
@@ -166,7 +166,7 @@ class _MainScreenState extends State<MainScreen> {
                         child: Text(
                           '${notifProvider.unreadCount}',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
                           ),
@@ -203,7 +203,7 @@ class _MainScreenState extends State<MainScreen> {
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.primary.withValues(alpha: 0.1)
-              : Colors.transparent,
+              : AppColors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
@@ -243,7 +243,7 @@ class _MainScreenState extends State<MainScreen> {
     final settings = Provider.of<SettingsProvider>(context);
 
     return Drawer(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       child: Column(
         children: [
           // Custom Header
@@ -269,7 +269,7 @@ class _MainScreenState extends State<MainScreen> {
                 Container(
                   padding: const EdgeInsets.all(3),
                   decoration: const BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.white,
                     shape: BoxShape.circle,
                   ),
                   child: CircleAvatar(
@@ -295,7 +295,7 @@ class _MainScreenState extends State<MainScreen> {
                           context,
                         )!.translate('welcome_guest'),
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: AppColors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -303,7 +303,10 @@ class _MainScreenState extends State<MainScreen> {
                 if (auth.isAuthenticated)
                   Text(
                     auth.user?.email ?? '',
-                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                    style: TextStyle(
+                      color: AppColors.white.withValues(alpha: 0.7),
+                      fontSize: 13,
+                    ),
                   ),
               ],
             ),
@@ -494,13 +497,13 @@ class _MainScreenState extends State<MainScreen> {
         title,
         style: TextStyle(
           fontWeight: FontWeight.w600,
-          color: color ?? Colors.black87,
+          color: color ?? AppColors.black87,
           fontSize: 14,
         ),
       ),
       trailing:
           trailing ??
-          const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+          const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.grey),
       onTap: onTap,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),

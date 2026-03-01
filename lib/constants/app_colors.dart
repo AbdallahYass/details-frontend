@@ -18,6 +18,14 @@ class AppColors {
   static const Color whatsapp = Color(0xFF25D366);
   static const Color amber = Color(0xFFFFC107);
 
+  // --- Neutral Colors (ألوان محايدة إضافية) ---
+  static const Color grey200 = Color(0xFFEEEEEE);
+  static const Color grey300 = Color(0xFFE0E0E0);
+  static const Color grey500 = Colors.grey;
+  static const Color grey700 = Color(0xFF616161);
+  static const Color black87 = Colors.black87;
+  static const Color blue = Colors.blue;
+
   // --- Text Colors (ألوان النصوص) ---
   static const Color textPrimary = Color(0xFF3E2723); // بني غامق جداً
   static const Color textSecondary = Color(0xFF5D4037); // بني متوسط

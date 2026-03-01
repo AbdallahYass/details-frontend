@@ -252,7 +252,7 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
         backgroundColor: AppColors.appBarBackground,
         foregroundColor: AppColors.appBarForeground,
         scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
         centerTitle: true,
         actions: [
           Consumer<NotificationProvider>(
@@ -277,7 +277,7 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
-                          color: Colors.red,
+                          color: AppColors.red,
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
@@ -287,7 +287,7 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
                         child: Text(
                           '${notifProvider.unreadCount}',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -326,7 +326,7 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
                                 imageUrl: banner['imageUrl'] ?? '',
                                 fit: BoxFit.cover,
                                 placeholder: (context, url) =>
-                                    Container(color: Colors.grey[200]),
+                                    Container(color: AppColors.grey200),
                                 errorWidget: (context, url, error) =>
                                     const Icon(Icons.error),
                               ),
@@ -360,7 +360,7 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddDialog,
         backgroundColor: AppColors.adminAdd,
-        child: const Icon(Icons.add, color: Colors.white),
+        child: const Icon(Icons.add, color: AppColors.white),
       ),
     );
   }

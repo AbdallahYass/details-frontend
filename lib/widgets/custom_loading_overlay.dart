@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:details_app/constants/app_colors.dart';
 
 class CustomLoadingOverlay extends StatefulWidget {
   final bool
@@ -44,8 +45,8 @@ class _CustomLoadingOverlayState extends State<CustomLoadingOverlay>
   Widget build(BuildContext context) {
     return Container(
       color: widget.isOverlay
-          ? Colors.black.withValues(alpha: 0.8)
-          : Colors.white,
+          ? AppColors.black.withValues(alpha: 0.8)
+          : AppColors.white,
       child: Center(
         child: AnimatedBuilder(
           animation: _controller,
@@ -60,7 +61,9 @@ class _CustomLoadingOverlayState extends State<CustomLoadingOverlay>
                     Text(
                       'Details Store',
                       style: TextStyle(
-                        color: widget.isOverlay ? Colors.white : Colors.black,
+                        color: widget.isOverlay
+                            ? AppColors.white
+                            : AppColors.black,
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.2,
@@ -71,8 +74,11 @@ class _CustomLoadingOverlayState extends State<CustomLoadingOverlay>
                     Text(
                       'Live in style',
                       style: TextStyle(
-                        color: (widget.isOverlay ? Colors.white : Colors.black)
-                            .withValues(alpha: 0.9),
+                        color:
+                            (widget.isOverlay
+                                    ? AppColors.white
+                                    : AppColors.black)
+                                .withValues(alpha: 0.9),
                         fontSize: 14,
                         fontWeight: FontWeight.w300,
                         letterSpacing: 4.0,

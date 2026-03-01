@@ -95,7 +95,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // لون خلفية التطبيق
+      backgroundColor: AppColors.white, // لون خلفية التطبيق
       body: Stack(
         alignment: Alignment.center,
         children: [
@@ -103,7 +103,7 @@ class _SplashScreenState extends State<SplashScreen> {
           // إذا لم يعمل الفيديو، ستكون هذه الصورة هي الظاهرة للمستخدم
           Center(
             child: Image.asset(
-              'assets/icons/logo2.png', // مسار اللوجو تبعك
+              'assets/images/logo2.png', // مسار اللوجو تبعك
               width: 200, // تحكم في حجم اللوجو بما يناسبك
               fit: BoxFit.contain,
             ),
@@ -130,7 +130,7 @@ class _SplashScreenState extends State<SplashScreen> {
             top: MediaQuery.of(context).padding.top + 20,
             right: 20,
             child: Material(
-              color: Colors.transparent,
+              color: AppColors.transparent,
               child: InkWell(
                 onTap: _navigateToNextScreen,
                 borderRadius: BorderRadius.circular(30),
@@ -140,10 +140,10 @@ class _SplashScreenState extends State<SplashScreen> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.4),
+                    color: AppColors.black.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(30),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.5),
+                      color: AppColors.white.withValues(alpha: 0.5),
                     ),
                   ),
                   child: Row(
@@ -152,7 +152,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       Text(
                         'Skip',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
                         ),
@@ -160,7 +160,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       SizedBox(width: 6),
                       Icon(
                         Icons.arrow_forward_ios_rounded,
-                        color: Colors.white,
+                        color: AppColors.white,
                         size: 12,
                       ),
                     ],

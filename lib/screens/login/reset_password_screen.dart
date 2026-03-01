@@ -66,7 +66,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
         toolbarHeight: 110,
         title: Image.asset('assets/images/logo2.png', height: 100),
@@ -74,7 +74,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         backgroundColor: AppColors.appBarBackground,
         elevation: 0,
         scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
         foregroundColor: AppColors.appBarForeground,
       ),
       body: Stack(
@@ -167,7 +167,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         )!.translate('reset_password_button'),
                         style: const TextStyle(
                           fontSize: 18,
-                          color: Colors.white,
+                          color: AppColors.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

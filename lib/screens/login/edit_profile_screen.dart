@@ -79,10 +79,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         toolbarHeight: 110,
         title: Image.asset('assets/images/logo2.png', height: 100),
         centerTitle: true,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         foregroundColor: AppColors.appBarForeground,
         scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.white,
+        surfaceTintColor: AppColors.white,
         actions: [
           Consumer<NotificationProvider>(
             builder: (context, notifProvider, child) {
@@ -106,7 +106,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
-                          color: Colors.red,
+                          color: AppColors.red,
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
@@ -116,7 +116,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         child: Text(
                           '${notifProvider.unreadCount}',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -206,7 +206,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       child: Text(
                         AppLocalizations.of(context)!.translate('save_changes'),
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppColors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),

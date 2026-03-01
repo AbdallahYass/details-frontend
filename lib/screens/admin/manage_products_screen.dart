@@ -100,13 +100,13 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
         backgroundColor: AppColors.appBarBackground,
         foregroundColor: AppColors.appBarForeground,
         scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
         title: TextField(
           decoration: InputDecoration(
             hintText: 'بحث عن منتج...',
             border: InputBorder.none,
             hintStyle: TextStyle(
-              color: AppColors.appBarForeground.withOpacity(0.7),
+              color: AppColors.appBarForeground.withValues(alpha: 0.7),
             ),
           ),
           style: const TextStyle(color: AppColors.appBarForeground),
@@ -135,7 +135,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
-                          color: Colors.red,
+                          color: AppColors.red,
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
@@ -145,7 +145,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                         child: Text(
                           '${notifProvider.unreadCount}',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -215,7 +215,7 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/admin/products/add'),
         backgroundColor: AppColors.adminAdd,
-        child: const Icon(Icons.add, color: Colors.white),
+        child: const Icon(Icons.add, color: AppColors.white),
       ),
     );
   }

@@ -31,7 +31,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         backgroundColor: AppColors.appBarBackground,
         foregroundColor: AppColors.appBarForeground,
         scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
         centerTitle: true,
       ),
       body: Consumer2<NotificationProvider, AuthProvider>(
@@ -48,12 +48,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   Icon(
                     Icons.notifications_off_outlined,
                     size: 80,
-                    color: Colors.grey[300],
+                    color: AppColors.grey300,
                   ),
                   const SizedBox(height: 20),
                   Text(
                     AppLocalizations.of(context)!.translate('no_notifications'),
-                    style: const TextStyle(color: Colors.grey, fontSize: 16),
+                    style: const TextStyle(color: AppColors.grey, fontSize: 16),
                   ),
                 ],
               ),
@@ -78,7 +78,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.only(right: 20),
                     color: AppColors.red,
-                    child: const Icon(Icons.delete, color: Colors.white),
+                    child: const Icon(Icons.delete, color: AppColors.white),
                   ),
                   onDismissed: (direction) {
                     notifProvider.deleteNotification(
@@ -93,13 +93,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       borderRadius: BorderRadius.circular(12),
                       side: BorderSide(
                         color: notification.isRead
-                            ? Colors.transparent
+                            ? AppColors.transparent
                             : AppColors.primary.withValues(alpha: 0.5),
                         width: 1,
                       ),
                     ),
                     color: notification.isRead
-                        ? Colors.white
+                        ? AppColors.white
                         : AppColors.primary.withValues(alpha: 0.05),
                     child: ListTile(
                       contentPadding: const EdgeInsets.symmetric(
@@ -108,12 +108,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       ),
                       leading: CircleAvatar(
                         backgroundColor: notification.isRead
-                            ? Colors.grey[200]
+                            ? AppColors.grey200
                             : AppColors.primary.withValues(alpha: 0.1),
                         child: Icon(
                           _getNotificationIcon(notification.type),
                           color: notification.isRead
-                              ? Colors.grey
+                              ? AppColors.grey
                               : AppColors.primary,
                         ),
                       ),
@@ -133,7 +133,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           Text(
                             notification.body,
                             style: TextStyle(
-                              color: Colors.grey[700],
+                              color: AppColors.grey700,
                               height: 1.3,
                             ),
                           ),
@@ -144,7 +144,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             ).format(notification.createdAt),
                             style: TextStyle(
                               fontSize: 11,
-                              color: Colors.grey[500],
+                              color: AppColors.grey500,
                             ),
                           ),
                         ],

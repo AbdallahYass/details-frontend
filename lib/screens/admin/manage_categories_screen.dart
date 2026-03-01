@@ -191,7 +191,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
         backgroundColor: AppColors.appBarBackground,
         foregroundColor: AppColors.appBarForeground,
         scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
         centerTitle: true,
         actions: [
           Consumer<NotificationProvider>(
@@ -216,7 +216,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
-                          color: Colors.red,
+                          color: AppColors.red,
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
@@ -226,7 +226,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                         child: Text(
                           '${notifProvider.unreadCount}',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -278,7 +278,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddDialog,
         backgroundColor: AppColors.adminAdd,
-        child: const Icon(Icons.add, color: Colors.white),
+        child: const Icon(Icons.add, color: AppColors.white),
       ),
     );
   }

@@ -96,11 +96,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     children: [
                       CircleAvatar(
                         radius: 28,
-                        backgroundColor: Colors.white24,
+                        backgroundColor: AppColors.white.withValues(
+                          alpha: 0.24,
+                        ),
                         child: Text(
                           user?.name[0].toUpperCase() ?? 'A',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 24,
                           ),
@@ -113,16 +115,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           Text(
                             'مرحباً، ${user?.name ?? "Admin"} 👋',
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppColors.white,
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'إدارة متجرك أصبحت أسهل',
                             style: TextStyle(
-                              color: Colors.white70,
+                              color: AppColors.white.withValues(alpha: 0.7),
                               fontSize: 14,
                             ),
                           ),
@@ -134,7 +136,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   // عرض الإحصائيات
                   if (_isLoading)
                     const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
+                      child: CircularProgressIndicator(color: AppColors.white),
                     )
                   else
                     Row(
@@ -240,7 +242,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     String subtitle,
   ) {
     return Material(
-      color: Colors.white,
+      color: AppColors.white,
       borderRadius: BorderRadius.circular(24),
       elevation: 0,
       child: InkWell(
@@ -251,7 +253,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: AppColors.black.withValues(alpha: 0.03),
                 blurRadius: 15,
                 offset: const Offset(0, 5),
               ),
@@ -265,7 +267,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(icon, size: 28, color: color),
@@ -278,7 +280,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: AppColors.black87,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -286,7 +288,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     subtitle,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[500],
+                      color: AppColors.grey500,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -305,23 +307,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
+            color: AppColors.white.withValues(alpha: 0.2),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: Colors.white, size: 20),
+          child: Icon(icon, color: AppColors.white, size: 20),
         ),
         const SizedBox(height: 8),
         Text(
           value,
           style: const TextStyle(
-            color: Colors.white,
+            color: AppColors.white,
             fontWeight: FontWeight.bold,
             fontSize: 16,
           ),
         ),
         Text(
           label,
-          style: const TextStyle(color: Colors.white70, fontSize: 12),
+          style: TextStyle(
+            color: AppColors.white.withValues(alpha: 0.7),
+            fontSize: 12,
+          ),
         ),
       ],
     );

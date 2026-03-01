@@ -20,19 +20,19 @@ class AppTheme {
         seedColor: AppColors.primary,
         primary: AppColors.primary,
         secondary: AppColors.secondary,
-        surface: Colors.white,
+        surface: AppColors.white,
         error: AppColors.error,
       ),
 
       // تحسين شكل الـ AppBar
       appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
         centerTitle: true,
         scrolledUnderElevation: 0,
         // السطر السحري لحل مشكلة اللون الرمادي في Material 3
-        surfaceTintColor: Colors.white,
-        shadowColor: Colors.transparent,
+        surfaceTintColor: AppColors.white,
+        shadowColor: AppColors.transparent,
         iconTheme: IconThemeData(color: AppColors.appBarForeground),
         titleTextStyle: TextStyle(
           color: AppColors.appBarForeground,

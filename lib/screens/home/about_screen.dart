@@ -14,7 +14,7 @@ class AboutScreen extends StatelessWidget {
         backgroundColor: AppColors.appBarBackground,
         foregroundColor: AppColors.appBarForeground,
         scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -43,7 +43,7 @@ class AboutScreen extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
-                          color: Colors.red,
+                          color: AppColors.red,
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
@@ -53,7 +53,7 @@ class AboutScreen extends StatelessWidget {
                         child: Text(
                           '${notifProvider.unreadCount}',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -75,7 +75,7 @@ class AboutScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: AppColors.black.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -104,7 +104,7 @@ class AboutScreen extends StatelessWidget {
                 color: AppColors.aboutLogoBackground,
               ),
               child: Image.asset(
-                'assets/images/logo1.png',
+                'assets/images/logo2.png',
                 height: 100,
                 errorBuilder: (c, _, __) => const Icon(
                   Icons.store,
@@ -178,7 +178,7 @@ class AboutScreen extends StatelessWidget {
         curve: Curves.easeInOut,
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.transparent,
+          color: AppColors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Icon(icon, color: AppColors.homeNavInactive, size: 24),

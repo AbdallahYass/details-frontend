@@ -279,7 +279,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         backgroundColor: AppColors.appBarBackground,
         foregroundColor: AppColors.appBarForeground,
         scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -308,7 +308,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
-                          color: Colors.red,
+                          color: AppColors.red,
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
@@ -318,7 +318,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                         child: Text(
                           '${notifProvider.unreadCount}',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -340,7 +340,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: AppColors.black.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -660,7 +660,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                           imageUrl: _imageController.text,
                           fit: BoxFit.contain,
                           placeholder: (context, url) =>
-                              Container(color: Colors.grey[200]),
+                              Container(color: AppColors.grey200),
                           errorWidget: (context, url, error) => Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -819,7 +819,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         curve: Curves.easeInOut,
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.transparent,
+          color: AppColors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Icon(icon, color: AppColors.homeNavInactive, size: 24),

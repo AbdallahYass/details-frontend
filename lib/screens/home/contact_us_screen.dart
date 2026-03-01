@@ -92,10 +92,10 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
       appBar: AppBar(
         toolbarHeight: 110,
         title: Image.asset('assets/images/logo2.png', height: 100),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         foregroundColor: AppColors.appBarForeground,
         scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.white,
+        surfaceTintColor: AppColors.white,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -124,7 +124,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
-                          color: Colors.red,
+                          color: AppColors.red,
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
@@ -134,7 +134,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                         child: Text(
                           '${notifProvider.unreadCount}',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -198,7 +198,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                       child: Text(
                         AppLocalizations.of(context)!.translate('send'),
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppColors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),

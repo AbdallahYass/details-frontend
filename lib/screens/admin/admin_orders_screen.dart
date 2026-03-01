@@ -100,10 +100,10 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
       appBar: AppBar(
         toolbarHeight: 110,
         title: Image.asset('assets/images/logo2.png', height: 100),
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         foregroundColor: AppColors.appBarForeground,
         scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.white,
+        surfaceTintColor: AppColors.white,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -132,7 +132,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: const BoxDecoration(
-                          color: Colors.red,
+                          color: AppColors.red,
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
@@ -142,7 +142,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                         child: Text(
                           '${notifProvider.unreadCount}',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.white,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
@@ -164,7 +164,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: AppColors.black.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -338,7 +338,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
         curve: Curves.easeInOut,
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.transparent,
+          color: AppColors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Icon(icon, color: AppColors.homeNavInactive, size: 24),
