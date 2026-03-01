@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:details_app/l10n/app_localizations.dart';
 import 'package:details_app/providers/wishlist_provider.dart';
+import 'package:details_app/providers/notification_provider.dart';
 import 'package:details_app/providers/auth_provider.dart';
 import 'package:details_app/providers/settings_provider.dart';
 import 'package:details_app/providers/cart_provider.dart';
@@ -17,6 +18,7 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()..tryAutoLogin()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProxyProvider<AuthProvider, WishlistProvider>(
           create: (_) => WishlistProvider(),
           update: (_, auth, wishlist) => wishlist!..updateToken(auth.token),

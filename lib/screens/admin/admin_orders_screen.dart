@@ -103,7 +103,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
         backgroundColor: Colors.white,
         foregroundColor: AppColors.appBarForeground,
         scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: Colors.white,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),

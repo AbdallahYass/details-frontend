@@ -82,7 +82,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         backgroundColor: Colors.white,
         foregroundColor: AppColors.appBarForeground,
         scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: Colors.white,
         actions: [
           Consumer<NotificationProvider>(
             builder: (context, notifProvider, child) {
