@@ -11,6 +11,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:details_app/providers/notification_provider.dart';
 import 'package:details_app/screens/home/notifications_screen.dart';
+import 'package:details_app/l10n/app_localizations.dart';
 
 class ManageProductsScreen extends StatefulWidget {
   const ManageProductsScreen({super.key});
@@ -62,17 +63,27 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
         _isLoading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('تم حذف المنتج بنجاح')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(
+                context,
+              )!.translate('product_deleted_success'),
+            ),
+          ),
+        );
       }
     } catch (e) {
       debugPrint('Error deleting product: $e');
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('فشل حذف المنتج')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.translate('product_delete_failed'),
+            ),
+          ),
+        );
       }
     }
   }
@@ -103,7 +114,9 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
         surfaceTintColor: AppColors.transparent,
         title: TextField(
           decoration: InputDecoration(
-            hintText: 'بحث عن منتج...',
+            hintText: AppLocalizations.of(
+              context,
+            )!.translate('search_product_hint'),
             border: InputBorder.none,
             hintStyle: TextStyle(
               color: AppColors.appBarForeground.withValues(alpha: 0.7),
@@ -182,7 +195,9 @@ class _ManageProductsScreenState extends State<ManageProductsScreen> {
                     ),
                   ),
                   title: Text(name ?? ''),
-                  subtitle: Text('\$${product['price']}'),
+                  subtitle: Text(
+                    '${product['price']} ${AppLocalizations.of(context)!.translate('currency')}',
+                  ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [

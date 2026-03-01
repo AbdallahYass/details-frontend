@@ -109,9 +109,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       );
     }
     if (_product == null) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: AppColors.background,
-        body: Center(child: Text("Product not found")),
+        body: Center(
+          child: Text(
+            AppLocalizations.of(context)!.translate('product_not_found'),
+          ),
+        ),
       );
     }
     return Scaffold(
@@ -288,11 +292,11 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                   context,
                                 )!.translate('currency');
                                 final text =
-                                    '🌟 *Check out this amazing product!* 🌟\n\n'
+                                    '🌟 *${AppLocalizations.of(context)!.translate('share_title')}* 🌟\n\n'
                                     '🛍️ *${_product!.getName(context)}*\n'
-                                    '💰 Price: *${_product!.price} $currency*\n\n'
-                                    '🔗 Link: ${AppConstants.shareBaseUrl}/product/${_product!.id}\n\n'
-                                    '_Sent from Details Store App_';
+                                    '💰 ${AppLocalizations.of(context)!.translate('price_label')}: *${_product!.price} $currency*\n\n'
+                                    '🔗 ${AppLocalizations.of(context)!.translate('link_label')}: ${AppConstants.shareBaseUrl}/product/${_product!.id}\n\n'
+                                    '_${AppLocalizations.of(context)!.translate('sent_from_app')}_';
 
                                 if (kIsWeb) {
                                   await SharePlus.instance.share(
@@ -464,7 +468,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                             final isOutOfStock = s.quantity <= 0;
                             return ChoiceChip(
                               label: Text(
-                                '${s.size} ${isOutOfStock ? '(Out)' : ''}',
+                                '${s.size} ${isOutOfStock ? '(${AppLocalizations.of(context)!.translate('sold_out_short')})' : ''}',
                               ),
                               selected: isSelected,
                               onSelected: isOutOfStock

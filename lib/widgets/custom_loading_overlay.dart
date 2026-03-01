@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:details_app/constants/app_colors.dart';
+import 'package:details_app/l10n/app_localizations.dart';
 
 class CustomLoadingOverlay extends StatefulWidget {
   final bool
@@ -59,7 +60,8 @@ class _CustomLoadingOverlayState extends State<CustomLoadingOverlay>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Details Store',
+                      AppLocalizations.of(context)?.translate('app_name') ??
+                          'Details Store',
                       style: TextStyle(
                         color: widget.isOverlay
                             ? AppColors.white
@@ -72,7 +74,8 @@ class _CustomLoadingOverlayState extends State<CustomLoadingOverlay>
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Live in style',
+                      AppLocalizations.of(context)?.translate('app_slogan') ??
+                          'Live in style',
                       style: TextStyle(
                         color:
                             (widget.isOverlay

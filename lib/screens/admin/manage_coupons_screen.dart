@@ -245,7 +245,9 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(
-                    '${coupon['discountType'] == 'percentage' ? '%' : '\$'}${coupon['value']} - Used: ${coupon['usedCount']}',
+                    coupon['discountType'] == 'percentage'
+                        ? '${coupon['value']}% - Used: ${coupon['usedCount']}'
+                        : '${coupon['value']} ${AppLocalizations.of(context)!.translate('currency')} - Used: ${coupon['usedCount']}',
                   ),
                   trailing: IconButton(
                     icon: const Icon(
@@ -269,7 +271,7 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: AppColors.black.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -288,7 +290,7 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddCouponDialog,
         backgroundColor: AppColors.adminAdd,
-        child: const Icon(Icons.add, color: Colors.white),
+        child: const Icon(Icons.add, color: AppColors.white),
       ),
     );
   }
@@ -302,7 +304,7 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
         curve: Curves.easeInOut,
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.transparent,
+          color: AppColors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Icon(icon, color: AppColors.homeNavInactive, size: 24),

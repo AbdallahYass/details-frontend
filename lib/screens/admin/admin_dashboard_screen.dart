@@ -7,6 +7,7 @@ import 'package:details_app/constants/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:details_app/providers/auth_provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:details_app/l10n/app_localizations.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -57,8 +58,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return Scaffold(
       backgroundColor: AppColors.adminBackground,
       appBar: AppBar(
-        title: const Text(
-          'لوحة التحكم',
+        title: Text(
+          AppLocalizations.of(context)!.translate('dashboard_title'),
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         centerTitle: true,
@@ -71,7 +72,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Icons.store_rounded,
               color: AppColors.appBarForeground,
             ),
-            tooltip: 'الذهاب للمتجر',
+            tooltip: AppLocalizations.of(context)!.translate('go_to_store'),
             onPressed: () => context.go('/'),
           ),
         ],
@@ -113,7 +114,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'مرحباً، ${user?.name ?? "Admin"} 👋',
+                            '${AppLocalizations.of(context)!.translate('welcome_user')} ${user?.name ?? "Admin"} 👋',
                             style: const TextStyle(
                               color: AppColors.white,
                               fontSize: 20,
@@ -122,7 +123,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'إدارة متجرك أصبحت أسهل',
+                            AppLocalizations.of(
+                              context,
+                            )!.translate('dashboard_subtitle'),
                             style: TextStyle(
                               color: AppColors.white.withValues(alpha: 0.7),
                               fontSize: 14,
@@ -143,22 +146,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         _buildStatItem(
-                          'المبيعات',
-                          '\$${_stats['totalSales']}',
+                          AppLocalizations.of(context)!.translate('sales'),
+                          '${_stats['totalSales']} ${AppLocalizations.of(context)!.translate('currency')}',
                           Icons.monetization_on,
                         ),
                         _buildStatItem(
-                          'الطلبات',
+                          AppLocalizations.of(context)!.translate('orders'),
                           '${_stats['ordersCount']}',
                           Icons.shopping_cart,
                         ),
                         _buildStatItem(
-                          'المنتجات',
+                          AppLocalizations.of(context)!.translate('products'),
                           '${_stats['productsCount']}',
                           Icons.inventory,
                         ),
                         _buildStatItem(
-                          'المستخدمين',
+                          AppLocalizations.of(context)!.translate('users'),
                           '${_stats['usersCount']}',
                           Icons.people,
                         ),
@@ -179,51 +182,51 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               children: [
                 _buildAdminCard(
                   context,
-                  'المنتجات',
+                  AppLocalizations.of(context)!.translate('products'),
                   Icons.inventory_2_outlined,
                   AppColors.adminDashProducts,
                   '/admin/products',
-                  'إدارة المخزون',
+                  AppLocalizations.of(context)!.translate('manage_inventory'),
                 ),
                 _buildAdminCard(
                   context,
-                  'الطلبات',
+                  AppLocalizations.of(context)!.translate('orders'),
                   Icons.shopping_cart_checkout_outlined,
                   AppColors.adminDashOrders,
                   '/admin/orders',
-                  'متابعة الطلبات',
+                  AppLocalizations.of(context)!.translate('track_orders'),
                 ),
                 _buildAdminCard(
                   context,
-                  'الكوبونات',
+                  AppLocalizations.of(context)!.translate('coupons'),
                   Icons.discount_outlined,
                   AppColors.adminDashCoupons,
                   '/admin/coupons',
-                  'أكواد الخصم',
+                  AppLocalizations.of(context)!.translate('discount_codes'),
                 ),
                 _buildAdminCard(
                   context,
-                  'الإعلانات',
+                  AppLocalizations.of(context)!.translate('banners'),
                   Icons.campaign_outlined,
                   AppColors.adminDashBanners,
                   '/admin/banners',
-                  'بنرات التطبيق',
+                  AppLocalizations.of(context)!.translate('app_banners'),
                 ),
                 _buildAdminCard(
                   context,
-                  'التصنيفات',
+                  AppLocalizations.of(context)!.translate('categories'),
                   Icons.category_outlined,
                   AppColors.adminDashCategories,
                   '/admin/categories',
-                  'أقسام المتجر',
+                  AppLocalizations.of(context)!.translate('store_sections'),
                 ),
                 _buildAdminCard(
                   context,
-                  'المستخدمين',
+                  AppLocalizations.of(context)!.translate('users'),
                   Icons.group_outlined,
                   AppColors.adminDashUsers,
                   '/admin/users',
-                  'إدارة العملاء',
+                  AppLocalizations.of(context)!.translate('manage_customers'),
                 ),
               ],
             ),

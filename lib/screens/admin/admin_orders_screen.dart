@@ -261,7 +261,9 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                   ),
                                 if (shipping != null &&
                                     shipping['phone'] != null)
-                                  Text('📞 الهاتف: ${shipping['phone']}'),
+                                  Text(
+                                    '📞 ${AppLocalizations.of(context)!.translate('phone_label')}: ${shipping['phone']}',
+                                  ),
                                 if (shipping != null)
                                   Text(
                                     '📍 ${AppLocalizations.of(context)!.translate('address')} ${shipping['city'] ?? ''} - ${shipping['street'] ?? ''}',
@@ -306,7 +308,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                           ),
                                         ),
                                         Text(
-                                          '${item['price']} ₪',
+                                          '${item['price']} ${AppLocalizations.of(context)!.translate('currency')}',
                                           style: const TextStyle(
                                             fontWeight: FontWeight.bold,
                                             color: AppColors.adminDashProducts,

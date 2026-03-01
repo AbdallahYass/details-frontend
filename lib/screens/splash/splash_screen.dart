@@ -148,9 +148,9 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       Text(
-                        'Skip',
+                        AppLocalizations.of(context)!.translate('skip'),
                         style: TextStyle(
                           color: AppColors.white,
                           fontWeight: FontWeight.bold,

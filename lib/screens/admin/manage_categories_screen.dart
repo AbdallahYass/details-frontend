@@ -62,16 +62,26 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
         if (mounted) Navigator.pop(context);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تم إضافة التصنيف بنجاح')),
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(
+                  context,
+                )!.translate('category_added_success'),
+              ),
+            ),
           );
         }
       }
     } catch (e) {
       debugPrint('Error adding category: $e');
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('فشل إضافة التصنيف')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.translate('category_add_failed'),
+            ),
+          ),
+        );
       }
     }
   }
@@ -89,17 +99,27 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
         _isLoading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('تم حذف التصنيف بنجاح')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(
+                context,
+              )!.translate('category_deleted_success'),
+            ),
+          ),
+        );
       }
     } catch (e) {
       debugPrint('Error deleting category: $e');
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('فشل حذف التصنيف')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.translate('category_delete_failed'),
+            ),
+          ),
+        );
       }
     }
   }
@@ -128,26 +148,34 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
             return Stack(
               children: [
                 AlertDialog(
-                  title: const Text('إضافة تصنيف جديد'),
+                  title: Text(
+                    AppLocalizations.of(context)!.translate('add_new_category'),
+                  ),
                   content: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       TextField(
                         controller: nameArController,
-                        decoration: const InputDecoration(
-                          labelText: 'الاسم (عربي)',
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(
+                            context,
+                          )!.translate('name_ar'),
                         ),
                       ),
                       TextField(
                         controller: nameEnController,
-                        decoration: const InputDecoration(
-                          labelText: 'الاسم (إنجليزي)',
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(
+                            context,
+                          )!.translate('name_en'),
                         ),
                       ),
                       TextField(
                         controller: imageController,
                         decoration: InputDecoration(
-                          labelText: 'رابط الصورة',
+                          labelText: AppLocalizations.of(
+                            context,
+                          )!.translate('image_url'),
                           suffixIcon: IconButton(
                             icon: const Icon(Icons.cloud_upload),
                             onPressed: isUploading ? null : pickImage,
@@ -159,7 +187,9 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                   actions: [
                     TextButton(
                       onPressed: isUploading ? null : () => Navigator.pop(ctx),
-                      child: const Text('إلغاء'),
+                      child: Text(
+                        AppLocalizations.of(context)!.translate('cancel'),
+                      ),
                     ),
                     ElevatedButton(
                       onPressed: isUploading
@@ -169,7 +199,9 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                               nameEnController.text,
                               imageController.text,
                             ),
-                      child: const Text('إضافة'),
+                      child: Text(
+                        AppLocalizations.of(context)!.translate('add'),
+                      ),
                     ),
                   ],
                 ),

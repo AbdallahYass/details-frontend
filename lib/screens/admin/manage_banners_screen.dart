@@ -9,6 +9,7 @@ import 'package:details_app/screens/home/cloudinary_service.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:details_app/providers/notification_provider.dart';
 import 'package:details_app/screens/home/notifications_screen.dart';
+import 'package:details_app/l10n/app_localizations.dart';
 
 class ManageBannersScreen extends StatefulWidget {
   const ManageBannersScreen({super.key});
@@ -94,21 +95,33 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
         if (mounted) Navigator.pop(context);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تم إضافة الإعلان بنجاح')),
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)!.translate('banner_added_success'),
+              ),
+            ),
           );
         }
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('فشل إضافة الإعلان')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)!.translate('banner_add_failed'),
+              ),
+            ),
+          );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('فشل إضافة الإعلان')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.translate('banner_add_failed'),
+            ),
+          ),
+        );
       }
     }
   }
@@ -126,16 +139,24 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
         _isLoading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('تم حذف الإعلان بنجاح')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.translate('banner_deleted_success'),
+            ),
+          ),
+        );
       }
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('فشل حذف الإعلان')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.translate('banner_delete_failed'),
+            ),
+          ),
+        );
       }
     }
   }
@@ -164,27 +185,35 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
             return Stack(
               children: [
                 AlertDialog(
-                  title: const Text('إضافة إعلان جديد'),
+                  title: Text(
+                    AppLocalizations.of(context)!.translate('add_new_banner'),
+                  ),
                   content: SingleChildScrollView(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         TextField(
                           controller: titleArController,
-                          decoration: const InputDecoration(
-                            labelText: 'العنوان (عربي)',
+                          decoration: InputDecoration(
+                            labelText: AppLocalizations.of(
+                              context,
+                            )!.translate('title_ar'),
                           ),
                         ),
                         TextField(
                           controller: titleEnController,
-                          decoration: const InputDecoration(
-                            labelText: 'العنوان (إنجليزي)',
+                          decoration: InputDecoration(
+                            labelText: AppLocalizations.of(
+                              context,
+                            )!.translate('title_en'),
                           ),
                         ),
                         TextField(
                           controller: imageController,
                           decoration: InputDecoration(
-                            labelText: 'رابط الصورة',
+                            labelText: AppLocalizations.of(
+                              context,
+                            )!.translate('image_url'),
                             suffixIcon: IconButton(
                               icon: const Icon(Icons.cloud_upload),
                               onPressed: isUploading ? null : pickImage,
@@ -195,8 +224,10 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
                         if (_categories.isNotEmpty)
                           DropdownButtonFormField<String>(
                             initialValue: selectedCategory,
-                            decoration: const InputDecoration(
-                              labelText: 'ربط بقسم (اختياري)',
+                            decoration: InputDecoration(
+                              labelText: AppLocalizations.of(
+                                context,
+                              )!.translate('link_category_optional'),
                               border: OutlineInputBorder(),
                             ),
                             items: _categories.map<DropdownMenuItem<String>>((
@@ -219,7 +250,9 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
                   actions: [
                     TextButton(
                       onPressed: isUploading ? null : () => Navigator.pop(ctx),
-                      child: const Text('إلغاء'),
+                      child: Text(
+                        AppLocalizations.of(context)!.translate('cancel'),
+                      ),
                     ),
                     ElevatedButton(
                       onPressed: isUploading
@@ -230,7 +263,9 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
                               imageController.text,
                               selectedCategory,
                             ),
-                      child: const Text('إضافة'),
+                      child: Text(
+                        AppLocalizations.of(context)!.translate('add'),
+                      ),
                     ),
                   ],
                 ),
@@ -307,9 +342,13 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
             onRefresh: _fetchBanners,
             child: _banners.isEmpty
                 ? ListView(
-                    children: const [
+                    children: [
                       SizedBox(height: 200),
-                      Center(child: Text('لا يوجد إعلانات حالياً')),
+                      Center(
+                        child: Text(
+                          AppLocalizations.of(context)!.translate('no_banners'),
+                        ),
+                      ),
                     ],
                   )
                 : ListView.builder(
@@ -334,11 +373,16 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
                             ListTile(
                               title: Text(
                                 banner['title'] is Map
-                                    ? (banner['title']['ar'] ?? 'إعلان')
-                                    : 'إعلان',
+                                    ? (banner['title']['ar'] ??
+                                          AppLocalizations.of(
+                                            context,
+                                          )!.translate('banner_default_title'))
+                                    : AppLocalizations.of(
+                                        context,
+                                      )!.translate('banner_default_title'),
                               ),
                               subtitle: Text(
-                                'الموقع: ${banner['location'] ?? 'home'}',
+                                '${AppLocalizations.of(context)!.translate('location_label')} ${banner['location'] ?? 'home'}',
                               ),
                               trailing: IconButton(
                                 icon: const Icon(
