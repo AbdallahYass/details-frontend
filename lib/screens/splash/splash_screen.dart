@@ -1,6 +1,4 @@
 import 'package:details_app/app_imports.dart';
-import 'package:video_player/video_player.dart';
-import 'package:details_app/widgets/custom_loading_overlay.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -9,85 +7,72 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
-  late VideoPlayerController _controller;
-  bool _isInitialized = false;
-  bool _isNavigated = false;
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
-    _initializeVideo();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2500),
+    );
+
+    // تأثير الظهور التدريجي
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.8, curve: Curves.easeIn),
+      ),
+    );
+
+    // تأثير التكبير المرن للشعار (نبض خفيف)
+    _scaleAnimation = Tween<double>(begin: 0.9, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 1.0, curve: Curves.easeOutCubic),
+      ),
+    );
+
+    // تأثير الانزلاق للنصوص السفلية
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: const Interval(0.3, 1.0, curve: Curves.easeOutQuart),
+          ),
+        );
+
+    _controller.forward();
+    _checkAuth();
   }
 
-  Future<void> _initializeVideo() async {
-    try {
-      _controller = VideoPlayerController.asset(
-        'assets/videos/splash_video.mp4',
-      );
-
-      // 1. مهلة زمنية للتهيئة (إذا كان النت أو الجهاز بطيئاً)
-      await _controller.initialize().timeout(const Duration(seconds: 4));
-
-      await _controller.setVolume(0.0); // ضروري جداً للأيفون
-      await _controller.setLooping(false);
-
-      if (mounted) {
-        setState(() => _isInitialized = true);
-
-        // 2. محاولة تشغيل الفيديو
-        await _controller.play();
-
-        // 3. الحل الذكي لوضع توفير الطاقة:
-        // ننتظر ثانية واحدة ونفحص.. هل الفيديو شغال فعلاً؟
-        Future.delayed(const Duration(seconds: 1), () {
-          if (mounted && !_controller.value.isPlaying) {
-            // إذا لم يبدأ الفيديو (غالباً بسبب Low Power Mode في الأيفون)
-            debugPrint(
-              "Autoplay blocked: Low Power Mode detected or Safari restriction.",
-            );
-            _navigateToNextScreen(); // ننتقل فوراً بدل التعليق
-          }
-        });
-
-        _controller.addListener(_videoListener);
-      }
-    } catch (e) {
-      // في حال حدوث أي خطأ (مثل عدم دعم الصيغة أو تأخر التحميل)
-      _navigateToNextScreen();
-    }
-  }
-
-  void _videoListener() {
+  Future<void> _checkAuth() async {
+    // انتظار انتهاء الأنيميشن أو وقت محدد
+    await Future.delayed(const Duration(seconds: 4));
     if (!mounted) return;
 
-    // التحقق من انتهاء الفيديو أو حدوث خطأ
-    if (_controller.value.hasError) {
-      debugPrint("Video Error: ${_controller.value.errorDescription}");
-      _navigateToNextScreen();
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+
+    // التحقق من حالة تسجيل الدخول والتوجيه
+    if (auth.token != null && auth.token.toString().isNotEmpty) {
+      context.go('/');
+    } else {
+      // التوجيه لصفحة تسجيل الدخول (تأكد من أن المسار /login معرف لديك في الراوتر)
+      try {
+        context.go('/login');
+      } catch (e) {
+        context.go('/');
+      }
     }
-
-    // إذا وصل الفيديو للنهاية
-    if (_controller.value.position >= _controller.value.duration) {
-      _navigateToNextScreen();
-    }
-  }
-
-  void _navigateToNextScreen() {
-    if (!mounted || _isNavigated) return;
-    _isNavigated = true;
-
-    // إيقاف المستمع قبل الانتقال
-    _controller.removeListener(_videoListener);
-
-    // الانتقال للصفحة الرئيسية
-    context.go('/');
   }
 
   @override
   void dispose() {
-    // إلغاء المستمع والتخلص من المتحكم بشكل آمن
-    _controller.removeListener(_videoListener);
     _controller.dispose();
     super.dispose();
   }
@@ -95,81 +80,142 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white, // لون خلفية التطبيق
-      body: Stack(
-        alignment: Alignment.center,
-        children: [
-          // 1. صورة اللوجو (تظهر دائماً كخلفية احتياطية)
-          // إذا لم يعمل الفيديو، ستكون هذه الصورة هي الظاهرة للمستخدم
-          Center(
-            child: Image.asset(
-              'assets/images/logo2.png', // مسار اللوجو تبعك
-              width: 200, // تحكم في حجم اللوجو بما يناسبك
-              fit: BoxFit.contain,
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFFFFFFF), // أبيض نقي
+              Color(0xFFF5F3EB), // بيج دافئ جداً (Creamy Paper)
+            ],
           ),
-
-          // 2. الفيديو (يظهر فوق الصورة إذا اشتغل)
-          if (_isInitialized)
-            SizedBox.expand(
-              child: FittedBox(
-                fit: BoxFit.contain,
-                child: SizedBox(
-                  width: _controller.value.size.width,
-                  height: _controller.value.size.height,
-                  child: VideoPlayer(_controller),
-                ),
-              ),
-            ),
-
-          // 3. مؤشر التحميل (يظهر فقط حتى يتم تهيئة الفيديو)
-          if (!_isInitialized) const CustomLoadingOverlay(isOverlay: true),
-
-          // 4. زر التخطي
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 20,
-            right: 20,
-            child: Material(
-              color: AppColors.transparent,
-              child: InkWell(
-                onTap: _navigateToNextScreen,
-                borderRadius: BorderRadius.circular(30),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // خلفية جمالية (توهج ذهبي خافت في الأعلى)
+            Positioned(
+              top: -150,
+              right: -150,
+              child: FadeTransition(
+                opacity: _fadeAnimation,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 8,
-                  ),
+                  width: 400,
+                  height: 400,
                   decoration: BoxDecoration(
-                    color: AppColors.black.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(
-                      color: AppColors.white.withValues(alpha: 0.5),
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        const Color(0xFFD4AF37).withValues(alpha: 0.1), // ذهبي
+                        Colors.transparent,
+                      ],
                     ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        AppLocalizations.of(context)!.translate('skip'),
-                        style: TextStyle(
-                          color: AppColors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      SizedBox(width: 6),
-                      Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        color: AppColors.white,
-                        size: 12,
-                      ),
-                    ],
+                ),
+              ),
+            ),
+            // دائرة سفلية بلون البراند
+            Positioned(
+              bottom: -100,
+              left: -100,
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: Container(
+                  width: 300,
+                  height: 300,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.primary.withValues(alpha: 0.03),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // الشعار بتصميم نظيف وظل ناعم جداً
+                  ScaleTransition(
+                    scale: _scaleAnimation,
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: Container(
+                        padding: const EdgeInsets.all(25),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.black.withValues(alpha: 0.05),
+                              blurRadius: 40,
+                              spreadRadius: 0,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Image.asset(
+                          'assets/images/logo2.png',
+                          height: 130,
+                          width: 130,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 50),
+
+                  // النصوص بتصميم فاخر (تباعد أحرف كبير)
+                  SlideTransition(
+                    position: _slideAnimation,
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: Column(
+                        children: [
+                          Text(
+                            'DETAILS',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w300, // خط رفيع
+                              color: AppColors.textPrimary,
+                              letterSpacing: 8.0, // تباعد كبير للأناقة
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'STORE',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFFD4AF37), // لون ذهبي
+                              letterSpacing: 4.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // مؤشر التحميل في الأسفل
+            Positioned(
+              bottom: 60,
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    color: Color(0xFFD4AF37), // ذهبي
+                    strokeWidth: 1.5,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

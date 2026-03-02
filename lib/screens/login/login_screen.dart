@@ -74,11 +74,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     // الشعار
                     Image.asset(
-                      'assets/images/logo.png',
+                      'assets/images/logo2.png',
                       height: 100,
                       errorBuilder: (c, _, __) => const Icon(
                         Icons.account_circle,
-                        size: 100,
+                        size: 180,
                         color: AppColors.primary,
                       ),
                     ),
