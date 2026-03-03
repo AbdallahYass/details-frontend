@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:details_app/app_imports.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:details_app/providers/notification_provider.dart';
@@ -510,275 +512,285 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   }
 
   Widget _buildProductCard(Product p) {
-    final isFav = context.select<WishlistProvider, bool>(
-      (w) => w.isInWishlist(p.id),
-    );
     final isHot = _popularIds.contains(p.id);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: AppColors.homeBackground,
-              border: Border.all(color: AppColors.cardBorder),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Stack(
-                children: [
-                  GestureDetector(
-                    onTap: () => context.push('/product/${p.id}', extra: p),
-                    child: Hero(
-                      tag: p.id,
-                      child: AnimatedProductImage(product: p),
-                    ),
-                  ),
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: _circleIcon(
-                      isFav ? Icons.favorite : Icons.favorite_border,
-                      size: 20,
-                      color: isFav
-                          ? AppColors.homeFavActive
-                          : AppColors.homeFavInactive,
-                      onTap: () async {
-                        final messenger = ScaffoldMessenger.of(context);
-                        final auth = Provider.of<AuthProvider>(
-                          context,
-                          listen: false,
-                        );
-                        if (!auth.isAuthenticated) {
-                          showDialog(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                              title: Text(
-                                AppLocalizations.of(
-                                  context,
-                                )!.translate('please_login'),
-                              ),
-                              content: Text(
-                                AppLocalizations.of(
-                                  context,
-                                )!.translate('login_subtitle'),
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(ctx),
-                                  child: Text(
-                                    AppLocalizations.of(
-                                      context,
-                                    )!.translate('cancel'),
-                                  ),
-                                ),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.pop(ctx);
-                                    context.push('/login');
-                                  },
-                                  child: Text(
-                                    AppLocalizations.of(
-                                      context,
-                                    )!.translate('login_button'),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                          return;
-                        }
-                        final wishlistProvider = Provider.of<WishlistProvider>(
-                          context,
-                          listen: false,
-                        );
-                        bool added = await wishlistProvider.toggleWishlist(p);
-                        if (!mounted) return;
-                        messenger.hideCurrentSnackBar();
-                        messenger.showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              added
-                                  ? AppLocalizations.of(
-                                      context,
-                                    )!.translate('added_to_wishlist')
-                                  : AppLocalizations.of(
-                                      context,
-                                    )!.translate('removed_from_wishlist'),
-                            ),
-                            backgroundColor: added
-                                ? AppColors.primary
-                                : AppColors.red,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            duration: const Duration(seconds: 1),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: Icon(
-                      Icons.fullscreen,
-                      color: AppColors.homeProductIcon,
-                      size: 24,
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 15,
-                    left: 10,
-                    child: Column(
-                      children: [
-                        _circleIcon(
-                          Icons.visibility_outlined,
-                          isWhite: true,
-                          onTap: () =>
-                              context.push('/product/${p.id}', extra: p),
-                        ),
-                        const SizedBox(height: 8),
-                        _circleIcon(
-                          Icons.share,
-                          isWhite: true,
-                          onTap: () async {
-                            try {
-                              final currency = AppLocalizations.of(
-                                context,
-                              )!.translate('currency');
-                              final text =
-                                  '🌟 *Check out this amazing product!* 🌟\n\n'
-                                  '🛍️ *${p.getName(context)}*\n'
-                                  '💰 Price: *${p.price} $currency*\n\n'
-                                  '🔗 Link: ${AppConstants.shareBaseUrl}/product/${p.id}\n\n'
-                                  '_Sent from Details Store App_';
-
-                              if (kIsWeb) {
-                                await SharePlus.instance.share(
-                                  ShareParams(text: text),
-                                );
-                              } else {
-                                // استخدام الكاش لجلب الصورة
-                                final file = await DefaultCacheManager()
-                                    .getSingleFile(p.imageUrl);
-
-                                // مشاركة الصورة مع النص
-                                await SharePlus.instance.share(
-                                  ShareParams(
-                                    files: [XFile(file.path)],
-                                    text: text,
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              debugPrint('Error sharing: $e');
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (p.isSoldOut)
-                    Positioned(
-                      top: 15,
-                      left: 0,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: const BoxDecoration(
-                          color: AppColors.homeBadgeSoldOut,
-                          borderRadius: BorderRadius.only(
-                            topRight: Radius.circular(20),
-                            bottomRight: Radius.circular(20),
-                          ),
-                        ),
-                        child: Text(
-                          AppLocalizations.of(context)!.translate('sold_out'),
-                          style: const TextStyle(
-                            color: AppColors.homeBadgeText,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
+    return Selector<WishlistProvider, bool>(
+      selector: (context, wishlistProvider) =>
+          wishlistProvider.isInWishlist(p.id),
+      builder: (context, isFav, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  color: AppColors.homeBackground,
+                  border: Border.all(color: AppColors.cardBorder),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Stack(
+                    children: [
+                      GestureDetector(
+                        onTap: () => context.push('/product/${p.id}', extra: p),
+                        child: Hero(
+                          tag: p.id,
+                          child: AnimatedProductImage(product: p),
                         ),
                       ),
-                    ),
-                  if (!p.isSoldOut && isHot)
-                    Positioned(
-                      top: 15,
-                      left: 0,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
+                      Positioned(
+                        top: 10,
+                        right: 10,
+                        child: _circleIcon(
+                          isFav ? Icons.favorite : Icons.favorite_border,
+                          size: 20,
+                          color: isFav
+                              ? AppColors.homeFavActive
+                              : AppColors.homeFavInactive,
+                          onTap: () async {
+                            final messenger = ScaffoldMessenger.of(context);
+                            final auth = Provider.of<AuthProvider>(
+                              context,
+                              listen: false,
+                            );
+                            if (!auth.isAuthenticated) {
+                              showDialog(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: Text(
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.translate('please_login'),
+                                  ),
+                                  content: Text(
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.translate('login_subtitle'),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(ctx),
+                                      child: Text(
+                                        AppLocalizations.of(
+                                          context,
+                                        )!.translate('cancel'),
+                                      ),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.pop(ctx);
+                                        context.push('/login');
+                                      },
+                                      child: Text(
+                                        AppLocalizations.of(
+                                          context,
+                                        )!.translate('login_button'),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              return;
+                            }
+                            final wishlistProvider =
+                                Provider.of<WishlistProvider>(
+                                  context,
+                                  listen: false,
+                                );
+                            bool added = await wishlistProvider.toggleWishlist(
+                              p,
+                            );
+                            if (!mounted) return;
+                            messenger.hideCurrentSnackBar();
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  added
+                                      ? AppLocalizations.of(
+                                          context,
+                                        )!.translate('added_to_wishlist')
+                                      : AppLocalizations.of(
+                                          context,
+                                        )!.translate('removed_from_wishlist'),
+                                ),
+                                backgroundColor: added
+                                    ? AppColors.primary
+                                    : AppColors.red,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                duration: const Duration(seconds: 1),
+                              ),
+                            );
+                          },
                         ),
-                        decoration: const BoxDecoration(
-                          color: AppColors.homeBadgeHot,
-                          borderRadius: BorderRadius.only(
-                            topRight: Radius.circular(20),
-                            bottomRight: Radius.circular(20),
-                          ),
+                      ),
+                      Positioned(
+                        top: 10,
+                        left: 10,
+                        child: Icon(
+                          Icons.fullscreen,
+                          color: AppColors.homeProductIcon,
+                          size: 24,
                         ),
-                        child: Row(
+                      ),
+                      Positioned(
+                        bottom: 15,
+                        left: 10,
+                        child: Column(
                           children: [
-                            Icon(
-                              Icons.local_fire_department,
-                              size: 12,
-                              color: AppColors.homeBadgeText,
+                            _circleIcon(
+                              Icons.visibility_outlined,
+                              isWhite: true,
+                              onTap: () =>
+                                  context.push('/product/${p.id}', extra: p),
                             ),
-                            SizedBox(width: 2),
-                            Text(
-                              AppLocalizations.of(context)!.translate('hot'),
+                            const SizedBox(height: 8),
+                            _circleIcon(
+                              Icons.share,
+                              isWhite: true,
+                              onTap: () async {
+                                try {
+                                  final currency = AppLocalizations.of(
+                                    context,
+                                  )!.translate('currency');
+                                  final text =
+                                      '🌟 *Check out this amazing product!* 🌟\n\n'
+                                      '🛍️ *${p.getName(context)}*\n'
+                                      '💰 Price: *${p.price} $currency*\n\n'
+                                      '🔗 Link: ${AppConstants.shareBaseUrl}/product/${p.id}\n\n'
+                                      '_Sent from Details Store App_';
+
+                                  if (kIsWeb) {
+                                    await SharePlus.instance.share(
+                                      ShareParams(text: text),
+                                    );
+                                  } else {
+                                    // استخدام الكاش لجلب الصورة
+                                    final file = await DefaultCacheManager()
+                                        .getSingleFile(p.imageUrl);
+
+                                    // مشاركة الصورة مع النص
+                                    await SharePlus.instance.share(
+                                      ShareParams(
+                                        files: [XFile(file.path)],
+                                        text: text,
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  debugPrint('Error sharing: $e');
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (p.isSoldOut)
+                        Positioned(
+                          top: 15,
+                          left: 0,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: const BoxDecoration(
+                              color: AppColors.homeBadgeSoldOut,
+                              borderRadius: BorderRadius.only(
+                                topRight: Radius.circular(20),
+                                bottomRight: Radius.circular(20),
+                              ),
+                            ),
+                            child: Text(
+                              AppLocalizations.of(
+                                context,
+                              )!.translate('sold_out'),
                               style: const TextStyle(
                                 color: AppColors.homeBadgeText,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                          ],
+                          ),
                         ),
-                      ),
+                      if (!p.isSoldOut && isHot)
+                        Positioned(
+                          top: 15,
+                          left: 0,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: const BoxDecoration(
+                              color: AppColors.homeBadgeHot,
+                              borderRadius: BorderRadius.only(
+                                topRight: Radius.circular(20),
+                                bottomRight: Radius.circular(20),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.local_fire_department,
+                                  size: 12,
+                                  color: AppColors.homeBadgeText,
+                                ),
+                                SizedBox(width: 2),
+                                Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.translate('hot'),
+                                  style: const TextStyle(
+                                    color: AppColors.homeBadgeText,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 10, right: 4, left: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    p.getName(context),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      height: 1.2,
                     ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    "${p.price.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.homeProductPrice,
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 10, right: 4, left: 4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                p.getName(context),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  height: 1.2,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                "${p.price.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}",
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.homeProductPrice,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 
