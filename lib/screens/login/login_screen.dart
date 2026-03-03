@@ -104,6 +104,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       backgroundColor: const Color(0xFFFDFBF7), // نفس خلفية السبلاش
       body: Stack(
         children: [
@@ -362,7 +363,7 @@ class _LoginScreenState extends State<LoginScreen>
                             ],
                           ),
 
-                          const SizedBox(height: 30),
+                          const SizedBox(height: 8),
 
                           // زر تسجيل الدخول المحدث
                           Container(
@@ -407,7 +408,7 @@ class _LoginScreenState extends State<LoginScreen>
                             ),
                           ),
 
-                          const SizedBox(height: 30),
+                          const SizedBox(height: 15),
 
                           // فاصل "أو سجل عبر" المضاف حديثاً
                           Row(
@@ -444,7 +445,7 @@ class _LoginScreenState extends State<LoginScreen>
                             ],
                           ),
 
-                          const SizedBox(height: 25),
+                          const SizedBox(height: 15),
 
                           // أزرار السوشيال ميديا المضافة حديثاً
                           Row(
@@ -496,7 +497,7 @@ class _LoginScreenState extends State<LoginScreen>
                             ],
                           ),
 
-                          const SizedBox(height: 30),
+                          const SizedBox(height: 8),
 
                           // رابط التسجيل
                           Row(
