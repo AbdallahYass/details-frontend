@@ -3,6 +3,7 @@
 import 'package:details_app/app_imports.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:details_app/providers/notification_provider.dart';
+import 'dart:math' as math;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -10,7 +11,8 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
+class _HomePageState extends State<HomePage>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   List<Product> products = [];
   List<BannerModel> banners = [];
   List<CategoryModel> categories = [];
@@ -29,10 +31,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   final Map<String, PageController> _categoryControllers = {};
   final HomeRepository _homeRepository = HomeRepository();
 
+  late AnimationController _rotationController;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    _rotationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 10),
+    )..repeat();
+
     _loadAllData();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -49,6 +59,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _rotationController.dispose();
     _heroTimer?.cancel();
     _bannerIndexNotifier.dispose();
     _heroController.dispose();
@@ -145,57 +156,117 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        RefreshIndicator(
-          onRefresh: () => _loadAllData(forceRefresh: true),
-          color: AppColors.primary,
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(),
-            slivers: [
-              if (errorMessage != null)
-                SliverFillRemaining(
-                  child: CommonErrorWidget(
-                    message: errorMessage!,
-                    onRetry: () => _loadAllData(forceRefresh: true),
-                  ),
-                )
-              else ...[
-                // Hero Section (Show Skeleton only if loading AND empty)
-                SliverToBoxAdapter(
-                  child: (isLoading && banners.isEmpty)
-                      ? _buildHeroSkeleton()
-                      : _buildHeroSlider(),
-                ),
-
-                // Categories Section (Show Skeleton only if loading AND empty)
-                SliverToBoxAdapter(
-                  child: (isLoading && categories.isEmpty)
-                      ? _buildCategoriesSkeleton()
-                      : _buildCategoriesSection(),
-                ),
-
-                // Popular Section (Keep visible if data exists, even during loading)
-                if (popularProducts.isNotEmpty && _selectedCategory == null)
-                  SliverToBoxAdapter(child: _buildPopularSection()),
-
-                // Products Grid (Show Skeleton OVER content if loading, otherwise content)
-                if (isLoading && products.isEmpty)
-                  SliverToBoxAdapter(child: _buildProductsSkeleton())
-                else
-                  ..._buildCategoryGrids(),
-
-                const SliverToBoxAdapter(child: SizedBox(height: 50)),
-                SliverToBoxAdapter(
-                  child: RevealOnScroll(child: _buildFooter()),
-                ),
-              ],
-            ],
+    return Scaffold(
+      backgroundColor: const Color(0xFFFDFBF7),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset('assets/images/bg.png', fit: BoxFit.cover),
           ),
-        ),
-        if (isLoading && products.isEmpty)
-          const CustomLoadingOverlay(isOverlay: false),
-      ],
+          Positioned(
+            top: -120,
+            right: -120,
+            child: AnimatedBuilder(
+              animation: _rotationController,
+              builder: (context, child) {
+                return Transform.rotate(
+                  angle: _rotationController.value * 2 * math.pi,
+                  child: child,
+                );
+              },
+              child: Container(
+                width: 400,
+                height: 400,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
+                    width: 2,
+                  ),
+                  gradient: SweepGradient(
+                    colors: [
+                      const Color(0xFFD4AF37).withValues(alpha: 0.2),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -180,
+            left: -180,
+            child: AnimatedBuilder(
+              animation: _rotationController,
+              builder: (context, child) {
+                return Transform.rotate(
+                  angle: -_rotationController.value * 2 * math.pi,
+                  child: child,
+                );
+              },
+              child: Container(
+                width: 500,
+                height: 500,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                    width: 40,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          RefreshIndicator(
+            onRefresh: () => _loadAllData(forceRefresh: true),
+            color: AppColors.primary,
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                if (errorMessage != null)
+                  SliverFillRemaining(
+                    child: CommonErrorWidget(
+                      message: errorMessage!,
+                      onRetry: () => _loadAllData(forceRefresh: true),
+                    ),
+                  )
+                else ...[
+                  // Hero Section (Show Skeleton only if loading AND empty)
+                  SliverToBoxAdapter(
+                    child: (isLoading && banners.isEmpty)
+                        ? _buildHeroSkeleton()
+                        : _buildHeroSlider(),
+                  ),
+
+                  // Categories Section (Show Skeleton only if loading AND empty)
+                  SliverToBoxAdapter(
+                    child: (isLoading && categories.isEmpty)
+                        ? _buildCategoriesSkeleton()
+                        : _buildCategoriesSection(),
+                  ),
+
+                  // Popular Section (Keep visible if data exists, even during loading)
+                  if (popularProducts.isNotEmpty && _selectedCategory == null)
+                    SliverToBoxAdapter(child: _buildPopularSection()),
+
+                  // Products Grid (Show Skeleton OVER content if loading, otherwise content)
+                  if (isLoading && products.isEmpty)
+                    SliverToBoxAdapter(child: _buildProductsSkeleton())
+                  else
+                    ..._buildCategoryGrids(),
+
+                  const SliverToBoxAdapter(child: SizedBox(height: 50)),
+                  SliverToBoxAdapter(
+                    child: RevealOnScroll(child: _buildFooter()),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (isLoading && products.isEmpty)
+            const CustomLoadingOverlay(isOverlay: false),
+        ],
+      ),
     );
   }
 
