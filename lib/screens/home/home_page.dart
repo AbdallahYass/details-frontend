@@ -158,6 +158,7 @@ class _HomePageState extends State<HomePage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFDFBF7),
+      extendBodyBehindAppBar: true,
       body: Stack(
         children: [
           Positioned.fill(
