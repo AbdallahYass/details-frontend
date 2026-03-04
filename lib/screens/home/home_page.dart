@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:flutter/cupertino.dart';
 import 'package:details_app/app_imports.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:details_app/providers/notification_provider.dart';
@@ -218,51 +219,102 @@ class _HomePageState extends State<HomePage>
               ),
             ),
           ),
-          RefreshIndicator(
-            onRefresh: () => _loadAllData(forceRefresh: true),
-            color: AppColors.primary,
-            child: CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                if (errorMessage != null)
-                  SliverFillRemaining(
-                    child: CommonErrorWidget(
-                      message: errorMessage!,
-                      onRetry: () => _loadAllData(forceRefresh: true),
-                    ),
-                  )
-                else ...[
-                  // Hero Section (Show Skeleton only if loading AND empty)
-                  SliverToBoxAdapter(
-                    child: (isLoading && banners.isEmpty)
-                        ? _buildHeroSkeleton()
-                        : _buildHeroSlider(),
-                  ),
-
-                  // Categories Section (Show Skeleton only if loading AND empty)
-                  SliverToBoxAdapter(
-                    child: (isLoading && categories.isEmpty)
-                        ? _buildCategoriesSkeleton()
-                        : _buildCategoriesSection(),
-                  ),
-
-                  // Popular Section (Keep visible if data exists, even during loading)
-                  if (popularProducts.isNotEmpty && _selectedCategory == null)
-                    SliverToBoxAdapter(child: _buildPopularSection()),
-
-                  // Products Grid (Show Skeleton OVER content if loading, otherwise content)
-                  if (isLoading && products.isEmpty)
-                    SliverToBoxAdapter(child: _buildProductsSkeleton())
-                  else
-                    ..._buildCategoryGrids(),
-
-                  const SliverToBoxAdapter(child: SizedBox(height: 50)),
-                  SliverToBoxAdapter(
-                    child: RevealOnScroll(child: _buildFooter()),
-                  ),
-                ],
-              ],
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
             ),
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.only(top: 120),
+                sliver: CupertinoSliverRefreshControl(
+                  onRefresh: () => _loadAllData(forceRefresh: true),
+                  builder:
+                      (
+                        context,
+                        refreshState,
+                        pulledExtent,
+                        refreshTriggerPullDistance,
+                        refreshIndicatorExtent,
+                      ) {
+                        final double opacity =
+                            (pulledExtent / refreshTriggerPullDistance).clamp(
+                              0.0,
+                              1.0,
+                            );
+                        return Container(
+                          alignment: Alignment.center,
+                          child: Opacity(
+                            opacity: opacity,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.translate('app_name'),
+                                  style: const TextStyle(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.translate('app_slogan'),
+                                  style: const TextStyle(
+                                    color: AppColors.primary,
+                                    fontSize: 12,
+                                    letterSpacing: 2.0,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                ),
+              ),
+              if (errorMessage != null)
+                SliverFillRemaining(
+                  child: CommonErrorWidget(
+                    message: errorMessage!,
+                    onRetry: () => _loadAllData(forceRefresh: true),
+                  ),
+                )
+              else ...[
+                // Hero Section (Show Skeleton only if loading AND empty)
+                SliverToBoxAdapter(
+                  child: (isLoading && banners.isEmpty)
+                      ? _buildHeroSkeleton()
+                      : _buildHeroSlider(),
+                ),
+
+                // Categories Section (Show Skeleton only if loading AND empty)
+                SliverToBoxAdapter(
+                  child: (isLoading && categories.isEmpty)
+                      ? _buildCategoriesSkeleton()
+                      : _buildCategoriesSection(),
+                ),
+
+                // Popular Section (Keep visible if data exists, even during loading)
+                if (popularProducts.isNotEmpty && _selectedCategory == null)
+                  SliverToBoxAdapter(child: _buildPopularSection()),
+
+                // Products Grid (Show Skeleton OVER content if loading, otherwise content)
+                if (isLoading && products.isEmpty)
+                  SliverToBoxAdapter(child: _buildProductsSkeleton())
+                else
+                  ..._buildCategoryGrids(),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 50)),
+                SliverToBoxAdapter(
+                  child: RevealOnScroll(child: _buildFooter()),
+                ),
+              ],
+            ],
           ),
           if (isLoading && products.isEmpty)
             const CustomLoadingOverlay(isOverlay: false),
