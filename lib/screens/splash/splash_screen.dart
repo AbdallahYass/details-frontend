@@ -20,6 +20,13 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+    );
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2500),
@@ -165,25 +172,11 @@ class _SplashScreenState extends State<SplashScreen>
                   child: FadeTransition(
                     opacity: _fadeAnimation,
                     child: Container(
-                      padding: const EdgeInsets.all(30),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(
-                              0xFFD4AF37,
-                            ).withValues(alpha: 0.2),
-                            blurRadius: 60,
-                            spreadRadius: 5,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
+                      padding: const EdgeInsets.all(15),
                       child: Image.asset(
-                        'assets/images/logo2.png',
-                        height: 120,
-                        width: 120,
+                        'assets/images/logo.png',
+                        height: 180,
+                        width: 180,
                       ),
                     ),
                   ),

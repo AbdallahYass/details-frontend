@@ -108,15 +108,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
       ),
       child: Scaffold(
         backgroundColor: const Color(0xFFFDFBF7),
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
-        extendBodyBehindAppBar: true,
         body: Stack(
           children: [
             Positioned.fill(
@@ -174,6 +165,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                       width: 40,
                     ),
                   ),
+                ),
+              ),
+            ),
+
+            // زر الرجوع المخصص (لضمان عدم وجود فريم أبيض)
+            Positioned(
+              top: 0,
+              left: 0,
+              child: SafeArea(
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back_ios,
+                    color: AppColors.primary,
+                  ),
+                  onPressed: () => Navigator.pop(context),
                 ),
               ),
             ),
