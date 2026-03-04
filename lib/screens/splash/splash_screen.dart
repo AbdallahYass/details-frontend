@@ -70,12 +70,12 @@ class _SplashScreenState extends State<SplashScreen>
     final auth = Provider.of<AuthProvider>(context, listen: false);
 
     if (auth.token != null && auth.token.toString().isNotEmpty) {
-      context.go('/');
+      context.go('/profile');
     } else {
       try {
-        context.go('/');
+        context.go('/profile');
       } catch (e) {
-        context.go('/');
+        context.go('/profile');
       }
     }
   }
