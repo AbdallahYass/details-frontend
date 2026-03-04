@@ -73,7 +73,7 @@ class _SplashScreenState extends State<SplashScreen>
       context.go('/');
     } else {
       try {
-        context.go('/login');
+        context.go('/');
       } catch (e) {
         context.go('/');
       }
