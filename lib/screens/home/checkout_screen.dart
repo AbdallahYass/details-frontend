@@ -1,5 +1,7 @@
 import 'package:details_app/app_imports.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
+import 'package:flutter/services.dart';
+import 'dart:math' as math;
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -8,16 +10,28 @@ class CheckoutScreen extends StatefulWidget {
   State<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
-class _CheckoutScreenState extends State<CheckoutScreen> {
+class _CheckoutScreenState extends State<CheckoutScreen>
+    with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _cityController = TextEditingController();
   final _streetController = TextEditingController();
   final _phoneController = TextEditingController();
   String _paymentMethod = 'cod'; // cash on delivery
   bool _isLoading = false;
+  late AnimationController _rotationController;
+
+  @override
+  void initState() {
+    super.initState();
+    _rotationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 10),
+    )..repeat();
+  }
 
   @override
   void dispose() {
+    _rotationController.dispose();
     _cityController.dispose();
     _streetController.dispose();
     _phoneController.dispose();
@@ -129,253 +143,327 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final cart = Provider.of<CartProvider>(context);
     final total = cart.totalAmount;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        toolbarHeight: 110,
-        title: Image.asset('assets/images/logo2.png', height: 100),
-        centerTitle: true,
-        backgroundColor: AppColors.appBarBackground,
-        foregroundColor: AppColors.appBarForeground,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+      child: Scaffold(
+        backgroundColor: const Color(0xFFFDFBF7),
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          toolbarHeight: 110,
+          title: Image.asset('assets/images/logo2.png', height: 100),
+          centerTitle: true,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
+            onPressed: () => context.pop(),
           ),
-        ],
-      ),
-      bottomNavigationBar: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-        height: 70,
-        decoration: BoxDecoration(
-          color: AppColors.homeNavBackground,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _navIcon(
-              Icons.home_outlined,
-              AppLocalizations.of(context)!.translate('nav_shop'),
-              0,
-            ),
-            _navIcon(
-              Icons.search,
-              AppLocalizations.of(context)!.translate('nav_search'),
-              1,
-            ),
-            _navIcon(
-              Icons.shopping_bag_outlined,
-              AppLocalizations.of(context)!.translate('nav_cart'),
-              2,
-            ),
-            _navIcon(
-              Icons.favorite_border,
-              AppLocalizations.of(context)!.translate('nav_wishlist'),
-              3,
-            ),
-          ],
-        ),
-      ),
-      body: cart.items.isEmpty
-          ? Center(
-              child: Text(
-                AppLocalizations.of(context)!.translate('cart_empty'),
+          actions: [
+            IconButton(
+              icon: const Icon(
+                Icons.notifications_outlined,
+                color: AppColors.primary,
               ),
-            )
-          : Stack(
-              children: [
-                SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildSectionTitle(context, 'shipping_info'),
-                        const SizedBox(height: 15),
-                        Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: AppColors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.shadowColor,
-                                blurRadius: 10,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            children: [
-                              _buildTextField(
-                                controller: _cityController,
-                                label: AppLocalizations.of(
-                                  context,
-                                )!.translate('city'),
-                                icon: Icons.location_city,
-                                validator: (value) {
-                                  if (value == null ||
-                                      value.trim().length < 2) {
-                                    return AppLocalizations.of(
-                                      context,
-                                    )!.translate('enter_valid_city');
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: 15),
-                              _buildTextField(
-                                controller: _streetController,
-                                label: AppLocalizations.of(
-                                  context,
-                                )!.translate('street'),
-                                icon: Icons.map,
-                                validator: (value) {
-                                  if (value == null || value.trim().isEmpty) {
-                                    return AppLocalizations.of(
-                                      context,
-                                    )!.translate('required_field');
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: 15),
-                              _buildTextField(
-                                controller: _phoneController,
-                                label: AppLocalizations.of(
-                                  context,
-                                )!.translate('phone'),
-                                icon: Icons.phone,
-                                keyboardType: TextInputType.phone,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return AppLocalizations.of(
-                                      context,
-                                    )!.translate('required_field');
-                                  }
-                                  if (value.length < 9) {
-                                    return AppLocalizations.of(
-                                      context,
-                                    )!.translate('enter_valid_phone');
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-                        _buildSectionTitle(context, 'payment_method'),
-                        const SizedBox(height: 15),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildPaymentOption(
-                                value: 'cod',
-                                label: AppLocalizations.of(
-                                  context,
-                                )!.translate('cash_on_delivery'),
-                                icon: Icons.money,
-                              ),
-                            ),
-                            const SizedBox(width: 15),
-                            Expanded(
-                              child: _buildPaymentOption(
-                                value: 'card',
-                                label: AppLocalizations.of(
-                                  context,
-                                )!.translate('credit_card'),
-                                icon: Icons.credit_card,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 30),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppColors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.shadowColor,
-                                blurRadius: 10,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                AppLocalizations.of(
-                                  context,
-                                )!.translate('total'),
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              Text(
-                                '${total.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 30),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 55,
-                          child: ElevatedButton(
-                            onPressed: _isLoading ? null : _submitOrder,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              elevation: 5,
-                              shadowColor: AppColors.primary.withValues(
-                                alpha: 0.3,
-                              ),
-                            ),
-                            child: Text(
-                              AppLocalizations.of(
-                                context,
-                              )!.translate('confirm_order'),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
+              onPressed: () {},
+            ),
+          ],
+        ),
+        bottomNavigationBar: Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+          height: 70,
+          decoration: BoxDecoration(
+            color: AppColors.homeNavBackground,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _navIcon(
+                Icons.home_outlined,
+                AppLocalizations.of(context)!.translate('nav_shop'),
+                0,
+              ),
+              _navIcon(
+                Icons.search,
+                AppLocalizations.of(context)!.translate('nav_search'),
+                1,
+              ),
+              _navIcon(
+                Icons.shopping_bag_outlined,
+                AppLocalizations.of(context)!.translate('nav_cart'),
+                2,
+              ),
+              _navIcon(
+                Icons.favorite_border,
+                AppLocalizations.of(context)!.translate('nav_wishlist'),
+                3,
+              ),
+            ],
+          ),
+        ),
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset('assets/images/bg.png', fit: BoxFit.cover),
+            ),
+            // --- خلفية متحركة ---
+            Positioned(
+              top: -120,
+              right: -120,
+              child: AnimatedBuilder(
+                animation: _rotationController,
+                builder: (context, child) {
+                  return Transform.rotate(
+                    angle: _rotationController.value * 2 * math.pi,
+                    child: child,
+                  );
+                },
+                child: Container(
+                  width: 400,
+                  height: 400,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
+                      width: 2,
+                    ),
+                    gradient: SweepGradient(
+                      colors: [
+                        const Color(0xFFD4AF37).withValues(alpha: 0.2),
+                        Colors.transparent,
                       ],
                     ),
                   ),
                 ),
-                if (_isLoading) const CustomLoadingOverlay(),
-              ],
+              ),
             ),
+            Positioned(
+              bottom: -180,
+              left: -180,
+              child: AnimatedBuilder(
+                animation: _rotationController,
+                builder: (context, child) {
+                  return Transform.rotate(
+                    angle: -_rotationController.value * 2 * math.pi,
+                    child: child,
+                  );
+                },
+                child: Container(
+                  width: 500,
+                  height: 500,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      width: 40,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            cart.items.isEmpty
+                ? Center(
+                    child: Text(
+                      AppLocalizations.of(context)!.translate('cart_empty'),
+                    ),
+                  )
+                : SafeArea(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildSectionTitle(context, 'shipping_info'),
+                            const SizedBox(height: 15),
+                            Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: AppColors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.shadowColor,
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  _buildTextField(
+                                    controller: _cityController,
+                                    label: AppLocalizations.of(
+                                      context,
+                                    )!.translate('city'),
+                                    icon: Icons.location_city,
+                                    validator: (value) {
+                                      if (value == null ||
+                                          value.trim().length < 2) {
+                                        return AppLocalizations.of(
+                                          context,
+                                        )!.translate('enter_valid_city');
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  const SizedBox(height: 15),
+                                  _buildTextField(
+                                    controller: _streetController,
+                                    label: AppLocalizations.of(
+                                      context,
+                                    )!.translate('street'),
+                                    icon: Icons.map,
+                                    validator: (value) {
+                                      if (value == null ||
+                                          value.trim().isEmpty) {
+                                        return AppLocalizations.of(
+                                          context,
+                                        )!.translate('required_field');
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  const SizedBox(height: 15),
+                                  _buildTextField(
+                                    controller: _phoneController,
+                                    label: AppLocalizations.of(
+                                      context,
+                                    )!.translate('phone'),
+                                    icon: Icons.phone,
+                                    keyboardType: TextInputType.phone,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return AppLocalizations.of(
+                                          context,
+                                        )!.translate('required_field');
+                                      }
+                                      if (value.length < 9) {
+                                        return AppLocalizations.of(
+                                          context,
+                                        )!.translate('enter_valid_phone');
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 30),
+                            _buildSectionTitle(context, 'payment_method'),
+                            const SizedBox(height: 15),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildPaymentOption(
+                                    value: 'cod',
+                                    label: AppLocalizations.of(
+                                      context,
+                                    )!.translate('cash_on_delivery'),
+                                    icon: Icons.money,
+                                  ),
+                                ),
+                                const SizedBox(width: 15),
+                                Expanded(
+                                  child: _buildPaymentOption(
+                                    value: 'card',
+                                    label: AppLocalizations.of(
+                                      context,
+                                    )!.translate('credit_card'),
+                                    icon: Icons.credit_card,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 30),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: AppColors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.shadowColor,
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.translate('total'),
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${total.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 30),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 55,
+                              child: ElevatedButton(
+                                onPressed: _isLoading ? null : _submitOrder,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF9E773A),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  elevation: 5,
+                                  shadowColor: AppColors.primary.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                ),
+                                child: Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.translate('confirm_order'),
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+            if (_isLoading) const CustomLoadingOverlay(),
+          ],
+        ),
+      ),
     );
   }
 
@@ -409,17 +497,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           vertical: 16,
           horizontal: 20,
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.lightGrey),
-        ),
+        border: InputBorder.none,
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.lightGrey),
+          borderSide: const BorderSide(color: Color(0xFFB89560), width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          borderSide: const BorderSide(color: Color(0xFF9E773A), width: 2),
         ),
       ),
       validator: validator,
