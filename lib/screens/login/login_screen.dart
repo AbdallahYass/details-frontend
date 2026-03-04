@@ -1,6 +1,7 @@
 import 'package:details_app/app_imports.dart';
 import 'forgot_password_screen.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
+import 'package:flutter/services.dart';
 import 'dart:math' as math;
 
 class LoginScreen extends StatefulWidget {
@@ -103,7 +104,13 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+      child: Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: const Color(0xFFFDFBF7), // نفس خلفية السبلاش
       body: Stack(
@@ -538,6 +545,7 @@ class _LoginScreenState extends State<LoginScreen>
           ),
           if (_isLoading) const CustomLoadingOverlay(),
         ],
+      ),
       ),
     );
   }
