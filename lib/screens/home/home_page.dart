@@ -29,7 +29,6 @@ class _HomePageState extends State<HomePage>
 
   String? _selectedCategory;
   final Map<String, List<Product>> _groupedProducts = {};
-  final Map<String, PageController> _categoryControllers = {};
   final HomeRepository _homeRepository = HomeRepository();
 
   late AnimationController _rotationController;
@@ -64,9 +63,6 @@ class _HomePageState extends State<HomePage>
     _heroTimer?.cancel();
     _bannerIndexNotifier.dispose();
     _heroController.dispose();
-    for (var controller in _categoryControllers.values) {
-      controller.dispose();
-    }
     super.dispose();
   }
 
@@ -98,7 +94,6 @@ class _HomePageState extends State<HomePage>
           popularProducts = results[3] as List<Product>;
           _popularIds = popularProducts.map((e) => e.id).toSet();
           _groupProducts();
-          _syncCategoryControllers(); // تنظيف الذاكرة
           isLoading = false;
           _bannerIndexNotifier.value = 0;
           if (_heroController.hasClients) {
@@ -118,17 +113,6 @@ class _HomePageState extends State<HomePage>
         });
       }
     }
-  }
-
-  void _syncCategoryControllers() {
-    final currentIds = categories.map((e) => e.id).toSet();
-    _categoryControllers.removeWhere((key, controller) {
-      if (!currentIds.contains(key)) {
-        controller.dispose();
-        return true;
-      }
-      return false;
-    });
   }
 
   void _groupProducts() {
@@ -389,59 +373,48 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildPopularSection() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 15),
+          child: Row(
             children: [
-              const Icon(Icons.star, color: AppColors.starColor, size: 24),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  AppLocalizations.of(context)!.translate('most_popular'),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.homeSectionTitle,
-                  ),
-                ),
+              const Icon(
+                Icons.local_fire_department,
+                color: AppColors.primary,
+                size: 24,
               ),
               const SizedBox(width: 8),
-              const Icon(Icons.star, color: AppColors.starColor, size: 24),
+              Text(
+                AppLocalizations.of(context)!.translate('most_popular'),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.homeSectionTitle,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 5),
-          Text(
-            AppLocalizations.of(context)!.translate('best_seller_week'),
-            style: const TextStyle(
-              color: AppColors.homeSectionSubtitle,
-              fontSize: 12,
-            ),
+        ),
+        SizedBox(
+          height: 260,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: popularProducts.length,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemBuilder: (context, index) {
+              return Container(
+                width: 160,
+                margin: const EdgeInsetsDirectional.only(end: 15),
+                child: _buildProductCard(popularProducts[index]),
+              );
+            },
           ),
-          const SizedBox(height: 20),
-          SizedBox(
-            //
-            height: 260,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: popularProducts.length,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemBuilder: (context, index) {
-                return Container(
-                  width: 160,
-                  margin: const EdgeInsetsDirectional.only(end: 15),
-                  child: _buildProductCard(popularProducts[index]),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 10),
+      ],
     );
   }
 
@@ -471,16 +444,6 @@ class _HomePageState extends State<HomePage>
     // إذا لم يتم اختيار كاتيجوري، نعرض كل قسم ومنتجاته داخل بطاقات
     List<Widget> slivers = [];
 
-    // حساب أبعاد PageView
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double availableWidth = screenWidth - 32; // margin 16 * 2
-    final double viewportFraction = 0.92;
-    final double pageWidth = availableWidth * viewportFraction;
-    final double itemWidth =
-        (pageWidth - 16 - 10) / 2; // padding 8*2 + spacing 10
-    final double itemHeight = itemWidth / 0.65;
-    final double pageViewHeight = (itemHeight * 2) + 10;
-
     for (var category in categories) {
       // تصفية المنتجات التابعة لهذا القسم
       final categoryProducts = _groupedProducts[category.id] ?? [];
@@ -488,24 +451,17 @@ class _HomePageState extends State<HomePage>
       // إذا لم يكن هناك منتجات في هذا القسم، لا نعرضه
       if (categoryProducts.isEmpty) continue;
 
-      if (!_categoryControllers.containsKey(category.id)) {
-        _categoryControllers[category.id] = PageController(
-          viewportFraction: viewportFraction,
-        );
-      }
-
-      int itemsPerPage = 4;
-      int totalPages = (categoryProducts.length / itemsPerPage).ceil();
-
       slivers.add(
         SliverToBoxAdapter(
-          child: Container(
-            margin: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Column(
-              children: [
-                // اسم القسم في المنتصف
-                Text(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+                child: Text(
                   category.getName(context),
                   style: const TextStyle(
                     fontSize: 18,
@@ -513,75 +469,25 @@ class _HomePageState extends State<HomePage>
                     color: AppColors.homeSectionTitle,
                   ),
                 ),
-                const SizedBox(height: 15),
-
-                SizedBox(
-                  height: pageViewHeight,
-                  child: PageView.builder(
-                    controller: _categoryControllers[category.id],
-                    itemCount: totalPages,
-                    itemBuilder: (context, pageIndex) {
-                      int startIndex = pageIndex * itemsPerPage;
-                      int endIndex = startIndex + itemsPerPage;
-                      if (endIndex > categoryProducts.length) {
-                        endIndex = categoryProducts.length;
-                      }
-                      final currentProducts = categoryProducts.sublist(
-                        startIndex,
-                        endIndex,
-                      );
-
-                      return Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Column(
-                          children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildProductCard(
-                                      currentProducts[0],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: currentProducts.length > 1
-                                        ? _buildProductCard(currentProducts[1])
-                                        : const SizedBox(),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (currentProducts.length > 2) ...[
-                              const SizedBox(height: 10),
-                              Expanded(
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildProductCard(
-                                        currentProducts[2],
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: currentProducts.length > 3
-                                          ? _buildProductCard(
-                                              currentProducts[3],
-                                            )
-                                          : const SizedBox(),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+              ),
+              SizedBox(
+                height: 260,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: categoryProducts.length,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      width: 160,
+                      margin: const EdgeInsetsDirectional.only(end: 15),
+                      child: _buildProductCard(categoryProducts[index]),
+                    );
+                  },
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 10),
+            ],
           ),
         ),
       );
@@ -986,7 +892,6 @@ class _HomePageState extends State<HomePage>
                   products = results[0] as List<Product>;
                   banners = results[1] as List<BannerModel>;
                   _groupProducts();
-                  _syncCategoryControllers();
                   isLoading = false;
                   _bannerIndexNotifier.value = 0;
                   if (_heroController.hasClients) {
@@ -1090,7 +995,6 @@ class _HomePageState extends State<HomePage>
               if (_selectedCategory == null) {
                 _groupProducts();
               }
-              _syncCategoryControllers();
               isLoading = false;
               _bannerIndexNotifier.value = 0;
               if (_heroController.hasClients) {
@@ -1111,7 +1015,7 @@ class _HomePageState extends State<HomePage>
         }
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Column(
           children: [
             AnimatedContainer(
