@@ -249,28 +249,51 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildSectionDivider() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 30),
       child: Row(
         children: [
           Expanded(
-            child: Divider(
-              color: AppColors.secondary.withValues(alpha: 0.15),
-              indent: 60,
-              endIndent: 10,
-              thickness: 1,
+            child: Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.transparent,
+                    AppColors.secondary.withValues(alpha: 0.4),
+                  ],
+                ),
+              ),
             ),
           ),
-          Icon(
-            Icons.diamond_outlined,
-            size: 14,
-            color: AppColors.secondary.withValues(alpha: 0.4),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Container(
+              width: 6,
+              height: 6,
+              transform: Matrix4.rotationZ(0.785398), // 45 degrees
+              decoration: BoxDecoration(
+                color: AppColors.secondary,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.secondary.withValues(alpha: 0.4),
+                    blurRadius: 6,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+            ),
           ),
           Expanded(
-            child: Divider(
-              color: AppColors.secondary.withValues(alpha: 0.15),
-              indent: 10,
-              endIndent: 60,
-              thickness: 1,
+            child: Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.secondary.withValues(alpha: 0.4),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
             ),
           ),
         ],
@@ -400,17 +423,7 @@ class _HomePageState extends State<HomePage>
                 return Container(
                   width: 175,
                   margin: const EdgeInsetsDirectional.only(end: 16),
-                  child: Stack(
-                    children: [
-                      _buildProductCard(popularProducts[index]),
-                      if (index < 3)
-                        Positioned(
-                          top: 0,
-                          left: 12,
-                          child: _buildRankBadge(index + 1),
-                        ),
-                    ],
-                  ),
+                  child: _buildProductCard(popularProducts[index]),
                 );
               },
             ),
@@ -429,9 +442,9 @@ class _HomePageState extends State<HomePage>
           sliver: SliverGrid(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              childAspectRatio: 0.65,
-              crossAxisSpacing: 15,
-              mainAxisSpacing: 25,
+              childAspectRatio: 0.58,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 16,
             ),
             delegate: SliverChildBuilderDelegate(
               (c, i) => _buildProductCard(products[i]),
@@ -497,9 +510,9 @@ class _HomePageState extends State<HomePage>
           sliver: SliverGrid(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              childAspectRatio: 0.65,
-              crossAxisSpacing: 15,
-              mainAxisSpacing: 25,
+              childAspectRatio: 0.58,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 16,
             ),
             delegate: SliverChildBuilderDelegate(
               (c, i) => _buildProductCard(products[i]),
@@ -520,35 +533,101 @@ class _HomePageState extends State<HomePage>
       selector: (context, wishlistProvider) =>
           wishlistProvider.isInWishlist(p.id),
       builder: (context, isFav, child) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
+        return Container(
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.black.withValues(alpha: 0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
                 child: Stack(
-                  // الحل السحري لتفادي كراش الأبعاد: منع الـ Stack من إجبار الصورة على التمدد
-                  fit: StackFit.loose,
                   children: [
-                    // تم تغليف الصورة بـ Positioned.fill لتحجيمها بالشكل الصحيح داخل الـ Stack
                     Positioned.fill(
-                      child: GestureDetector(
-                        onTap: () => context.push('/product/${p.id}', extra: p),
-                        child: Hero(
-                          tag: p.id,
-                          child: AnimatedProductImage(product: p),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(12),
+                        ),
+                        child: GestureDetector(
+                          onTap: () =>
+                              context.push('/product/${p.id}', extra: p),
+                          child: Hero(
+                            tag: p.id,
+                            child: AnimatedProductImage(product: p),
+                          ),
                         ),
                       ),
                     ),
+                    // Badges
+                    if (p.isSoldOut)
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.black.withValues(alpha: 0.7),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            AppLocalizations.of(context)!.translate('sold_out'),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      )
+                    else if (isHot)
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.red.withValues(alpha: 0.8),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.local_fire_department,
+                                size: 10,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                AppLocalizations.of(context)!.translate('hot'),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    // Fav Button
                     Positioned(
-                      top: 10,
-                      right: 10,
-                      child: _circleIcon(
-                        isFav ? Icons.favorite : Icons.favorite_border,
-                        size: 20,
-                        color: isFav
-                            ? AppColors.homeFavActive
-                            : AppColors.homeFavInactive,
+                      top: 8,
+                      right: 8,
+                      child: GestureDetector(
                         onTap: () async {
                           final messenger = ScaffoldMessenger.of(context);
                           final auth = Provider.of<AuthProvider>(
@@ -556,42 +635,7 @@ class _HomePageState extends State<HomePage>
                             listen: false,
                           );
                           if (!auth.isAuthenticated) {
-                            showDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.translate('please_login'),
-                                ),
-                                content: Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.translate('login_subtitle'),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(ctx),
-                                    child: Text(
-                                      AppLocalizations.of(
-                                        context,
-                                      )!.translate('cancel'),
-                                    ),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.pop(ctx);
-                                      context.push('/login');
-                                    },
-                                    child: Text(
-                                      AppLocalizations.of(
-                                        context,
-                                      )!.translate('login_button'),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
+                            context.push('/login');
                             return;
                           }
                           final wishlistProvider =
@@ -613,204 +657,108 @@ class _HomePageState extends State<HomePage>
                                         context,
                                       )!.translate('removed_from_wishlist'),
                               ),
-                              backgroundColor: added
-                                  ? AppColors.primary
-                                  : AppColors.red,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isFav ? Icons.favorite : Icons.favorite_border,
+                            size: 16,
+                            color: isFav ? AppColors.red : AppColors.grey,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Info Section
+              Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      p.getName(context),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "${p.price.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 30,
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          final cart = Provider.of<CartProvider>(
+                            context,
+                            listen: false,
+                          );
+                          cart.addItem(
+                            p.id,
+                            p.price,
+                            p.getName(context),
+                            p.imageUrl,
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.translate('added_to_cart'),
                               ),
                               duration: const Duration(seconds: 1),
                             ),
                           );
                         },
-                      ),
-                    ),
-                    Positioned(
-                      top: 10,
-                      left: 10,
-                      child: Icon(
-                        Icons.fullscreen,
-                        color: AppColors.homeProductIcon,
-                        size: 24,
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 15,
-                      left: 10,
-                      child: Column(
-                        children: [
-                          _circleIcon(
-                            Icons.visibility_outlined,
-                            isWhite: true,
-                            onTap: () =>
-                                context.push('/product/${p.id}', extra: p),
+                        style: OutlinedButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          side: BorderSide(
+                            color: AppColors.primary.withValues(alpha: 0.2),
                           ),
-                          const SizedBox(height: 8),
-                          _circleIcon(
-                            Icons.share,
-                            isWhite: true,
-                            onTap: () async {
-                              try {
-                                final currency = AppLocalizations.of(
-                                  context,
-                                )!.translate('currency');
-                                final text =
-                                    '🌟 *Check out this amazing product!* 🌟\n\n'
-                                    '🛍️ *${p.getName(context)}*\n'
-                                    '💰 Price: *${p.price} $currency*\n\n'
-                                    '🔗 Link: https://details-store.com/product/${p.id}\n\n'
-                                    '_Sent from Details Store App_';
-
-                                if (kIsWeb) {
-                                  await SharePlus.instance.share(
-                                    ShareParams(text: text),
-                                  );
-                                } else {
-                                  final file = await DefaultCacheManager()
-                                      .getSingleFile(p.imageUrl);
-                                  await SharePlus.instance.share(
-                                    ShareParams(
-                                      files: [XFile(file.path)],
-                                      text: text,
-                                    ),
-                                  );
-                                }
-                              } catch (e) {
-                                debugPrint('Error sharing: $e');
-                              }
-                            },
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                        ],
-                      ),
-                    ),
-                    if (p.isSoldOut)
-                      Positioned(
-                        top: 15,
-                        left: 0,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: const BoxDecoration(
-                            color: AppColors.homeBadgeSoldOut,
-                            borderRadius: BorderRadius.only(
-                              topRight: Radius.circular(20),
-                              bottomRight: Radius.circular(20),
-                            ),
-                          ),
-                          child: Text(
-                            AppLocalizations.of(context)!.translate('sold_out'),
-                            style: const TextStyle(
-                              color: AppColors.homeBadgeText,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        ),
+                        child: Text(
+                          AppLocalizations.of(
+                            context,
+                          )!.translate('add_to_cart'),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: AppColors.primary,
                           ),
                         ),
                       ),
-                    if (!p.isSoldOut && isHot)
-                      Positioned(
-                        top: 15,
-                        left: 0,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: const BoxDecoration(
-                            color: AppColors.homeBadgeHot,
-                            borderRadius: BorderRadius.only(
-                              topRight: Radius.circular(20),
-                              bottomRight: Radius.circular(20),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.local_fire_department,
-                                size: 12,
-                                color: AppColors.homeBadgeText,
-                              ),
-                              const SizedBox(width: 2),
-                              Text(
-                                AppLocalizations.of(context)!.translate('hot'),
-                                style: const TextStyle(
-                                  color: AppColors.homeBadgeText,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                    ),
                   ],
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 10, right: 4, left: 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    p.getName(context),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      height: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    "${p.price.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}",
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.homeProductPrice,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         );
       },
-    );
-  }
-
-  Widget _circleIcon(
-    IconData icon, {
-    bool isWhite = false,
-    double size = 18,
-    VoidCallback? onTap,
-    Color? color,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: isWhite ? AppColors.homeBackground : AppColors.homeIconBg,
-          shape: BoxShape.circle,
-          boxShadow: isWhite
-              ? [BoxShadow(color: AppColors.homeIconShadow, blurRadius: 4)]
-              : [],
-        ),
-        child: Icon(
-          icon,
-          color: color ?? AppColors.homeFavInactive,
-          size: size,
-        ),
-      ),
     );
   }
 
@@ -1149,35 +1097,6 @@ class _HomePageState extends State<HomePage>
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRankBadge(int rank) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(
-        color: rank == 1
-            ? const Color(0xFFFFD700) // Gold
-            : rank == 2
-            ? const Color(0xFFC0C0C0) // Silver
-            : const Color(0xFFCD7F32), // Bronze
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Text(
-        '#$rank',
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
         ),
       ),
     );
