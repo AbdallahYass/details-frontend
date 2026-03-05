@@ -222,7 +222,8 @@ class _HomePageState extends State<HomePage>
                       ? _buildCategoriesSkeleton()
                       : _buildCategoriesSection(),
                 ),
-                if (popularProducts.isNotEmpty && _selectedCategory == null) ...[
+                if (popularProducts.isNotEmpty &&
+                    _selectedCategory == null) ...[
                   SliverToBoxAdapter(child: _buildSectionDivider()),
                   SliverToBoxAdapter(child: _buildPopularSection()),
                 ],
@@ -465,7 +466,7 @@ class _HomePageState extends State<HomePage>
                     color: AppColors.homeSectionTitle,
                   ),
                 ),
-              ),
+              ), //
               SizedBox(
                 height: 260,
                 child: ListView.builder(
@@ -1160,8 +1161,8 @@ class _HomePageState extends State<HomePage>
         color: rank == 1
             ? const Color(0xFFFFD700) // Gold
             : rank == 2
-                ? const Color(0xFFC0C0C0) // Silver
-                : const Color(0xFFCD7F32), // Bronze
+            ? const Color(0xFFC0C0C0) // Silver
+            : const Color(0xFFCD7F32), // Bronze
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
         boxShadow: [
           BoxShadow(
