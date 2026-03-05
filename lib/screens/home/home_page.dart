@@ -332,20 +332,6 @@ class _HomePageState extends State<HomePage>
             color: _isScrolled
                 ? Colors.white.withValues(alpha: 0.85)
                 : Colors.transparent,
-            child: AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              centerTitle: true,
-              title: Text(
-                AppLocalizations.of(context)!.translate('app_name'),
-                style: TextStyle(
-                  color: _isScrolled ? Colors.black87 : const Color(0xFFD4AF37),
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 2,
-                  fontSize: 20,
-                ),
-              ),
-            ),
           ),
         ),
       ),

@@ -23,19 +23,19 @@ class ProductCardWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                // 1. أعدنا ClipRRect للخارج ليقص الحواف للـ Stack بالكامل
+                // 1. أرجعنا الـ ClipRRect ليغلف الـ Stack بالكامل
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
+                  // 2. الـ Stack هنا بدون StackFit.expand عشان ما يجبر الصورة على أبعاد وهمية تكسر الـ Animation
                   child: Stack(
-                    // 2. قمنا بإزالة fit: StackFit.expand لمنع تعارض الأحجام
                     children: [
-                      // الصورة الأساسية بدون قيود إجبارية (كما كانت في كودك الأصلي)
+                      // 3. الصورة تأخذ حجمها بمرونة كما في كودك الأصلي
                       Hero(
                         tag: product.id,
                         child: AnimatedProductImage(product: product),
                       ),
 
-                      // زر المفضلة الزجاجي العائم
+                      // زر المفضلة الزجاجي العائم الفخم
                       Positioned(
                         top: 10,
                         right: 10,
@@ -91,7 +91,7 @@ class ProductCardWidget extends StatelessWidget {
                         ),
                       ),
 
-                      // شارات Hot و Sold Out
+                      // شارات الـ Sold Out والـ Hot
                       if (product.isSoldOut)
                         Positioned(
                           top: 10,
@@ -145,6 +145,7 @@ class ProductCardWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
+              // اسم المنتج
               Text(
                 product.getName(context),
                 maxLines: 1,
@@ -156,6 +157,7 @@ class ProductCardWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
+              // سعر المنتج
               Text(
                 "${product.price.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}",
                 style: const TextStyle(
