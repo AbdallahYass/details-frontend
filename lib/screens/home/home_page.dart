@@ -24,7 +24,7 @@ class _HomePageState extends State<HomePage>
   int _requestId = 0; // لمنع Race Condition
 
   final ValueNotifier<int> _bannerIndexNotifier = ValueNotifier(0);
-  final PageController _heroController = PageController();
+  final PageController _heroController = PageController(viewportFraction: 0.92);
   Timer? _heroTimer;
 
   String? _selectedCategory;
@@ -747,7 +747,7 @@ class _HomePageState extends State<HomePage>
   Widget _buildHeroSlider() => banners.isEmpty
       ? const SizedBox()
       : SizedBox(
-          height: 220,
+          height: 320,
           child: VisibilityDetector(
             key: const Key('hero-slider'),
             onVisibilityChanged: (info) {
@@ -757,37 +757,81 @@ class _HomePageState extends State<HomePage>
                 _startHeroScroll();
               }
             },
-            child: Stack(
-              alignment: Alignment.center,
+            child: Column(
               children: [
-                Listener(
-                  onPointerDown: (_) => _heroTimer?.cancel(),
-                  onPointerUp: (_) => _startHeroScroll(),
-                  child: PageView.builder(
-                    controller: _heroController,
-                    itemCount: banners.length,
-                    onPageChanged: (i) {
-                      _bannerIndexNotifier.value = i;
-                    },
-                    itemBuilder: (c, i) => GestureDetector(
-                      onTap: () => _onBannerTap(banners[i]),
-                      child: AnimatedBannerItem(banner: banners[i]),
+                Expanded(
+                  child: Listener(
+                    onPointerDown: (_) => _heroTimer?.cancel(),
+                    onPointerUp: (_) => _startHeroScroll(),
+                    child: PageView.builder(
+                      controller: _heroController,
+                      itemCount: banners.length,
+                      onPageChanged: (i) {
+                        _bannerIndexNotifier.value = i;
+                      },
+                      itemBuilder: (c, i) {
+                        return AnimatedBuilder(
+                          animation: _heroController,
+                          builder: (context, child) {
+                            double value = 1.0;
+                            if (_heroController.position.haveDimensions) {
+                              value = _heroController.page! - i;
+                              value = (1 - (value.abs() * 0.08)).clamp(
+                                0.92,
+                                1.0,
+                              );
+                            } else {
+                              value = i == _bannerIndexNotifier.value
+                                  ? 1.0
+                                  : 0.92;
+                            }
+                            return Transform.scale(
+                              scale: Curves.easeOut.transform(value),
+                              child: child,
+                            );
+                          },
+                          child: GestureDetector(
+                            onTap: () => _onBannerTap(banners[i]),
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.black.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: AnimatedBannerItem(banner: banners[i]),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
-                Positioned(
-                  bottom: 20,
-                  child: ValueListenableBuilder<int>(
-                    valueListenable: _bannerIndexNotifier,
-                    builder: (context, currentIndex, child) {
-                      return Row(
-                        children: List.generate(
-                          banners.length,
-                          (i) => _dot(i == currentIndex),
-                        ),
-                      );
-                    },
-                  ),
+                const SizedBox(height: 12),
+                ValueListenableBuilder<int>(
+                  valueListenable: _bannerIndexNotifier,
+                  builder: (context, currentIndex, child) {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        banners.length,
+                        (i) => _dot(i == currentIndex),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
