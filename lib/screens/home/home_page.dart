@@ -4,7 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:details_app/app_imports.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:details_app/providers/notification_provider.dart';
-import 'dart:math' as math;
 import 'dart:ui';
 
 class HomePage extends StatefulWidget {
@@ -984,54 +983,51 @@ class _HomePageState extends State<HomePage>
               ],
             ),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  width: 55,
-                  height: 55,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.black.withValues(alpha: 0.08),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(3),
-                  child: ClipOval(
+                Expanded(
+                  flex: 3,
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(18),
+                    ),
                     child: CachedNetworkImage(
                       imageUrl: category.imageUrl,
-                      memCacheWidth: 150,
+                      memCacheWidth: 250,
                       fit: BoxFit.cover,
+                      width: double.infinity,
                       placeholder: (context, url) =>
                           Container(color: AppColors.imagePlaceholder),
-                      errorWidget: (context, url, error) => Icon(
-                        Icons.category_outlined,
-                        color: AppColors.homeCategoryIcon,
-                        size: 24,
+                      errorWidget: (context, url, error) => Center(
+                        child: Icon(
+                          Icons.category_outlined,
+                          color: AppColors.homeCategoryIcon,
+                          size: 24,
+                        ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Text(
-                    category.getName(context),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight:
-                          isSelected ? FontWeight.w800 : FontWeight.w600,
-                      color: isSelected
-                          ? AppColors.primary
-                          : AppColors.textPrimary,
-                      letterSpacing: 0.5,
+                Expanded(
+                  flex: 2,
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        category.getName(context),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: isSelected
+                              ? FontWeight.w800
+                              : FontWeight.w600,
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.textPrimary,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
                     ),
                   ),
                 ),
