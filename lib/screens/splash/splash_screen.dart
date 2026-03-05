@@ -69,9 +69,9 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
 
     if (auth.token != null && auth.token.toString().isNotEmpty) {
-      context.go('/search');
+      context.go('/');
     } else {
-      context.go('/search');
+      context.go('/');
     }
   }
 

@@ -26,30 +26,35 @@ class _AnimatedProductImageState extends State<AnimatedProductImage> {
         onTapDown: (_) => setState(() => _isHovered = true),
         onTapUp: (_) => setState(() => _isHovered = false),
         onTapCancel: () => setState(() => _isHovered = false),
-        child: AnimatedCrossFade(
-          firstChild: _buildImage(firstImage),
-          secondChild: _buildImage(secondImage),
-          crossFadeState: _isHovered && hasSecondImage
-              ? CrossFadeState.showSecond
-              : CrossFadeState.showFirst,
-          duration: const Duration(milliseconds: 500),
-          firstCurve: Curves.easeInOutCubic,
-          secondCurve: Curves.easeInOutCubic,
+        // استخدمنا StackFit.expand عشان الصورة تملي الكرت بذكاء بدون Infinity
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // الصورة الأساسية
+            _buildImage(firstImage),
+
+            // الصورة الثانية تظهر فقط عند اللمس أو التمرير
+            if (hasSecondImage)
+              AnimatedOpacity(
+                opacity: _isHovered ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeInOut,
+                child: _buildImage(secondImage),
+              ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildImage(String url) {
-    return SizedBox(
-      width: double.infinity,
-      height: double.infinity,
-      child: CachedNetworkImage(
-        imageUrl: url,
-        fit: BoxFit.cover,
-        placeholder: (context, url) => Container(color: Colors.grey[200]),
-        errorWidget: (context, url, error) => const Icon(Icons.error),
-      ),
+    // شلنا SizedBox(double.infinity) اللي كانت سبب الكراش
+    return CachedNetworkImage(
+      imageUrl: url,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => Container(color: Colors.grey[200]),
+      errorWidget: (context, url, error) =>
+          const Icon(Icons.error, color: Colors.grey),
     );
   }
 }

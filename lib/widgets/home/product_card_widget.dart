@@ -23,19 +23,22 @@ class ProductCardWidget extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                // 1. أرجعنا الـ ClipRRect ليغلف الـ Stack بالكامل
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  // 2. الـ Stack هنا بدون StackFit.expand عشان ما يجبر الصورة على أبعاد وهمية تكسر الـ Animation
                   child: Stack(
                     children: [
-                      // 3. الصورة تأخذ حجمها بمرونة كما في كودك الأصلي
-                      Hero(
-                        tag: product.id,
-                        child: AnimatedProductImage(product: product),
+                      // الحل السحري هنا: Positioned.fill لتحديد المساحة + Align لفك القيود الإجبارية
+                      Positioned.fill(
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: Hero(
+                            tag: product.id,
+                            child: AnimatedProductImage(product: product),
+                          ),
+                        ),
                       ),
 
-                      // زر المفضلة الزجاجي العائم الفخم
+                      // زر المفضلة الزجاجي العائم
                       Positioned(
                         top: 10,
                         right: 10,
@@ -91,7 +94,7 @@ class ProductCardWidget extends StatelessWidget {
                         ),
                       ),
 
-                      // شارات الـ Sold Out والـ Hot
+                      // شارات Hot و Sold Out
                       if (product.isSoldOut)
                         Positioned(
                           top: 10,
@@ -145,7 +148,6 @@ class ProductCardWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              // اسم المنتج
               Text(
                 product.getName(context),
                 maxLines: 1,
@@ -157,7 +159,6 @@ class ProductCardWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              // سعر المنتج
               Text(
                 "${product.price.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}",
                 style: const TextStyle(
