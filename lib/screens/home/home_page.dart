@@ -466,7 +466,7 @@ class _HomePageState extends State<HomePage>
                     color: AppColors.homeSectionTitle,
                   ),
                 ),
-              ), //
+              ),
               SizedBox(
                 height: 260,
                 child: ListView.builder(
