@@ -4,6 +4,7 @@ import 'package:details_app/app_imports.dart';
 import 'package:details_app/providers/notification_provider.dart';
 import 'package:details_app/screens/home/notifications_screen.dart';
 import 'package:details_app/widgets/app_drawer.dart';
+import 'dart:ui';
 
 class MainScreen extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
@@ -20,7 +21,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
+      backgroundColor: const Color(0xFFFDFBF7),
       extendBody: true,
       extendBodyBehindAppBar: true, // السماح للمحتوى بالظهور خلف البار
       appBar: _buildAppBar(context),
@@ -107,6 +108,14 @@ class _MainScreenState extends State<MainScreen> {
       scrolledUnderElevation: 0,
       surfaceTintColor: Colors.transparent,
       shadowColor: AppColors.transparent,
+      flexibleSpace: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            color: const Color(0xFFFDFBF7).withValues(alpha: 0.8),
+          ),
+        ),
+      ),
       systemOverlayStyle: const SystemUiOverlayStyle(
         statusBarColor: AppColors.transparent,
         statusBarIconBrightness: Brightness.dark,

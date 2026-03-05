@@ -1179,115 +1179,132 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildFooter() => Container(
-    width: double.infinity,
-    color: AppColors.homeFooterBackground,
-    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-    child: Column(
-      children: [
-        _buildFooterAbout(),
-        const SizedBox(height: 30),
-        _footerAccordion(
-          AppLocalizations.of(context)!.translate('language'),
-          [],
-          customChildren: [
-            _buildLanguageItem('العربية', const Locale('ar', '')),
-            _buildLanguageItem('English', const Locale('en', '')),
-          ],
+        width: double.infinity,
+        color: const Color(0xFF121212),
+        padding: const EdgeInsets.only(
+          top: 60,
+          bottom: 120, // مساحة إضافية عشان الناف بار ما يغطي الفوتر
+          left: 24,
+          right: 24,
         ),
-        const Divider(color: AppColors.footerDivider, height: 1),
-        _footerAccordion(
-          AppLocalizations.of(context)!.translate('policies'),
-          [],
-          customChildren: [
-            _buildPolicyItem(
-              AppLocalizations.of(context)!.translate('policy_cancel'),
+        child: Column(
+          children: [
+            // Branding
+            const Text(
+              'DETAILS',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 26,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 6,
+              ),
             ),
-            _buildPolicyItem(
-              AppLocalizations.of(context)!.translate('policy_return'),
+            Text(
+              'STORE',
+              style: TextStyle(
+                color: AppColors.secondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 8,
+              ),
             ),
-            _buildPolicyItem(
-              AppLocalizations.of(context)!.translate('policy_shipping'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 40),
-        const Divider(color: AppColors.footerDivider),
-        const SizedBox(height: 20),
-        Text(
-          AppLocalizations.of(context)!.translate('copyright'),
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AppColors.footerText,
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    ),
-  );
+            const SizedBox(height: 30),
 
-  Widget _buildFooterAbout() => Column(
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      Text(
-        AppLocalizations.of(context)!.translate('footer_about_title'),
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: AppColors.white,
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      const SizedBox(height: 15),
-      Text(
-        AppLocalizations.of(context)!.translate('footer_about_desc'),
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: AppColors.footerTextSecondary,
-          fontSize: 13,
-          height: 1.6,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      const SizedBox(height: 20),
-      _contactRow(Icons.email_outlined, "support@details-store.com"),
-      _contactRow(Icons.phone_android, "+972-598723438"),
-      const SizedBox(height: 15),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          IconButton(
-            onPressed: () async {
-              final Uri url = Uri.parse(
-                'https://www.instagram.com/details__store__?igsh=c3Nuam5mNDM4ajBp',
-              );
-              if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-                debugPrint('Could not launch Instagram');
-              }
-            },
-            icon: const FaIcon(
-              FontAwesomeIcons.instagram,
-              color: AppColors.white,
-              size: 20,
+            // Description
+            Text(
+              AppLocalizations.of(context)!.translate('footer_about_desc'),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.6),
+                fontSize: 13,
+                height: 1.6,
+              ),
             ),
-          ),
-          IconButton(
-            onPressed: () async {
-              final Uri url = Uri.parse('https://wa.me/972598723438');
-              if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-                debugPrint('Could not launch WhatsApp');
-              }
-            },
-            icon: const FaIcon(
-              FontAwesomeIcons.whatsapp,
-              color: AppColors.white,
-              size: 20,
+            const SizedBox(height: 30),
+
+            // Contact Info
+            Column(
+              children: [
+                _contactRow(Icons.email_outlined, "support@details-store.com"),
+                const SizedBox(height: 10),
+                _contactRow(Icons.phone_android, "+972-598723438"),
+              ],
             ),
-          ),
-        ],
-      ),
-    ],
-  );
+            const SizedBox(height: 30),
+
+            // Social Buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _socialButton(
+                  FontAwesomeIcons.instagram,
+                  'https://www.instagram.com/details__store__?igsh=c3Nuam5mNDM4ajBp',
+                ),
+                const SizedBox(width: 20),
+                _socialButton(
+                  FontAwesomeIcons.whatsapp,
+                  'https://wa.me/972598723438',
+                ),
+              ],
+            ),
+            const SizedBox(height: 40),
+
+            // Links (Accordions)
+            Container(
+              decoration: BoxDecoration(
+                border: Border.symmetric(
+                  horizontal: BorderSide(
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
+                ),
+              ),
+              child: Column(
+                children: [
+                  _footerAccordion(
+                    AppLocalizations.of(context)!.translate('language'),
+                    customChildren: [
+                      _buildLanguageItem('العربية', const Locale('ar', '')),
+                      _buildLanguageItem('English', const Locale('en', '')),
+                    ],
+                  ),
+                  Divider(
+                    height: 1,
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
+                  _footerAccordion(
+                    AppLocalizations.of(context)!.translate('policies'),
+                    customChildren: [
+                      _buildPolicyItem(
+                        AppLocalizations.of(context)!
+                            .translate('policy_cancel'),
+                      ),
+                      _buildPolicyItem(
+                        AppLocalizations.of(context)!
+                            .translate('policy_return'),
+                      ),
+                      _buildPolicyItem(
+                        AppLocalizations.of(context)!
+                            .translate('policy_shipping'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 40),
+
+            // Copyright
+            Text(
+              AppLocalizations.of(context)!.translate('copyright'),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.3),
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      );
 
   Widget _buildLanguageItem(String label, Locale locale) {
     return GestureDetector(
@@ -1296,14 +1313,12 @@ class _HomePageState extends State<HomePage>
       },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 5),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
         child: Text(
           label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AppColors.footerText,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.7),
             fontSize: 13,
-            fontWeight: FontWeight.bold,
           ),
         ),
       ),
@@ -1329,78 +1344,79 @@ class _HomePageState extends State<HomePage>
       },
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 5),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
         child: Text(
           title,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AppColors.footerText,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.7),
             fontSize: 13,
-            fontWeight: FontWeight.bold,
           ),
         ),
       ),
     );
   }
 
-  Widget _footerAccordion(
-    String t,
-    List<String> i, {
+  Widget _footerAccordion(String title, {
     List<Widget>? customChildren,
-  }) => Theme(
-    data: ThemeData().copyWith(dividerColor: AppColors.transparent),
-    child: ExpansionTile(
-      title: Center(
-        child: Text(
-          t,
-          textAlign: TextAlign.center,
+  }) {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        iconColor: AppColors.secondary,
+        collapsedIconColor: Colors.white.withValues(alpha: 0.5),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 10),
+        title: Text(
+          title,
           style: const TextStyle(
-            color: AppColors.white,
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
           ),
         ),
+        children: customChildren ?? [],
       ),
-      trailing: const Icon(Icons.add, color: AppColors.white, size: 20),
-      childrenPadding: const EdgeInsets.only(bottom: 20, right: 16, left: 16),
-      expandedCrossAxisAlignment: CrossAxisAlignment.center,
-      children:
-          customChildren ??
-          i
-              .map(
-                (item) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 5),
-                  child: Text(
-                    item,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: AppColors.footerText,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              )
-              .toList(),
-    ),
-  );
+    );
+  }
 
-  Widget _contactRow(IconData i, String t) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 5),
-    child: Row(
+  Widget _contactRow(IconData icon, String text) {
+    return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
+        Icon(icon, color: AppColors.secondary, size: 16),
+        const SizedBox(width: 10),
         Text(
-          t,
-          style: const TextStyle(
-            color: AppColors.footerTextSecondary,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
+          text,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.8),
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(width: 10),
-        Icon(i, color: AppColors.white, size: 16),
       ],
-    ),
-  );
+    );
+  }
+
+  Widget _socialButton(IconData icon, String url) {
+    return GestureDetector(
+      onTap: () async {
+        if (!await launchUrl(
+          Uri.parse(url),
+          mode: LaunchMode.externalApplication,
+        )) {
+          debugPrint('Could not launch $url');
+        }
+      },
+      child: Container(
+        width: 45,
+        height: 45,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withValues(alpha: 0.05),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        child: FaIcon(icon, color: Colors.white, size: 20),
+      ),
+    );
+  }
 }
