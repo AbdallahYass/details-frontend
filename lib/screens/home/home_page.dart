@@ -356,11 +356,12 @@ class _HomePageState extends State<HomePage>
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 15),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -519,7 +520,7 @@ class _HomePageState extends State<HomePage>
           wishlistProvider.isInWishlist(p.id),
       builder: (context, isFav, child) {
         return Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
               child: ClipRRect(
@@ -751,10 +752,11 @@ class _HomePageState extends State<HomePage>
             Padding(
               padding: const EdgeInsets.only(top: 10, right: 4, left: 4),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
                     p.getName(context),
+                    textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -766,6 +768,7 @@ class _HomePageState extends State<HomePage>
                   const SizedBox(height: 6),
                   Text(
                     "${p.price.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}",
+                    textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
