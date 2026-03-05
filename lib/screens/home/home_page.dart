@@ -222,8 +222,12 @@ class _HomePageState extends State<HomePage>
                       ? _buildCategoriesSkeleton()
                       : _buildCategoriesSection(),
                 ),
-                if (popularProducts.isNotEmpty && _selectedCategory == null)
+                if (popularProducts.isNotEmpty && _selectedCategory == null) ...[
+                  SliverToBoxAdapter(child: _buildSectionDivider()),
                   SliverToBoxAdapter(child: _buildPopularSection()),
+                ],
+                if (!isLoading && products.isNotEmpty)
+                  SliverToBoxAdapter(child: _buildSectionDivider()),
                 if (isLoading && products.isEmpty)
                   SliverToBoxAdapter(child: _buildProductsSkeleton())
                 else
@@ -237,6 +241,37 @@ class _HomePageState extends State<HomePage>
           ),
           if (isLoading && products.isEmpty)
             const CustomLoadingOverlay(isOverlay: false),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionDivider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Divider(
+              color: AppColors.secondary.withValues(alpha: 0.15),
+              indent: 60,
+              endIndent: 10,
+              thickness: 1,
+            ),
+          ),
+          Icon(
+            Icons.diamond_outlined,
+            size: 14,
+            color: AppColors.secondary.withValues(alpha: 0.4),
+          ),
+          Expanded(
+            child: Divider(
+              color: AppColors.secondary.withValues(alpha: 0.15),
+              indent: 10,
+              endIndent: 60,
+              thickness: 1,
+            ),
+          ),
         ],
       ),
     );
@@ -308,48 +343,79 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildPopularSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 15),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.local_fire_department,
-                color: AppColors.primary,
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                AppLocalizations.of(context)!.translate('most_popular'),
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.homeSectionTitle,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.homeBackground,
+            AppColors.secondary.withValues(alpha: 0.03),
+            AppColors.homeBackground,
+          ],
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 15),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.trending_up,
+                    color: AppColors.secondary,
+                    size: 20,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                Text(
+                  AppLocalizations.of(context)!.translate('most_popular'),
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.homeSectionTitle,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        SizedBox(
-          height: 260,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            itemCount: popularProducts.length,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemBuilder: (context, index) {
-              return Container(
-                width: 160,
-                margin: const EdgeInsetsDirectional.only(end: 15),
-                child: _buildProductCard(popularProducts[index]),
-              );
-            },
+          SizedBox(
+            height: 290,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              itemCount: popularProducts.length,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemBuilder: (context, index) {
+                return Container(
+                  width: 175,
+                  margin: const EdgeInsetsDirectional.only(end: 16),
+                  child: Stack(
+                    children: [
+                      _buildProductCard(popularProducts[index]),
+                      if (index < 3)
+                        Positioned(
+                          top: 0,
+                          left: 12,
+                          child: _buildRankBadge(index + 1),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
-        ),
-        const SizedBox(height: 10),
-      ],
+          const SizedBox(height: 20),
+        ],
+      ),
     );
   }
 
@@ -1079,6 +1145,35 @@ class _HomePageState extends State<HomePage>
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRankBadge(int rank) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: rank == 1
+            ? const Color(0xFFFFD700) // Gold
+            : rank == 2
+                ? const Color(0xFFC0C0C0) // Silver
+                : const Color(0xFFCD7F32), // Bronze
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Text(
+        '#$rank',
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 12,
         ),
       ),
     );
