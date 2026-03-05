@@ -535,7 +535,7 @@ class _HomePageState extends State<HomePage>
       builder: (context, isFav, child) {
         return Container(
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: const Color(0xFFFDFBF7),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
@@ -675,6 +675,55 @@ class _HomePageState extends State<HomePage>
                         ),
                       ),
                     ),
+                    Positioned(
+                      bottom: 8,
+                      left: 8,
+                      child: Column(
+                        children: [
+                          _circleIcon(
+                            Icons.visibility_outlined,
+                            isWhite: true,
+                            onTap: () =>
+                                context.push('/product/${p.id}', extra: p),
+                          ),
+                          const SizedBox(height: 8),
+                          _circleIcon(
+                            Icons.share,
+                            isWhite: true,
+                            onTap: () async {
+                              try {
+                                final currency = AppLocalizations.of(
+                                  context,
+                                )!.translate('currency');
+                                final text =
+                                    '🌟 *Check out this amazing product!* 🌟\n\n'
+                                    '🛍️ *${p.getName(context)}*\n'
+                                    '💰 Price: *${p.price} $currency*\n\n'
+                                    '🔗 Link: https://details-store.com/product/${p.id}\n\n'
+                                    '_Sent from Details Store App_';
+
+                                if (kIsWeb) {
+                                  await SharePlus.instance.share(
+                                    ShareParams(text: text),
+                                  );
+                                } else {
+                                  final file = await DefaultCacheManager()
+                                      .getSingleFile(p.imageUrl);
+                                  await SharePlus.instance.share(
+                                    ShareParams(
+                                      files: [XFile(file.path)],
+                                      text: text,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                debugPrint('Error sharing: $e');
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -759,6 +808,33 @@ class _HomePageState extends State<HomePage>
           ),
         );
       },
+    );
+  }
+
+  Widget _circleIcon(
+    IconData icon, {
+    bool isWhite = false,
+    double size = 18,
+    VoidCallback? onTap,
+    Color? color,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isWhite ? AppColors.homeBackground : AppColors.homeIconBg,
+          shape: BoxShape.circle,
+          boxShadow: isWhite
+              ? [BoxShadow(color: AppColors.homeIconShadow, blurRadius: 4)]
+              : [],
+        ),
+        child: Icon(
+          icon,
+          color: color ?? AppColors.homeFavInactive,
+          size: size,
+        ),
+      ),
     );
   }
 
