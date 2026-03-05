@@ -1,9 +1,26 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:details_app/models/product.dart';
 import 'package:details_app/models/banner_model.dart';
 import 'package:details_app/models/category_model.dart';
 import 'package:details_app/services/cache_service.dart';
+
+// --- Top-Level Functions for Compute ---
+List<Product> _parseProducts(String responseBody) {
+  final parsed = json.decode(responseBody) as List;
+  return parsed.map((json) => Product.fromJson(json)).toList();
+}
+
+List<BannerModel> _parseBanners(String responseBody) {
+  final parsed = json.decode(responseBody) as List;
+  return parsed.map((json) => BannerModel.fromJson(json)).toList();
+}
+
+List<CategoryModel> _parseCategories(String responseBody) {
+  final parsed = json.decode(responseBody) as List;
+  return parsed.map((json) => CategoryModel.fromJson(json)).toList();
+}
 
 class HomeRepository {
   Future<List<dynamic>> loadHomeData({bool forceRefresh = false}) async {
@@ -25,18 +42,20 @@ class HomeRepository {
     }
 
     if (!forceRefresh) {
-      final cached = CacheService().get<List<Product>>(url);
-      if (cached != null) return cached;
+      // جلب النص الخام من الكاش لتقليل الضغط
+      final cachedString = CacheService().get<String>(url);
+      if (cachedString != null) {
+        return compute(_parseProducts, cachedString);
+      }
     }
 
     final res = await http
         .get(Uri.parse(url))
         .timeout(const Duration(seconds: 15));
     if (res.statusCode == 200) {
-      final data = (json.decode(res.body) as List)
-          .map((j) => Product.fromJson(j))
-          .toList();
-      CacheService().set(url, data);
+      // تخزين النص الخام مباشرة (سريع جداً ولا يسبب تعليق)
+      CacheService().set(url, res.body);
+      final data = await compute(_parseProducts, res.body);
       return data;
     }
     throw Exception('Failed to load products');
@@ -53,18 +72,18 @@ class HomeRepository {
     }
 
     if (!forceRefresh) {
-      final cached = CacheService().get<List<BannerModel>>(url);
-      if (cached != null) return cached;
+      final cachedString = CacheService().get<String>(url);
+      if (cachedString != null) {
+        return compute(_parseBanners, cachedString);
+      }
     }
 
     final res = await http
         .get(Uri.parse(url))
         .timeout(const Duration(seconds: 15));
     if (res.statusCode == 200) {
-      final data = (json.decode(res.body) as List)
-          .map((j) => BannerModel.fromJson(j))
-          .toList();
-      CacheService().set(url, data);
+      CacheService().set(url, res.body);
+      final data = await compute(_parseBanners, res.body);
       return data;
     }
     throw Exception('Failed to load banners');
@@ -75,19 +94,20 @@ class HomeRepository {
   }) async {
     const url = 'https://api.details-store.com/api/categories';
     if (!forceRefresh) {
-      final cached = CacheService().get<List<CategoryModel>>(url);
-      if (cached != null) return cached;
+      final cachedString = CacheService().get<String>(url);
+      if (cachedString != null) {
+        // استخدام compute للتصنيفات أيضاً لضمان عدم تجميد الواجهة نهائياً
+        return compute(_parseCategories, cachedString);
+      }
     }
 
     final res = await http
         .get(Uri.parse(url))
         .timeout(const Duration(seconds: 15));
     if (res.statusCode == 200) {
-      final data = (json.decode(res.body) as List)
-          .map((j) => CategoryModel.fromJson(j))
-          .toList();
-      CacheService().set(url, data);
-      return data;
+      CacheService().set(url, res.body);
+      // استخدام compute هنا أيضاً
+      return compute(_parseCategories, res.body);
     }
     throw Exception('Failed to load categories');
   }
@@ -97,18 +117,18 @@ class HomeRepository {
   }) async {
     const url = 'https://api.details-store.com/api/popular-products';
     if (!forceRefresh) {
-      final cached = CacheService().get<List<Product>>(url);
-      if (cached != null) return cached;
+      final cachedString = CacheService().get<String>(url);
+      if (cachedString != null) {
+        return compute(_parseProducts, cachedString);
+      }
     }
 
     final res = await http
         .get(Uri.parse(url))
         .timeout(const Duration(seconds: 15));
     if (res.statusCode == 200) {
-      final data = (json.decode(res.body) as List)
-          .map((j) => Product.fromJson(j))
-          .toList();
-      CacheService().set(url, data);
+      CacheService().set(url, res.body);
+      final data = await compute(_parseProducts, res.body);
       return data;
     }
     throw Exception('Failed to load popular products');

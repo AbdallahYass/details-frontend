@@ -20,13 +20,6 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
-      ),
-    );
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2500),
@@ -64,19 +57,21 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _checkAuth() async {
-    await Future.delayed(const Duration(seconds: 4));
-    if (!mounted) return;
-
     final auth = Provider.of<AuthProvider>(context, listen: false);
 
+    // تشغيل المؤقت ومحاولة تسجيل الدخول في نفس الوقت لعدم تضييع الوقت
+    final minDuration = Future.delayed(const Duration(seconds: 4));
+    try {
+      await auth.tryAutoLogin();
+    } catch (_) {}
+    await minDuration;
+
+    if (!mounted) return;
+
     if (auth.token != null && auth.token.toString().isNotEmpty) {
-      context.go('/');
+      context.go('/search');
     } else {
-      try {
-        context.go('/');
-      } catch (e) {
-        context.go('/');
-      }
+      context.go('/search');
     }
   }
 
@@ -102,7 +97,12 @@ class _SplashScreenState extends State<SplashScreen>
           alignment: Alignment.center,
           children: [
             Positioned.fill(
-              child: Image.asset('assets/images/bg.png', fit: BoxFit.cover),
+              child: Image.asset(
+                'assets/images/bg.png',
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+                cacheWidth: 1080, // تحسين الأداء
+              ),
             ),
 
             // Animated Background Patterns

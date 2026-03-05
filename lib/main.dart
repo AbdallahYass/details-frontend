@@ -13,11 +13,12 @@ import 'package:details_app/constants/app_theme.dart';
 import 'package:details_app/providers/router.dart';
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   setPathUrlStrategy();
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()..tryAutoLogin()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProxyProvider<AuthProvider, WishlistProvider>(
           create: (_) => WishlistProvider(),

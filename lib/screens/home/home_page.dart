@@ -1,10 +1,14 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter/cupertino.dart';
 import 'package:details_app/app_imports.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:details_app/providers/notification_provider.dart';
-import 'dart:math' as math;
+import 'dart:ui';
+
+// استيراد الملفات المفصولة
+import 'package:details_app/widgets/home/hero_slider_widget.dart';
+import 'package:details_app/widgets/home/categories_section_widget.dart';
+import 'package:details_app/widgets/home/product_card_widget.dart';
+import 'package:details_app/widgets/home/home_footer_widget.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,27 +25,34 @@ class _HomePageState extends State<HomePage>
   Set<String> _popularIds = {};
   bool isLoading = true;
   String? errorMessage;
-  int _requestId = 0; // لمنع Race Condition
+  int _requestId = 0;
 
   final ValueNotifier<int> _bannerIndexNotifier = ValueNotifier(0);
-  final PageController _heroController = PageController();
+  late PageController _heroController;
   Timer? _heroTimer;
 
   String? _selectedCategory;
   final Map<String, List<Product>> _groupedProducts = {};
   final HomeRepository _homeRepository = HomeRepository();
 
-  late AnimationController _rotationController;
+  final ScrollController _scrollController = ScrollController();
+  bool _isScrolled = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    _rotationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 10),
-    )..repeat();
+    // Viewport Fraction يعطي تأثير الإعلانات الجانبية (Peeking effect)
+    _heroController = PageController(viewportFraction: 0.85);
+
+    _scrollController.addListener(() {
+      if (_scrollController.offset > 50 && !_isScrolled) {
+        setState(() => _isScrolled = true);
+      } else if (_scrollController.offset <= 50 && _isScrolled) {
+        setState(() => _isScrolled = false);
+      }
+    });
 
     _loadAllData();
 
@@ -59,10 +70,10 @@ class _HomePageState extends State<HomePage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _rotationController.dispose();
     _heroTimer?.cancel();
     _bannerIndexNotifier.dispose();
     _heroController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -127,138 +138,89 @@ class _HomePageState extends State<HomePage>
 
   void _startHeroScroll() {
     _heroTimer?.cancel();
-    _heroTimer = Timer.periodic(const Duration(seconds: 5), (t) {
+    _heroTimer = Timer.periodic(const Duration(seconds: 4), (t) {
       if (banners.isNotEmpty && _heroController.hasClients) {
         int nextIndex = (_bannerIndexNotifier.value + 1) % banners.length;
         _heroController.animateToPage(
           nextIndex,
-          duration: const Duration(milliseconds: 1200),
-          curve: Curves.easeInOutQuart,
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.fastOutSlowIn,
         );
       }
     });
   }
 
+  void _onBannerTap(BannerModel banner) {
+    if (banner.category != null) {
+      try {
+        final cat = categories.firstWhere((c) => c.id == banner.category);
+        _onCategoryTap(cat);
+      } catch (e) {
+        debugPrint('Category not found for banner: ${banner.category}');
+      }
+    }
+  }
+
+  void _onCategoryTap(CategoryModel category) async {
+    final int currentRequest = ++_requestId;
+    setState(() {
+      _selectedCategory = _selectedCategory == category.slug
+          ? null
+          : category.slug;
+      isLoading = true;
+      errorMessage = null;
+      products = [];
+    });
+
+    try {
+      final results = await Future.wait([
+        _homeRepository.fetchProducts(category: _selectedCategory),
+        _homeRepository.fetchBanners(
+          location: _selectedCategory == null ? 'home' : 'category',
+          category: _selectedCategory,
+        ),
+      ]);
+      if (mounted && currentRequest == _requestId) {
+        setState(() {
+          products = results[0] as List<Product>;
+          banners = results[1] as List<BannerModel>;
+          if (_selectedCategory == null) _groupProducts();
+          isLoading = false;
+          _bannerIndexNotifier.value = 0;
+          if (_heroController.hasClients) _heroController.jumpToPage(0);
+        });
+        _startHeroScroll();
+      }
+    } catch (e) {
+      if (mounted && currentRequest == _requestId) {
+        setState(() {
+          isLoading = false;
+          errorMessage = AppLocalizations.of(
+            context,
+          )!.translate('error_occurred');
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDFBF7),
+      backgroundColor: const Color(0xFFFAFAFA), // خلفية بيضاء فخمة
       extendBodyBehindAppBar: true,
+      appBar: _buildGlassAppBar(),
       body: Stack(
         children: [
-          Positioned.fill(
-            child: Image.asset('assets/images/bg.png', fit: BoxFit.cover),
-          ),
-          Positioned(
-            top: -120,
-            right: -120,
-            child: AnimatedBuilder(
-              animation: _rotationController,
-              builder: (context, child) {
-                return Transform.rotate(
-                  angle: _rotationController.value * 2 * math.pi,
-                  child: child,
-                );
-              },
-              child: Container(
-                width: 400,
-                height: 400,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
-                    width: 2,
-                  ),
-                  gradient: SweepGradient(
-                    colors: [
-                      const Color(0xFFD4AF37).withValues(alpha: 0.2),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -180,
-            left: -180,
-            child: AnimatedBuilder(
-              animation: _rotationController,
-              builder: (context, child) {
-                return Transform.rotate(
-                  angle: -_rotationController.value * 2 * math.pi,
-                  child: child,
-                );
-              },
-              child: Container(
-                width: 500,
-                height: 500,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.15),
-                    width: 40,
-                  ),
-                ),
-              ),
-            ),
-          ),
           CustomScrollView(
+            controller: _scrollController,
             physics: const BouncingScrollPhysics(
               parent: AlwaysScrollableScrollPhysics(),
             ),
             slivers: [
               SliverPadding(
-                padding: const EdgeInsets.only(top: 120),
+                padding: const EdgeInsets.only(top: 100),
                 sliver: CupertinoSliverRefreshControl(
                   onRefresh: () => _loadAllData(forceRefresh: true),
-                  builder:
-                      (
-                        context,
-                        refreshState,
-                        pulledExtent,
-                        refreshTriggerPullDistance,
-                        refreshIndicatorExtent,
-                      ) {
-                        final double opacity =
-                            (pulledExtent / refreshTriggerPullDistance).clamp(
-                              0.0,
-                              1.0,
-                            );
-                        return Container(
-                          alignment: Alignment.center,
-                          child: Opacity(
-                            opacity: opacity,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.translate('app_name'),
-                                  style: const TextStyle(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                    letterSpacing: 1.2,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.translate('app_slogan'),
-                                  style: const TextStyle(
-                                    color: AppColors.primary,
-                                    fontSize: 12,
-                                    letterSpacing: 2.0,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
                 ),
               ),
               if (errorMessage != null)
@@ -269,34 +231,83 @@ class _HomePageState extends State<HomePage>
                   ),
                 )
               else ...[
-                // Hero Section (Show Skeleton only if loading AND empty)
+                // سلايدر الإعلانات المطور
                 SliverToBoxAdapter(
                   child: (isLoading && banners.isEmpty)
                       ? _buildHeroSkeleton()
-                      : _buildHeroSlider(),
+                      : HeroSliderWidget(
+                          banners: banners,
+                          heroController: _heroController,
+                          bannerIndexNotifier: _bannerIndexNotifier,
+                          onBannerTap: _onBannerTap,
+                          onPointerDown: () => _heroTimer?.cancel(),
+                          onPointerUp: _startHeroScroll,
+                        ),
                 ),
 
-                // Categories Section (Show Skeleton only if loading AND empty)
+                // الأقسام
                 SliverToBoxAdapter(
                   child: (isLoading && categories.isEmpty)
-                      ? _buildCategoriesSkeleton()
-                      : _buildCategoriesSection(),
+                      ? const SizedBox() // يمكنك إضافة Skeleton للأقسام هنا
+                      : CategoriesSectionWidget(
+                          categories: categories,
+                          selectedCategory: _selectedCategory,
+                          onCategoryTap: _onCategoryTap,
+                        ),
                 ),
 
-                // Popular Section (Keep visible if data exists, even during loading)
-                if (popularProducts.isNotEmpty && _selectedCategory == null)
-                  SliverToBoxAdapter(child: _buildPopularSection()),
+                const SliverToBoxAdapter(child: SizedBox(height: 10)),
 
-                // Products Grid (Show Skeleton OVER content if loading, otherwise content)
+                // قسم المنتجات الشائعة (Trending)
+                if (popularProducts.isNotEmpty && _selectedCategory == null)
+                  SliverToBoxAdapter(child: _buildTrendySection()),
+
+                // عنوان شبكة المنتجات
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 15),
+                    child: Text(
+                      AppLocalizations.of(
+                        context,
+                      )!.translate('discover_collection'),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // شبكة المنتجات (Discover Grid)
                 if (isLoading && products.isEmpty)
                   SliverToBoxAdapter(child: _buildProductsSkeleton())
                 else
-                  ..._buildCategoryGrids(),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver: SliverGrid(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.60, // تصميم طولي أكثر للأناقة
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 24,
+                          ),
+                      delegate: SliverChildBuilderDelegate(
+                        (c, i) => ProductCardWidget(
+                          product: products[i],
+                          isHot: _popularIds.contains(products[i].id),
+                        ),
+                        childCount: products.length,
+                      ),
+                    ),
+                  ),
 
                 const SliverToBoxAdapter(child: SizedBox(height: 50)),
-                SliverToBoxAdapter(
-                  child: RevealOnScroll(child: _buildFooter()),
-                ),
+                const SliverToBoxAdapter(
+                  child: HomeFooterWidget(),
+                ), // الفوتر الجديد
               ],
             ],
           ),
@@ -307,98 +318,64 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _buildHeroSkeleton() {
-    return Container(
-      height: 220,
-      width: double.infinity,
-      color: AppColors.imagePlaceholder,
-    );
-  }
-
-  Widget _buildCategoriesSkeleton() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.homeBackground,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Container(height: 20, width: 100, color: AppColors.imagePlaceholder),
-          const SizedBox(height: 15),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: 6,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 15,
-              childAspectRatio: 0.85,
-            ),
-            itemBuilder: (c, i) => Container(
-              decoration: BoxDecoration(
-                color: AppColors.imagePlaceholder,
-                shape: BoxShape.circle,
+  PreferredSizeWidget _buildGlassAppBar() {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(kToolbarHeight),
+      child: ClipRRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(
+            sigmaX: _isScrolled ? 15 : 0,
+            sigmaY: _isScrolled ? 15 : 0,
+          ),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            color: _isScrolled
+                ? Colors.white.withValues(alpha: 0.85)
+                : Colors.transparent,
+            child: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              title: Text(
+                AppLocalizations.of(context)!.translate('app_name'),
+                style: TextStyle(
+                  color: _isScrolled ? Colors.black87 : const Color(0xFFD4AF37),
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2,
+                  fontSize: 20,
+                ),
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProductsSkeleton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: 4,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 0.65,
-          crossAxisSpacing: 15,
-          mainAxisSpacing: 25,
-        ),
-        itemBuilder: (context, index) => Container(
-          decoration: BoxDecoration(
-            color: AppColors.imagePlaceholder,
-            borderRadius: BorderRadius.circular(16),
-          ),
         ),
       ),
     );
   }
 
-  Widget _buildPopularSection() {
+  Widget _buildTrendySection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 15),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Icon(
-                Icons.local_fire_department,
-                color: AppColors.primary,
-                size: 24,
-              ),
-              const SizedBox(width: 8),
               Text(
-                AppLocalizations.of(context)!.translate('most_popular'),
+                AppLocalizations.of(context)!.translate('trending_now'),
                 style: const TextStyle(
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.homeSectionTitle,
+                  letterSpacing: 1,
+                  color: Colors.black87,
                 ),
               ),
+              const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
             ],
           ),
         ),
         SizedBox(
-          height: 260,
+          height: 280,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
@@ -406,893 +383,47 @@ class _HomePageState extends State<HomePage>
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemBuilder: (context, index) {
               return Container(
-                width: 160,
-                margin: const EdgeInsetsDirectional.only(end: 15),
-                child: _buildProductCard(popularProducts[index]),
+                width: 170,
+                margin: const EdgeInsetsDirectional.only(end: 16),
+                child: ProductCardWidget(
+                  product: popularProducts[index],
+                  isHot: _popularIds.contains(popularProducts[index].id),
+                ),
               );
             },
           ),
         ),
-        const SizedBox(height: 10),
       ],
     );
   }
 
-  // دالة لبناء شبكات المنتجات مقسمة حسب الكاتيجوري
-  List<Widget> _buildCategoryGrids() {
-    // إذا كان المستخدم اختار كاتيجوري محدد من الدوائر العلوية، نعرض المنتجات كلها في شبكة واحدة
-    if (_selectedCategory != null) {
-      return [
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.65,
-              crossAxisSpacing: 15,
-              mainAxisSpacing: 25,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (c, i) => _buildProductCard(products[i]),
-              childCount: products.length,
-            ),
-          ),
-        ),
-      ];
-    }
-
-    // إذا لم يتم اختيار كاتيجوري، نعرض كل قسم ومنتجاته داخل بطاقات
-    List<Widget> slivers = [];
-
-    for (var category in categories) {
-      // تصفية المنتجات التابعة لهذا القسم
-      final categoryProducts = _groupedProducts[category.id] ?? [];
-
-      // إذا لم يكن هناك منتجات في هذا القسم، لا نعرضه
-      if (categoryProducts.isEmpty) continue;
-
-      slivers.add(
-        SliverToBoxAdapter(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 10,
-                ),
-                child: Text(
-                  category.getName(context),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.homeSectionTitle,
-                  ),
-                ),
-              ),
-              SizedBox(
-                height: 260,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: categoryProducts.length,
-                  itemBuilder: (context, index) {
-                    return Container(
-                      width: 160,
-                      margin: const EdgeInsetsDirectional.only(end: 15),
-                      child: _buildProductCard(categoryProducts[index]),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 10),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // في حال لم تكن هناك أي منتجات أو أقسام محملة بعد
-    if (slivers.isEmpty && products.isNotEmpty) {
-      // عرض المنتجات العامة كاحتياط
-      slivers.add(
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.65,
-              crossAxisSpacing: 15,
-              mainAxisSpacing: 25,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (c, i) => _buildProductCard(products[i]),
-              childCount: products.length,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return slivers;
-  }
-
-  Widget _buildProductCard(Product p) {
-    final isHot = _popularIds.contains(p.id);
-
-    return Selector<WishlistProvider, bool>(
-      selector: (context, wishlistProvider) =>
-          wishlistProvider.isInWishlist(p.id),
-      builder: (context, isFav, child) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Stack(
-                  children: [
-                    GestureDetector(
-                      onTap: () => context.push('/product/${p.id}', extra: p),
-                      child: Hero(
-                        tag: p.id,
-                        child: AnimatedProductImage(product: p),
-                      ),
-                    ),
-                    Positioned(
-                      top: 10,
-                      right: 10,
-                      child: _circleIcon(
-                        isFav ? Icons.favorite : Icons.favorite_border,
-                        size: 20,
-                        color: isFav
-                            ? AppColors.homeFavActive
-                            : AppColors.homeFavInactive,
-                        onTap: () async {
-                          final messenger = ScaffoldMessenger.of(context);
-                          final auth = Provider.of<AuthProvider>(
-                            context,
-                            listen: false,
-                          );
-                          if (!auth.isAuthenticated) {
-                            showDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.translate('please_login'),
-                                ),
-                                content: Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.translate('login_subtitle'),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(ctx),
-                                    child: Text(
-                                      AppLocalizations.of(
-                                        context,
-                                      )!.translate('cancel'),
-                                    ),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.pop(ctx);
-                                      context.push('/login');
-                                    },
-                                    child: Text(
-                                      AppLocalizations.of(
-                                        context,
-                                      )!.translate('login_button'),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                            return;
-                          }
-                          final wishlistProvider =
-                              Provider.of<WishlistProvider>(
-                                context,
-                                listen: false,
-                              );
-                          bool added = await wishlistProvider.toggleWishlist(p);
-                          if (!mounted) return;
-                          messenger.hideCurrentSnackBar();
-                          messenger.showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                added
-                                    ? AppLocalizations.of(
-                                        context,
-                                      )!.translate('added_to_wishlist')
-                                    : AppLocalizations.of(
-                                        context,
-                                      )!.translate('removed_from_wishlist'),
-                              ),
-                              backgroundColor: added
-                                  ? AppColors.primary
-                                  : AppColors.red,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              duration: const Duration(seconds: 1),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    Positioned(
-                      top: 10,
-                      left: 10,
-                      child: Icon(
-                        Icons.fullscreen,
-                        color: AppColors.homeProductIcon,
-                        size: 24,
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 15,
-                      left: 10,
-                      child: Column(
-                        children: [
-                          _circleIcon(
-                            Icons.visibility_outlined,
-                            isWhite: true,
-                            onTap: () =>
-                                context.push('/product/${p.id}', extra: p),
-                          ),
-                          const SizedBox(height: 8),
-                          _circleIcon(
-                            Icons.share,
-                            isWhite: true,
-                            onTap: () async {
-                              try {
-                                final currency = AppLocalizations.of(
-                                  context,
-                                )!.translate('currency');
-                                final text =
-                                    '🌟 *Check out this amazing product!* 🌟\n\n'
-                                    '🛍️ *${p.getName(context)}*\n'
-                                    '💰 Price: *${p.price} $currency*\n\n'
-                                    '🔗 Link: ${AppConstants.shareBaseUrl}/product/${p.id}\n\n'
-                                    '_Sent from Details Store App_';
-
-                                if (kIsWeb) {
-                                  await SharePlus.instance.share(
-                                    ShareParams(text: text),
-                                  );
-                                } else {
-                                  // استخدام الكاش لجلب الصورة
-                                  final file = await DefaultCacheManager()
-                                      .getSingleFile(p.imageUrl);
-
-                                  // مشاركة الصورة مع النص
-                                  await SharePlus.instance.share(
-                                    ShareParams(
-                                      files: [XFile(file.path)],
-                                      text: text,
-                                    ),
-                                  );
-                                }
-                              } catch (e) {
-                                debugPrint('Error sharing: $e');
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (p.isSoldOut)
-                      Positioned(
-                        top: 15,
-                        left: 0,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: const BoxDecoration(
-                            color: AppColors.homeBadgeSoldOut,
-                            borderRadius: BorderRadius.only(
-                              topRight: Radius.circular(20),
-                              bottomRight: Radius.circular(20),
-                            ),
-                          ),
-                          child: Text(
-                            AppLocalizations.of(context)!.translate('sold_out'),
-                            style: const TextStyle(
-                              color: AppColors.homeBadgeText,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    if (!p.isSoldOut && isHot)
-                      Positioned(
-                        top: 15,
-                        left: 0,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: const BoxDecoration(
-                            color: AppColors.homeBadgeHot,
-                            borderRadius: BorderRadius.only(
-                              topRight: Radius.circular(20),
-                              bottomRight: Radius.circular(20),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.local_fire_department,
-                                size: 12,
-                                color: AppColors.homeBadgeText,
-                              ),
-                              SizedBox(width: 2),
-                              Text(
-                                AppLocalizations.of(context)!.translate('hot'),
-                                style: const TextStyle(
-                                  color: AppColors.homeBadgeText,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 10, right: 4, left: 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    p.getName(context),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      height: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    "${p.price.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}",
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.homeProductPrice,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _circleIcon(
-    IconData icon, {
-    bool isWhite = false,
-    double size = 18,
-    VoidCallback? onTap,
-    Color? color,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: isWhite ? AppColors.homeBackground : AppColors.homeIconBg,
-          shape: BoxShape.circle,
-          boxShadow: isWhite
-              ? [BoxShadow(color: AppColors.homeIconShadow, blurRadius: 4)]
-              : [],
-        ),
-        child: Icon(
-          icon,
-          color: color ?? AppColors.homeFavInactive,
-          size: size,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeroSlider() => banners.isEmpty
-      ? const SizedBox()
-      : SizedBox(
-          height: 220,
-          child: VisibilityDetector(
-            key: const Key('hero-slider'),
-            onVisibilityChanged: (info) {
-              if (info.visibleFraction == 0) {
-                _heroTimer?.cancel();
-              } else {
-                _startHeroScroll();
-              }
-            },
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                PageView.builder(
-                  controller: _heroController,
-                  itemCount: banners.length,
-                  onPageChanged: (i) {
-                    _bannerIndexNotifier.value = i;
-                    _heroTimer?.cancel();
-                    _startHeroScroll();
-                  },
-                  itemBuilder: (c, i) => GestureDetector(
-                    onTap: () => _onBannerTap(banners[i]),
-                    child: AnimatedBannerItem(banner: banners[i]),
-                  ),
-                ),
-                Positioned(
-                  bottom: 20,
-                  child: ValueListenableBuilder<int>(
-                    valueListenable: _bannerIndexNotifier,
-                    builder: (context, currentIndex, child) {
-                      return Row(
-                        children: List.generate(
-                          banners.length,
-                          (i) => _dot(i == currentIndex),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-
-  void _onBannerTap(BannerModel banner) {
-    // تأكد من أن BannerModel يحتوي على حقل category
-    if (banner.category != null) {
-      try {
-        // البحث عن القسم المطابق للـ ID الموجود في الإعلان
-        final cat = categories.firstWhere((c) => c.id == banner.category);
-
-        final int currentRequest = ++_requestId;
-        // تفعيل القسم وتحديث الصفحة (نفس منطق الضغط على دائرة القسم)
-        setState(() {
-          _selectedCategory = cat.slug;
-          isLoading = true;
-          errorMessage = null;
-          products = []; // تفريغ المنتجات لإجبار الـ Overlay على الظهور
-        });
-
-        Future.wait<dynamic>([
-              _homeRepository.fetchProducts(category: _selectedCategory),
-              _homeRepository.fetchBanners(
-                location: 'category',
-                category: _selectedCategory,
-              ),
-            ])
-            .then((results) {
-              if (mounted && currentRequest == _requestId) {
-                setState(() {
-                  products = results[0] as List<Product>;
-                  banners = results[1] as List<BannerModel>;
-                  _groupProducts();
-                  isLoading = false;
-                  _bannerIndexNotifier.value = 0;
-                  if (_heroController.hasClients) {
-                    _heroController.jumpToPage(0);
-                  }
-                });
-                _startHeroScroll();
-              }
-            })
-            .catchError((e) {
-              debugPrint("Error loading category data: $e");
-              if (mounted && currentRequest == _requestId) {
-                setState(() {
-                  isLoading = false;
-                  errorMessage = AppLocalizations.of(
-                    context,
-                  )!.translate('error_occurred');
-                });
-              }
-            });
-      } catch (e) {
-        debugPrint('Category not found for banner: ${banner.category}');
-      }
-    }
-  }
-
-  Widget _dot(bool active) => AnimatedContainer(
-    duration: const Duration(milliseconds: 300),
-    margin: const EdgeInsets.symmetric(horizontal: 4),
-    width: active ? 16 : 8,
-    height: 8,
+  Widget _buildHeroSkeleton() => Container(
+    height: 200,
+    margin: const EdgeInsets.symmetric(horizontal: 16),
     decoration: BoxDecoration(
-      color: active ? AppColors.homeDotActive : AppColors.homeDotInactive,
+      color: Colors.grey[200],
       borderRadius: BorderRadius.circular(20),
     ),
   );
-  Widget _buildCategoriesSection() => Column(
-    children: [
-      const SizedBox(height: 20),
-      Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16),
-        padding: const EdgeInsets.all(10),
-        child: Column(
-          children: [
-            Text(
-              AppLocalizations.of(context)!.translate('categories'),
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.homeSectionTitle,
-              ),
-            ),
-            const SizedBox(height: 15),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: categories.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 15,
-                childAspectRatio: 0.85,
-              ),
-              itemBuilder: (c, i) =>
-                  _buildCategoryItem(category: categories[i]),
-            ),
-          ],
-        ),
-      ),
-      const SizedBox(height: 10),
-    ],
-  );
-  Widget _buildCategoryItem({required CategoryModel category}) {
-    bool isSelected = _selectedCategory == category.slug;
-    return GestureDetector(
-      onTap: () async {
-        final int currentRequest = ++_requestId;
-        setState(() {
-          if (_selectedCategory == category.slug) {
-            _selectedCategory = null;
-          } else {
-            _selectedCategory = category.slug;
-          }
-          isLoading = true;
-          errorMessage = null;
-          products = []; // تفريغ المنتجات لإجبار الـ Overlay على الظهور
-        });
 
-        try {
-          final results = await Future.wait([
-            _homeRepository.fetchProducts(category: _selectedCategory),
-            _homeRepository.fetchBanners(
-              location: _selectedCategory == null ? 'home' : 'category',
-              category: _selectedCategory,
-            ),
-          ]);
-          if (mounted && currentRequest == _requestId) {
-            setState(() {
-              products = results[0] as List<Product>;
-              banners = results[1] as List<BannerModel>;
-              if (_selectedCategory == null) {
-                _groupProducts();
-              }
-              isLoading = false;
-              _bannerIndexNotifier.value = 0;
-              if (_heroController.hasClients) {
-                _heroController.jumpToPage(0);
-              }
-            });
-          }
-        } catch (e) {
-          debugPrint("Error loading category data: $e");
-          if (mounted && currentRequest == _requestId) {
-            setState(() {
-              isLoading = false;
-              errorMessage = AppLocalizations.of(
-                context,
-              )!.translate('error_occurred');
-            });
-          }
-        }
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Column(
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.transparent,
-                border: Border.all(
-                  color: isSelected ? AppColors.primary : AppColors.transparent,
-                  width: 2,
-                ),
-                boxShadow: [
-                  if (!isSelected)
-                    BoxShadow(
-                      color: AppColors.shadowColor,
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                ],
-              ),
-              child: ClipOval(
-                child: CachedNetworkImage(
-                  imageUrl: category.imageUrl,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) =>
-                      Container(color: AppColors.imagePlaceholder),
-                  errorWidget: (context, url, error) => Icon(
-                    Icons.category_outlined,
-                    color: isSelected
-                        ? AppColors.white
-                        : AppColors.homeCategoryIcon,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              category.getName(context),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected
-                    ? AppColors.primary
-                    : AppColors.homeCategoryText,
-              ),
-            ),
-          ],
+  Widget _buildProductsSkeleton() => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    child: GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 4,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.60,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 24,
+      ),
+      itemBuilder: (c, i) => Container(
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(12),
         ),
       ),
-    );
-  }
-
-  Widget _buildFooter() => Container(
-    width: double.infinity,
-    color: AppColors.homeFooterBackground,
-    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-    child: Column(
-      children: [
-        _buildFooterAbout(),
-        const SizedBox(height: 30),
-        _footerAccordion(
-          AppLocalizations.of(context)!.translate('language'),
-          [],
-          customChildren: [
-            _buildLanguageItem('العربية', const Locale('ar', '')),
-            _buildLanguageItem('English', const Locale('en', '')),
-          ],
-        ),
-        const Divider(color: AppColors.footerDivider, height: 1),
-        _footerAccordion(
-          AppLocalizations.of(context)!.translate('policies'),
-          [],
-          customChildren: [
-            _buildPolicyItem(
-              AppLocalizations.of(context)!.translate('policy_cancel'),
-            ),
-            _buildPolicyItem(
-              AppLocalizations.of(context)!.translate('policy_return'),
-            ),
-            _buildPolicyItem(
-              AppLocalizations.of(context)!.translate('policy_shipping'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 40),
-        const Divider(color: AppColors.footerDivider),
-        const SizedBox(height: 20),
-        Text(
-          AppLocalizations.of(context)!.translate('copyright'),
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AppColors.footerText,
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    ),
-  );
-  Widget _buildFooterAbout() => Column(
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      Text(
-        AppLocalizations.of(context)!.translate('footer_about_title'),
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: AppColors.white,
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      const SizedBox(height: 15),
-      Text(
-        AppLocalizations.of(context)!.translate('footer_about_desc'),
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: AppColors.footerTextSecondary,
-          fontSize: 13,
-          height: 1.6,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      const SizedBox(height: 20),
-      _contactRow(Icons.email_outlined, "support@details-store.com"),
-      _contactRow(Icons.phone_android, "+972-598723438"),
-      const SizedBox(height: 15),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          IconButton(
-            onPressed: () async {
-              final Uri url = Uri.parse(
-                'https://www.instagram.com/details__store__?igsh=c3Nuam5mNDM4ajBp',
-              );
-              if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-                debugPrint('Could not launch $url');
-              }
-            },
-            icon: const FaIcon(
-              FontAwesomeIcons.instagram,
-              color: AppColors.white,
-              size: 20,
-            ),
-          ),
-          IconButton(
-            onPressed: () async {
-              final Uri url = Uri.parse('https://wa.me/972598723438');
-              if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-                debugPrint('Could not launch $url');
-              }
-            },
-            icon: const FaIcon(
-              FontAwesomeIcons.whatsapp,
-              color: AppColors.white,
-              size: 20,
-            ),
-          ),
-        ],
-      ),
-    ],
-  );
-  Widget _buildLanguageItem(String label, Locale locale) {
-    return GestureDetector(
-      onTap: () {
-        Provider.of<SettingsProvider>(context, listen: false).setLocale(locale);
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 5),
-        child: Text(
-          label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AppColors.footerText,
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPolicyItem(String title) {
-    return GestureDetector(
-      onTap: () {
-        showDialog(
-          context: context,
-          builder: (c) => AlertDialog(
-            title: Text(title),
-            content: Text(title),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(c),
-                child: Text(AppLocalizations.of(context)!.translate('ok')),
-              ),
-            ],
-          ),
-        );
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 5),
-        child: Text(
-          title,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AppColors.footerText,
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _footerAccordion(
-    String t,
-    List<String> i, {
-    List<Widget>? customChildren,
-  }) => Theme(
-    data: ThemeData().copyWith(dividerColor: AppColors.transparent),
-    child: ExpansionTile(
-      title: Center(
-        child: Text(
-          t,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AppColors.white,
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-      trailing: const Icon(Icons.add, color: AppColors.white, size: 20),
-      childrenPadding: const EdgeInsets.only(bottom: 20, right: 16, left: 16),
-      expandedCrossAxisAlignment: CrossAxisAlignment.center,
-      children:
-          customChildren ??
-          i
-              .map(
-                (item) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 5),
-                  child: Text(
-                    item,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: AppColors.footerText,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              )
-              .toList(),
-    ),
-  );
-  Widget _contactRow(IconData i, String t) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 5),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          t,
-          style: const TextStyle(
-            color: AppColors.footerTextSecondary,
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Icon(i, color: AppColors.white, size: 16),
-      ],
     ),
   );
 }
