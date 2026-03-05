@@ -101,7 +101,7 @@ class _MainScreenState extends State<MainScreen> {
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
-      toolbarHeight: 110, // زيادة الارتفاع ليتناسب مع اللوجو الكبير
+      toolbarHeight: 80, // تقليل الارتفاع
       backgroundColor: Colors.transparent, // شفاف
       foregroundColor: AppColors.black,
       elevation: 0,
@@ -134,10 +134,10 @@ class _MainScreenState extends State<MainScreen> {
         },
       ),
       title: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 5),
         child: Image.asset(
           'assets/images/logo2.png', // اللوجو
-          height: 100,
+          height: 70,
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) {
             return const Icon(Icons.store, size: 30, color: AppColors.black);
