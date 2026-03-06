@@ -63,7 +63,12 @@ class _NotificationsScreenState extends State<NotificationsScreen>
         body: Stack(
           children: [
             Positioned.fill(
-              child: Image.asset('assets/images/bg.png', fit: BoxFit.cover),
+              child: Image.asset(
+                'assets/images/bg.png',
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+                cacheWidth: 1080, // ضروري للكاش
+              ),
             ),
             // --- خلفية متحركة ---
             Positioned(

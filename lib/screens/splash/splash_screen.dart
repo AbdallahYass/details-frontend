@@ -56,6 +56,18 @@ class _SplashScreenState extends State<SplashScreen>
     _checkAuth();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // تحميل الصور مسبقاً للذاكرة لتجنب التأخير في الصفحات التالية
+    precacheImage(const AssetImage('assets/images/logo2.png'), context);
+    // الخلفية مع تحديد العرض عشان تتطابق مع باقي الصفحات وتدخل الكاش
+    precacheImage(
+      ResizeImage(const AssetImage('assets/images/bg.png'), width: 1080),
+      context,
+    );
+  }
+
   Future<void> _checkAuth() async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
 

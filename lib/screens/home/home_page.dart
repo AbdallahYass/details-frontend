@@ -212,6 +212,7 @@ class _HomePageState extends State<HomePage>
                   ),
                 )
               else ...[
+                SliverToBoxAdapter(child: _buildAnnouncementBar()),
                 SliverToBoxAdapter(
                   child: (isLoading && banners.isEmpty)
                       ? _buildHeroSkeleton()
@@ -242,6 +243,45 @@ class _HomePageState extends State<HomePage>
           ),
           if (isLoading && products.isEmpty)
             const CustomLoadingOverlay(isOverlay: false),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnnouncementBar() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 5, 16, 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.local_shipping_outlined,
+            color: AppColors.secondary,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              "التوصيل متاح لجميع مناطق الضفة والقدس والداخل 🚛",
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ],
       ),
     );
