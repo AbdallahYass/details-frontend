@@ -254,11 +254,15 @@ class _HomePageState extends State<HomePage>
       margin: const EdgeInsets.fromLTRB(16, 5, 16, 10),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.primary,
+        color: const Color(0xFF452512),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFD4AF37).withValues(alpha: 0.3),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.1),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -268,7 +272,7 @@ class _HomePageState extends State<HomePage>
         children: [
           const Icon(
             Icons.local_shipping_outlined,
-            color: AppColors.secondary,
+            color: Color(0xFFD4AF37),
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -279,6 +283,7 @@ class _HomePageState extends State<HomePage>
                 color: Colors.white,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
               ),
             ),
           ),
@@ -445,7 +450,7 @@ class _HomePageState extends State<HomePage>
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.homeSectionTitle,
+                    color: Color(0xFF452512),
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -516,7 +521,7 @@ class _HomePageState extends State<HomePage>
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.homeSectionTitle,
+                    color: Color(0xFF452512),
                   ),
                 ),
               ),
@@ -781,7 +786,7 @@ class _HomePageState extends State<HomePage>
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: Color(0xFF452512),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -1048,7 +1053,7 @@ class _HomePageState extends State<HomePage>
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w300,
-                color: AppColors.textPrimary,
+                color: const Color(0xFF452512),
                 //letterSpacing: 12.0,
                 height: 1.2,
               ),
@@ -1203,7 +1208,7 @@ class _HomePageState extends State<HomePage>
                               : FontWeight.w600,
                           color: isSelected
                               ? AppColors.primary
-                              : AppColors.textPrimary,
+                              : const Color(0xFF452512),
                           letterSpacing: 0.5,
                         ),
                       ),
