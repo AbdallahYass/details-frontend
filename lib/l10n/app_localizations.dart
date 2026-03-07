@@ -123,6 +123,7 @@ class AppLocalizations {
       'enter_valid_city': 'Please enter a valid city name',
       'enter_valid_phone': 'Please enter a valid phone number',
       'size': 'Size',
+      'colors': 'Colors',
       'available': 'Available:',
       'select_size': 'Please select a size',
       'added_to_cart': 'Added to cart successfully',
@@ -253,6 +254,10 @@ class AppLocalizations {
       'sent_from_app': 'Sent from Details Store App',
       'sold_out_short': 'Out',
       'skip': 'Skip',
+      'add_color': 'Add Color',
+      'color_name_ar': 'Color Name (Arabic)',
+      'color_name_en': 'Color Name (English)',
+      'hex_code': 'Hex Code (e.g. #000000)',
     },
     'ar': {
       'app_name': 'متجر ديتيلز',
@@ -364,6 +369,7 @@ class AppLocalizations {
       'enter_valid_city': 'يرجى إدخال اسم مدينة صحيح',
       'enter_valid_phone': 'يرجى إدخال رقم هاتف صحيح',
       'size': 'المقاس',
+      'colors': 'الألوان',
       'available': 'متوفر:',
       'select_size': 'يرجى اختيار المقاس',
       'added_to_cart': 'تمت الإضافة للسلة',
@@ -494,6 +500,10 @@ class AppLocalizations {
       'sent_from_app': 'تم الإرسال من تطبيق ديتيلز',
       'sold_out_short': 'نفذ',
       'skip': 'تخطي',
+      'add_color': 'إضافة لون',
+      'color_name_ar': 'اسم اللون (عربي)',
+      'color_name_en': 'اسم اللون (إنجليزي)',
+      'hex_code': 'كود اللون (مثال #000000)',
     },
   };
 

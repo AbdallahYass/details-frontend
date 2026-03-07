@@ -10,6 +10,7 @@ class CartItem {
   final double price;
   final String imageUrl;
   final String? size; // المقاس المختار
+  final String? color; // اللون المختار
 
   CartItem({
     required this.id,
@@ -19,6 +20,7 @@ class CartItem {
     required this.price,
     required this.imageUrl,
     this.size,
+    this.color,
   }) : productId = productId ?? id;
 }
 
@@ -52,10 +54,13 @@ class CartProvider with ChangeNotifier {
     String title,
     String imageUrl, {
     String? size,
+    String? color,
     int maxQuantity = 999,
   }) {
-    // المفتاح في السلة يكون دمجاً بين الآيدي والمقاس لتمييز المنتجات المختلفة بالمقاس
-    final cartKey = size != null ? '${productId}_$size' : productId;
+    // المفتاح في السلة يكون دمجاً بين الآيدي والمقاس واللون لتمييز المنتجات
+    String cartKey = productId;
+    if (size != null) cartKey += '_$size';
+    if (color != null) cartKey += '_$color';
 
     if (_items.containsKey(cartKey)) {
       // التحقق من عدم تجاوز الكمية المتوفرة
@@ -74,6 +79,7 @@ class CartProvider with ChangeNotifier {
           price: existingCartItem.price,
           imageUrl: existingCartItem.imageUrl,
           size: existingCartItem.size,
+          color: existingCartItem.color,
         ),
       );
     } else {
@@ -90,6 +96,7 @@ class CartProvider with ChangeNotifier {
           price: price,
           imageUrl: imageUrl,
           size: size,
+          color: color,
         ),
       );
     }
@@ -111,6 +118,7 @@ class CartProvider with ChangeNotifier {
           price: existingCartItem.price,
           imageUrl: existingCartItem.imageUrl,
           size: existingCartItem.size,
+          color: existingCartItem.color,
         ),
       );
     } else {

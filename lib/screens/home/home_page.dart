@@ -172,32 +172,36 @@ class _HomePageState extends State<HomePage>
                           alignment: Alignment.center,
                           child: Opacity(
                             opacity: opacity,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.translate('app_name'),
-                                  style: const TextStyle(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                    letterSpacing: 1.2,
+                            child: SingleChildScrollView(
+                              physics: const NeverScrollableScrollPhysics(),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.translate('app_name'),
+                                    style: const TextStyle(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      letterSpacing: 1.2,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.translate('app_slogan'),
-                                  style: const TextStyle(
-                                    color: AppColors.primary,
-                                    fontSize: 12,
-                                    letterSpacing: 2.0,
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.translate('app_slogan'),
+                                    style: const TextStyle(
+                                      color: AppColors.primary,
+                                      fontSize: 12,
+                                      letterSpacing: 2.0,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         );
@@ -468,7 +472,10 @@ class _HomePageState extends State<HomePage>
                 return Container(
                   width: 175,
                   margin: const EdgeInsetsDirectional.only(end: 16),
-                  child: _buildProductCard(popularProducts[index]),
+                  child: _buildProductCard(
+                    popularProducts[index],
+                    heroEnabled: false,
+                  ),
                 );
               },
             ),
@@ -571,7 +578,7 @@ class _HomePageState extends State<HomePage>
     return slivers;
   }
 
-  Widget _buildProductCard(Product p) {
+  Widget _buildProductCard(Product p, {bool heroEnabled = true}) {
     final isHot = _popularIds.contains(p.id);
 
     return Selector<WishlistProvider, bool>(
@@ -604,9 +611,12 @@ class _HomePageState extends State<HomePage>
                         child: GestureDetector(
                           onTap: () =>
                               context.push('/product/${p.id}', extra: p),
-                          child: Hero(
-                            tag: p.id,
-                            child: AnimatedProductImage(product: p),
+                          child: HeroMode(
+                            enabled: heroEnabled,
+                            child: Hero(
+                              tag: p.id,
+                              child: AnimatedProductImage(product: p),
+                            ),
                           ),
                         ),
                       ),
@@ -1224,132 +1234,126 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildFooter() => Container(
-        width: double.infinity,
-        color: const Color(0xFF121212),
-        padding: const EdgeInsets.only(
-          top: 60,
-          bottom: 120, // مساحة إضافية عشان الناف بار ما يغطي الفوتر
-          left: 24,
-          right: 24,
+    width: double.infinity,
+    color: const Color(0xFF121212),
+    padding: const EdgeInsets.only(
+      top: 60,
+      bottom: 120, // مساحة إضافية عشان الناف بار ما يغطي الفوتر
+      left: 24,
+      right: 24,
+    ),
+    child: Column(
+      children: [
+        // Branding
+        const Text(
+          'DETAILS',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 26,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 6,
+          ),
         ),
-        child: Column(
+        Text(
+          'STORE',
+          style: TextStyle(
+            color: AppColors.secondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 8,
+          ),
+        ),
+        const SizedBox(height: 30),
+
+        // Description
+        Text(
+          AppLocalizations.of(context)!.translate('footer_about_desc'),
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.6),
+            fontSize: 13,
+            height: 1.6,
+          ),
+        ),
+        const SizedBox(height: 30),
+
+        // Contact Info
+        Column(
           children: [
-            // Branding
-            const Text(
-              'DETAILS',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 6,
-              ),
-            ),
-            Text(
-              'STORE',
-              style: TextStyle(
-                color: AppColors.secondary,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 8,
-              ),
-            ),
-            const SizedBox(height: 30),
+            _contactRow(Icons.email_outlined, "support@details-store.com"),
+            const SizedBox(height: 10),
+            _contactRow(Icons.phone_android, "+972-598723438"),
+          ],
+        ),
+        const SizedBox(height: 30),
 
-            // Description
-            Text(
-              AppLocalizations.of(context)!.translate('footer_about_desc'),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.6),
-                fontSize: 13,
-                height: 1.6,
-              ),
+        // Social Buttons
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _socialButton(
+              FontAwesomeIcons.instagram,
+              'https://www.instagram.com/details__store__?igsh=c3Nuam5mNDM4ajBp',
             ),
-            const SizedBox(height: 30),
-
-            // Contact Info
-            Column(
-              children: [
-                _contactRow(Icons.email_outlined, "support@details-store.com"),
-                const SizedBox(height: 10),
-                _contactRow(Icons.phone_android, "+972-598723438"),
-              ],
-            ),
-            const SizedBox(height: 30),
-
-            // Social Buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _socialButton(
-                  FontAwesomeIcons.instagram,
-                  'https://www.instagram.com/details__store__?igsh=c3Nuam5mNDM4ajBp',
-                ),
-                const SizedBox(width: 20),
-                _socialButton(
-                  FontAwesomeIcons.whatsapp,
-                  'https://wa.me/972598723438',
-                ),
-              ],
-            ),
-            const SizedBox(height: 40),
-
-            // Links (Accordions)
-            Container(
-              decoration: BoxDecoration(
-                border: Border.symmetric(
-                  horizontal: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.1),
-                  ),
-                ),
-              ),
-              child: Column(
-                children: [
-                  _footerAccordion(
-                    AppLocalizations.of(context)!.translate('language'),
-                    customChildren: [
-                      _buildLanguageItem('العربية', const Locale('ar', '')),
-                      _buildLanguageItem('English', const Locale('en', '')),
-                    ],
-                  ),
-                  Divider(
-                    height: 1,
-                    color: Colors.white.withValues(alpha: 0.1),
-                  ),
-                  _footerAccordion(
-                    AppLocalizations.of(context)!.translate('policies'),
-                    customChildren: [
-                      _buildPolicyItem(
-                        AppLocalizations.of(context)!
-                            .translate('policy_cancel'),
-                      ),
-                      _buildPolicyItem(
-                        AppLocalizations.of(context)!
-                            .translate('policy_return'),
-                      ),
-                      _buildPolicyItem(
-                        AppLocalizations.of(context)!
-                            .translate('policy_shipping'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 40),
-
-            // Copyright
-            Text(
-              AppLocalizations.of(context)!.translate('copyright'),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.3),
-                fontSize: 11,
-              ),
+            const SizedBox(width: 20),
+            _socialButton(
+              FontAwesomeIcons.whatsapp,
+              'https://wa.me/972598723438',
             ),
           ],
         ),
-      );
+        const SizedBox(height: 40),
+
+        // Links (Accordions)
+        Container(
+          decoration: BoxDecoration(
+            border: Border.symmetric(
+              horizontal: BorderSide(
+                color: Colors.white.withValues(alpha: 0.1),
+              ),
+            ),
+          ),
+          child: Column(
+            children: [
+              _footerAccordion(
+                AppLocalizations.of(context)!.translate('language'),
+                customChildren: [
+                  _buildLanguageItem('العربية', const Locale('ar', '')),
+                  _buildLanguageItem('English', const Locale('en', '')),
+                ],
+              ),
+              Divider(height: 1, color: Colors.white.withValues(alpha: 0.1)),
+              _footerAccordion(
+                AppLocalizations.of(context)!.translate('policies'),
+                customChildren: [
+                  _buildPolicyItem(
+                    AppLocalizations.of(context)!.translate('policy_cancel'),
+                  ),
+                  _buildPolicyItem(
+                    AppLocalizations.of(context)!.translate('policy_return'),
+                  ),
+                  _buildPolicyItem(
+                    AppLocalizations.of(context)!.translate('policy_shipping'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 40),
+
+        // Copyright
+        Text(
+          AppLocalizations.of(context)!.translate('copyright'),
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.3),
+            fontSize: 11,
+          ),
+        ),
+      ],
+    ),
+  );
 
   Widget _buildLanguageItem(String label, Locale locale) {
     return GestureDetector(
@@ -1401,9 +1405,7 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _footerAccordion(String title, {
-    List<Widget>? customChildren,
-  }) {
+  Widget _footerAccordion(String title, {List<Widget>? customChildren}) {
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(

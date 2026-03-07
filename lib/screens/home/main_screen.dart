@@ -136,7 +136,7 @@ class _MainScreenState extends State<MainScreen> {
       title: Padding(
         padding: const EdgeInsets.symmetric(vertical: 5),
         child: Image.asset(
-          'assets/images/logo2.png', // اللوجو
+          'assets/images/logo.png', // اللوجو
           height: 70,
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) {

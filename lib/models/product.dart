@@ -19,6 +19,45 @@ class ProductSize {
   Map<String, dynamic> toJson() => {'size': size, 'quantity': quantity};
 }
 
+class ProductColor {
+  final String nameAr;
+  final String nameEn;
+  final String hex;
+  final String? imageUrl;
+
+  ProductColor({
+    required this.nameAr,
+    required this.nameEn,
+    required this.hex,
+    this.imageUrl,
+  });
+
+  factory ProductColor.fromJson(dynamic json) {
+    if (json is String) {
+      return ProductColor(nameAr: '', nameEn: '', hex: json);
+    }
+    final nameMap = json['name'] is Map ? json['name'] : {};
+    return ProductColor(
+      nameAr: nameMap['ar']?.toString() ?? '',
+      nameEn: nameMap['en']?.toString() ?? '',
+      hex: json['hex']?.toString() ?? '',
+      imageUrl: json['imageUrl']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'name': {'ar': nameAr, 'en': nameEn},
+    'hex': hex,
+    if (imageUrl != null) 'imageUrl': imageUrl,
+  };
+
+  String getName(BuildContext context) {
+    final locale = Localizations.localeOf(context).languageCode;
+    if (locale == 'ar') return nameAr.isNotEmpty ? nameAr : nameEn;
+    return nameEn.isNotEmpty ? nameEn : nameAr;
+  }
+}
+
 class Product {
   final String id;
   final Map<String, dynamic> name;
@@ -33,6 +72,7 @@ class Product {
   final int popularity;
   final int quantity;
   final List<ProductSize> sizes;
+  final List<ProductColor> colors;
 
   Product({
     required this.id,
@@ -48,6 +88,7 @@ class Product {
     this.popularity = 0,
     this.quantity = 0,
     this.sizes = const [],
+    this.colors = const [],
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -78,6 +119,11 @@ class Product {
           : int.tryParse(json['quantity']?.toString() ?? '0') ?? 0,
       sizes: (json['sizes'] is List)
           ? (json['sizes'] as List).map((e) => ProductSize.fromJson(e)).toList()
+          : [],
+      colors: (json['colors'] is List)
+          ? (json['colors'] as List)
+                .map((e) => ProductColor.fromJson(e))
+                .toList()
           : [],
     );
   }

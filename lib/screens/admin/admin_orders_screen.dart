@@ -294,6 +294,19 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                       AppLocalizations.of(
                                         context,
                                       )!.translate('unknown_product');
+
+                                  final size = item['size'];
+                                  final color = item['color'];
+                                  String details = '';
+                                  if (size != null &&
+                                      size.toString().isNotEmpty) {
+                                    details += ' [$size]';
+                                  }
+                                  if (color != null &&
+                                      color.toString().isNotEmpty) {
+                                    details += ' - $color';
+                                  }
+
                                   return Padding(
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 4,
@@ -304,7 +317,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                       children: [
                                         Expanded(
                                           child: Text(
-                                            '- $productName (x${item['quantity']})',
+                                            '- $productName$details (x${item['quantity']})',
                                           ),
                                         ),
                                         Text(

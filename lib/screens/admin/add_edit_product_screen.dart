@@ -28,6 +28,9 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
   final _newCategoryController = TextEditingController(); // للكاتيجوري الجديد
   final _sizeInputController = TextEditingController();
   final _sizeQtyController = TextEditingController();
+  final _colorNameArController = TextEditingController();
+  final _colorNameEnController = TextEditingController();
+  final _colorHexController = TextEditingController();
   String? _selectedCategory;
   List<dynamic> _categories = [];
   List<String> _galleryImages = []; // قائمة الصور الإضافية
@@ -37,6 +40,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
   bool _isNewCategory = false; // تحديد وضع الكاتيجوري
   bool _isSoldOut = false;
   bool _isFeatured = false;
+  List<ProductColor> _colors = [];
 
   @override
   void initState() {
@@ -76,6 +80,11 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
             .map((e) => ProductSize.fromJson(e))
             .toList();
       }
+      if (p['colors'] != null) {
+        _colors = (p['colors'] as List)
+            .map((e) => ProductColor.fromJson(e))
+            .toList();
+      }
     }
   }
 
@@ -94,6 +103,9 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     _newCategoryController.dispose();
     _sizeInputController.dispose();
     _sizeQtyController.dispose();
+    _colorNameArController.dispose();
+    _colorNameEnController.dispose();
+    _colorHexController.dispose();
     super.dispose();
   }
 
@@ -235,6 +247,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         'isSoldOut': _isSoldOut,
         'featured': _isFeatured,
         'images': allImages,
+        'colors': _colors.map((e) => e.toJson()).toList(),
       });
 
       final response = await request.send();
@@ -536,6 +549,100 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                               ),
                             )
                             .toList(),
+                      ),
+                    ),
+                  const SizedBox(height: 10),
+                  // --- Colors Section ---
+                  Text(
+                    AppLocalizations.of(context)!.translate('colors'),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _colorNameArController,
+                          decoration: InputDecoration(
+                            labelText: AppLocalizations.of(
+                              context,
+                            )!.translate('color_name_ar'),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _colorNameEnController,
+                          decoration: InputDecoration(
+                            labelText: AppLocalizations.of(
+                              context,
+                            )!.translate('color_name_en'),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _colorHexController,
+                          decoration: InputDecoration(
+                            labelText: AppLocalizations.of(
+                              context,
+                            )!.translate('hex_code'),
+                            hintText: '#000000',
+                            prefixIcon: const Icon(Icons.color_lens),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.add_circle,
+                          color: AppColors.adminEdit,
+                        ),
+                        onPressed: () {
+                          if (_colorHexController.text.isNotEmpty) {
+                            setState(() {
+                              _colors.add(
+                                ProductColor(
+                                  nameAr: _colorNameArController.text.trim(),
+                                  nameEn: _colorNameEnController.text.trim(),
+                                  hex: _colorHexController.text.trim(),
+                                ),
+                              );
+                              _colorNameArController.clear();
+                              _colorNameEnController.clear();
+                              _colorHexController.clear();
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                  if (_colors.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Wrap(
+                        spacing: 8,
+                        children: _colors.map((c) {
+                          return Chip(
+                            avatar: CircleAvatar(
+                              backgroundColor: Color(
+                                int.tryParse(c.hex.replaceFirst('#', '0xFF')) ??
+                                    0xFF000000,
+                              ),
+                            ),
+                            label: Text(c.getName(context)),
+                            onDeleted: () {
+                              setState(() {
+                                _colors.remove(c);
+                              });
+                            },
+                          );
+                        }).toList(),
                       ),
                     ),
                   const SizedBox(height: 10),
