@@ -1,8 +1,14 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:details_app/app_imports.dart';
 import 'forgot_password_screen.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -102,6 +108,69 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
+  // ---- دالة تسجيل الدخول بواسطة جوجل الجديدة ----
+  Future<void> _loginWithGoogle() async {
+    setState(() => _isLoading = true);
+    try {
+      // 1. فتح نافذة حسابات جوجل
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+      if (googleUser == null) {
+        // المستخدم تراجع وسكر النافذة
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // 2. سحب كود الأمان (idToken)
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
+
+      if (idToken != null) {
+        // 3. إرسال الكود للباك إند الخاص بك
+        final response = await http.post(
+          Uri.parse('https://api.details-store.com/api/auth/google'),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode({'idToken': idToken}),
+        );
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final token = data['token'];
+
+          // حفظ التوكن في الجهاز
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('token', token);
+
+          // توجيه المستخدم للصفحة الرئيسية بعد النجاح
+          if (mounted) {
+            context.go('/');
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("فشل تسجيل الدخول من السيرفر"),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
+        }
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("حدث خطأ: $error"),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -112,18 +181,17 @@ class _LoginScreenState extends State<LoginScreen>
       ),
       child: Scaffold(
         extendBodyBehindAppBar: true,
-        backgroundColor: const Color(0xFFFDFBF7), // نفس خلفية السبلاش
+        backgroundColor: const Color(0xFFFDFBF7),
         body: Stack(
           children: [
             Positioned.fill(
               child: Image.asset(
                 'assets/images/bg.png',
                 fit: BoxFit.cover,
-                gaplessPlayback: true, // يمنع الوميض
-                cacheWidth: 1080, // توحيد الحجم لاستخدام الكاش
+                gaplessPlayback: true,
+                cacheWidth: 1080,
               ),
             ),
-            // --- خلفية متحركة (نفس السبلاش) ---
             Positioned(
               top: -120,
               right: -120,
@@ -179,7 +247,6 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ),
 
-            // --- المحتوى الرئيسي ---
             SafeArea(
               child: Center(
                 child: SingleChildScrollView(
@@ -216,7 +283,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 opacity: _fadeAnimation,
                                 child: Column(
                                   children: [
-                                    Text(
+                                    const Text(
                                       'DETAILS',
                                       style: TextStyle(
                                         fontSize: 32,
@@ -236,8 +303,8 @@ class _LoginScreenState extends State<LoginScreen>
                                           height: 1,
                                           color: const Color(0xFFD4AF37),
                                         ),
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
+                                        const Padding(
+                                          padding: EdgeInsets.symmetric(
                                             horizontal: 12,
                                           ),
                                           child: Text(
@@ -245,7 +312,7 @@ class _LoginScreenState extends State<LoginScreen>
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
-                                              color: const Color(0xFFD4AF37),
+                                              color: Color(0xFFD4AF37),
                                               letterSpacing: 4.0,
                                             ),
                                           ),
@@ -262,8 +329,6 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                             ),
                             const SizedBox(height: 20),
-
-                            // حقل البريد الإلكتروني
                             _buildElegantTextField(
                               controller: _emailController,
                               label: AppLocalizations.of(
@@ -285,10 +350,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 return null;
                               },
                             ),
-
                             const SizedBox(height: 16),
-
-                            // حقل كلمة المرور
                             _buildElegantTextField(
                               controller: _passwordController,
                               label: AppLocalizations.of(
@@ -316,17 +378,12 @@ class _LoginScreenState extends State<LoginScreen>
                                 return null;
                               },
                             ),
-
                             const SizedBox(height: 10),
-
-                            // صف تذكرني ونسيت كلمة المرور
                             Row(
                               children: [
                                 Checkbox(
                                   value: _rememberMe,
-                                  activeColor: const Color(
-                                    0xFF9E773A,
-                                  ), // ذهبي أغمق
+                                  activeColor: const Color(0xFF9E773A),
                                   checkColor: Colors.white,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(4),
@@ -347,7 +404,7 @@ class _LoginScreenState extends State<LoginScreen>
                                   )!.translate('remember_me'),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF9E773A), // ذهبي أغمق
+                                    color: Color(0xFF9E773A),
                                     fontSize: 14,
                                   ),
                                 ),
@@ -367,7 +424,7 @@ class _LoginScreenState extends State<LoginScreen>
                                       context,
                                     )!.translate('forgot_password'),
                                     style: const TextStyle(
-                                      color: Color(0xFF9E773A), // ذهبي أغمق
+                                      color: Color(0xFF9E773A),
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
                                     ),
@@ -375,22 +432,17 @@ class _LoginScreenState extends State<LoginScreen>
                                 ),
                               ],
                             ),
-
                             const SizedBox(height: 8),
-
-                            // زر تسجيل الدخول المحدث
                             Container(
                               width: double.infinity,
-                              height: 55, // ارتفاع الزر
+                              height: 55,
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(
-                                  10,
-                                ), // حواف مطابقة لحقول الإدخال
+                                borderRadius: BorderRadius.circular(10),
                                 boxShadow: [
                                   BoxShadow(
                                     color: const Color(
                                       0xFF9E773A,
-                                    ).withValues(alpha: 0.3), // ظل بلون الزر
+                                    ).withValues(alpha: 0.3),
                                     blurRadius: 8,
                                     offset: const Offset(0, 4),
                                   ),
@@ -399,11 +451,8 @@ class _LoginScreenState extends State<LoginScreen>
                               child: ElevatedButton(
                                 onPressed: _isLoading ? null : _handleLogin,
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(
-                                    0xFF9E773A,
-                                  ), // اللون الذهبي الغامق الموجود بالصورة
-                                  shadowColor: Colors
-                                      .transparent, // تم تعطيل الظل الافتراضي
+                                  backgroundColor: const Color(0xFF9E773A),
+                                  shadowColor: Colors.transparent,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10),
                                   ),
@@ -420,10 +469,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 ),
                               ),
                             ),
-
                             const SizedBox(height: 15),
-
-                            // فاصل "أو سجل عبر" المضاف حديثاً
                             Row(
                               children: [
                                 Expanded(
@@ -434,13 +480,11 @@ class _LoginScreenState extends State<LoginScreen>
                                     thickness: 1,
                                   ),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 15,
-                                  ),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 15),
                                   child: Text(
                                     'أو سجل عبر: / Or Sign In',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       color: Color(0xFFD4AF37),
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
@@ -457,62 +501,46 @@ class _LoginScreenState extends State<LoginScreen>
                                 ),
                               ],
                             ),
-
                             const SizedBox(height: 15),
-
-                            // أزرار السوشيال ميديا المضافة حديثاً
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // زر Google
+                                // تم ربط زر جوجل هنا 👇
                                 _buildSocialButton(
                                   child: const Text(
                                     'G',
                                     style: TextStyle(
                                       fontSize: 24,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF9E773A), // لون ذهبي
+                                      color: Color(0xFF9E773A),
                                     ),
                                   ),
-                                  onPressed: () {
-                                    // ضيف كود تسجيل الدخول بجوجل هون
-                                  },
+                                  onPressed: _loginWithGoogle,
                                 ),
                                 const SizedBox(width: 20),
-
-                                // زر Apple
                                 _buildSocialButton(
                                   child: const Icon(
                                     Icons.apple,
                                     size: 32,
-                                    color: Colors.black, // أسود
+                                    color: Colors.black,
                                   ),
-                                  onPressed: () {
-                                    // ضيف كود تسجيل الدخول بأبل هون
-                                  },
+                                  onPressed: () {},
                                 ),
                                 const SizedBox(width: 20),
-
-                                // زر Facebook
                                 _buildSocialButton(
                                   child: const Text(
                                     'f',
                                     style: TextStyle(
                                       fontSize: 28,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF9E773A), // لون ذهبي
+                                      color: Color(0xFF9E773A),
                                     ),
                                   ),
-                                  onPressed: () {
-                                    // ضيف كود تسجيل الدخول بفيسبوك هون
-                                  },
+                                  onPressed: () {},
                                 ),
                               ],
                             ),
-
                             const SizedBox(height: 8),
-
-                            // رابط التسجيل
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -556,7 +584,6 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // دالة بناء حقول الإدخال المحدثة بالتصميم الجديد
   Widget _buildElegantTextField({
     required TextEditingController controller,
     required String label,
@@ -569,15 +596,12 @@ class _LoginScreenState extends State<LoginScreen>
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.white, // خلفية بيضاء
-        borderRadius: BorderRadius.circular(10), // حواف دائرية مطابقة للصورة
-        border: Border.all(
-          color: const Color(0xFFB89560), // لون الإطار الذهبي/البني
-          width: 1.2,
-        ),
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFB89560), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.04), // ظل ناعم جداً
+            color: AppColors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -594,26 +618,20 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(
-            color: Color(0xFF666666), // لون خط التسمية
-            fontSize: 14,
-          ),
-          prefixIcon: Icon(
-            icon,
-            color: const Color(0xFFB89560), // لون الأيقونة مطابق للإطار
-          ),
+          labelStyle: const TextStyle(color: Color(0xFF666666), fontSize: 14),
+          prefixIcon: Icon(icon, color: const Color(0xFFB89560)),
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
                     obscureText
                         ? Icons.visibility_off_outlined
                         : Icons.visibility_outlined,
-                    color: const Color(0xFFB89560), // لون أيقونة العين
+                    color: const Color(0xFFB89560),
                   ),
                   onPressed: onTogglePassword,
                 )
               : null,
-          border: InputBorder.none, // إخفاء إطار الفلتر الافتراضي
+          border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 20,
             vertical: 18,
@@ -623,7 +641,6 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // دالة بناء أزرار السوشيال ميديا الدائرية المضافة حديثاً
   Widget _buildSocialButton({
     required Widget child,
     required VoidCallback onPressed,
@@ -637,13 +654,10 @@ class _LoginScreenState extends State<LoginScreen>
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: AppColors.white,
-          border: Border.all(
-            color: const Color(0xFFB89560), // الإطار الذهبي
-            width: 1.5,
-          ),
+          border: Border.all(color: const Color(0xFFB89560), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: AppColors.black.withValues(alpha: 0.05), // ظل خفيف جداً
+              color: AppColors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),

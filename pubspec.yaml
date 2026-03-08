@@ -27,8 +27,12 @@ dependencies:
   path_provider: ^2.1.2
   flutter_cache_manager: ^3.3.2
   video_player: ^2.8.6
+  google_sign_in: ^6.2.1
+  firebase_core: ^4.5.0
   flutter_localizations:
     sdk: flutter
+  
+  
 
 dev_dependencies:
   flutter_test:

@@ -741,41 +741,6 @@ class _HomePageState extends State<HomePage>
                             onTap: () =>
                                 context.push('/product/${p.id}', extra: p),
                           ),
-                          const SizedBox(height: 8),
-                          _circleIcon(
-                            Icons.share,
-                            isWhite: true,
-                            onTap: () async {
-                              try {
-                                final currency = AppLocalizations.of(
-                                  context,
-                                )!.translate('currency');
-                                final text =
-                                    '🌟 *Check out this amazing product!* 🌟\n\n'
-                                    '🛍️ *${p.getName(context)}*\n'
-                                    '💰 Price: *${p.price} $currency*\n\n'
-                                    '🔗 Link: https://details-store.com/product/${p.id}\n\n'
-                                    '_Sent from Details Store App_';
-
-                                if (kIsWeb) {
-                                  await SharePlus.instance.share(
-                                    ShareParams(text: text),
-                                  );
-                                } else {
-                                  final file = await DefaultCacheManager()
-                                      .getSingleFile(p.imageUrl);
-                                  await SharePlus.instance.share(
-                                    ShareParams(
-                                      files: [XFile(file.path)],
-                                      text: text,
-                                    ),
-                                  );
-                                }
-                              } catch (e) {
-                                debugPrint('Error sharing: $e');
-                              }
-                            },
-                          ),
                         ],
                       ),
                     ),
@@ -814,27 +779,35 @@ class _HomePageState extends State<HomePage>
                       height: 30,
                       width: double.infinity,
                       child: OutlinedButton(
-                        onPressed: () {
-                          final cart = Provider.of<CartProvider>(
-                            context,
-                            listen: false,
-                          );
-                          cart.addItem(
-                            p.id,
-                            p.price,
-                            p.getName(context),
-                            p.imageUrl,
-                          );
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                AppLocalizations.of(
-                                  context,
-                                )!.translate('added_to_cart'),
-                              ),
-                              duration: const Duration(seconds: 1),
-                            ),
-                          );
+                        onPressed: () async {
+                          try {
+                            final currency = AppLocalizations.of(
+                              context,
+                            )!.translate('currency');
+                            final text =
+                                '🌟 *Check out this amazing product!* 🌟\n\n'
+                                '🛍️ *${p.getName(context)}*\n'
+                                '💰 Price: *${p.price} $currency*\n\n'
+                                '🔗 Link: https://details-store.com/product/${p.id}\n\n'
+                                '_Sent from Details Store App_';
+
+                            if (kIsWeb) {
+                              await SharePlus.instance.share(
+                                ShareParams(text: text),
+                              );
+                            } else {
+                              final file = await DefaultCacheManager()
+                                  .getSingleFile(p.imageUrl);
+                              await SharePlus.instance.share(
+                                ShareParams(
+                                  files: [XFile(file.path)],
+                                  text: text,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            debugPrint('Error sharing: $e');
+                          }
                         },
                         style: OutlinedButton.styleFrom(
                           padding: EdgeInsets.zero,
@@ -845,14 +818,25 @@ class _HomePageState extends State<HomePage>
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: Text(
-                          AppLocalizations.of(
-                            context,
-                          )!.translate('add_to_cart'),
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: AppColors.primary,
-                          ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.share,
+                              size: 14,
+                              color: AppColors.primary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              AppLocalizations.of(
+                                context,
+                              )!.translate('share_title'),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

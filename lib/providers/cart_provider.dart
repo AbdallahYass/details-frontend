@@ -56,6 +56,7 @@ class CartProvider with ChangeNotifier {
     String? size,
     String? color,
     int maxQuantity = 999,
+    int quantityToAdd = 1,
   }) {
     // المفتاح في السلة يكون دمجاً بين الآيدي والمقاس واللون لتمييز المنتجات
     String cartKey = productId;
@@ -64,7 +65,7 @@ class CartProvider with ChangeNotifier {
 
     if (_items.containsKey(cartKey)) {
       // التحقق من عدم تجاوز الكمية المتوفرة
-      if (_items[cartKey]!.quantity >= maxQuantity) {
+      if (_items[cartKey]!.quantity + quantityToAdd > maxQuantity) {
         return; // لا تقم بالإضافة إذا وصلنا للحد الأقصى
       }
 
@@ -75,7 +76,7 @@ class CartProvider with ChangeNotifier {
           id: existingCartItem.id,
           productId: existingCartItem.productId,
           title: existingCartItem.title,
-          quantity: existingCartItem.quantity + 1,
+          quantity: existingCartItem.quantity + quantityToAdd,
           price: existingCartItem.price,
           imageUrl: existingCartItem.imageUrl,
           size: existingCartItem.size,
@@ -83,7 +84,7 @@ class CartProvider with ChangeNotifier {
         ),
       );
     } else {
-      if (maxQuantity < 1) return; // لا يمكن إضافة منتج كميته 0
+      if (maxQuantity < quantityToAdd) return; // لا يمكن إضافة منتج كميته 0
 
       // إضافة منتج جديد
       _items.putIfAbsent(
@@ -92,7 +93,7 @@ class CartProvider with ChangeNotifier {
           id: cartKey,
           productId: productId,
           title: title,
-          quantity: 1,
+          quantity: quantityToAdd,
           price: price,
           imageUrl: imageUrl,
           size: size,
