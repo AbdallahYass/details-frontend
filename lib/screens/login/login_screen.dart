@@ -111,27 +111,32 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _loginWithGoogle() async {
     setState(() => _isLoading = true);
     try {
-      // 1. فتح نافذة حسابات جوجل
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      // 1. إعداد جوجل مع الـ Client ID اللي أعطيتني ياه
+      // هذا السطر هو اللي رح يخلي idToken ما يطلع Null
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        clientId:
+            '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com',
+      );
 
-      // فحص: هل المستخدم كنسل أو سكر النافذة؟
+      // 2. فتح نافذة حسابات جوجل
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
       if (googleUser == null) {
         debugPrint("المستخدم ألغى عملية تسجيل الدخول");
-        setState(() => _isLoading = false);
+        if (mounted) setState(() => _isLoading = false);
         return;
       }
 
-      // 2. سحب كود الأمان
+      // 3. سحب كود الأمان (authentication)
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
       final String? idToken = googleAuth.idToken;
 
-      // فحص: هل جوجل أعطانا التوكن؟ (لو الـ SHA-1 غلط رح يكون نل)
       if (idToken == null) {
-        throw "فشل الحصول على idToken من جوجل. تأكد من إعدادات الـ SHA-1 في فايربيس.";
+        throw "فشل الحصول على idToken. تأكد من مطابقة الـ SHA-1 في فايربيس.";
       }
 
-      // 3. إرسال الكود للباك إند
+      // 4. إرسال الكود للباك إند الخاص بـ details-store.com
       final response = await http.post(
         Uri.parse('https://api.details-store.com/api/auth/google'),
         headers: {'Content-Type': 'application/json'},
@@ -141,6 +146,7 @@ class _LoginScreenState extends State<LoginScreen>
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final token = data['token'];
+
         if (token != null) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('token', token);
@@ -154,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("حدث خطأ: $error"),
+            content: Text("حدث خطأ في متجر ديتيلز: $error"),
             backgroundColor: Colors.red,
           ),
         );
