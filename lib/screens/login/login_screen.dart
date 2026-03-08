@@ -111,12 +111,13 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _loginWithGoogle() async {
     setState(() => _isLoading = true);
     try {
+      // 1. الإعداد النهائي (استخدمنا serverClientId لضمان الحصول على idToken)
       final GoogleSignIn googleSignIn = GoogleSignIn(
         serverClientId:
             '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com',
       );
 
-      // 2. فتح نافذة حسابات جوجل
+      // 2. محاولة تسجيل الدخول
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
       if (googleUser == null) {
@@ -125,16 +126,17 @@ class _LoginScreenState extends State<LoginScreen>
         return;
       }
 
-      // 3. سحب كود الأمان (authentication)
+      // 3. الحصول على كود الأمان
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
       final String? idToken = googleAuth.idToken;
 
+      // فحص: إذا التوكن نل، المشكلة بتكون 100% SHA-1 في فايربيس
       if (idToken == null) {
-        throw "فشل الحصول على idToken. تأكد من مطابقة الـ SHA-1 في فايربيس.";
+        throw "لم نتمكن من استلام idToken. تأكد من إضافة SHA-1 لمشروعك في فايربيس وتحديث ملف google-services.json";
       }
 
-      // 4. إرسال الكود للباك إند الخاص بـ details-store.com
+      // 4. إرسال التوكن للباك إند الخاص بك (Node.js)
       final response = await http.post(
         Uri.parse('https://api.details-store.com/api/auth/google'),
         headers: {'Content-Type': 'application/json'},
@@ -151,15 +153,16 @@ class _LoginScreenState extends State<LoginScreen>
           if (mounted) context.go('/');
         }
       } else {
-        throw "خطأ من السيرفر: ${response.body}";
+        throw "خطأ من السيرفر (Node.js): ${response.body}";
       }
     } catch (error) {
       debugPrint("Google Login Error: $error");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("حدث خطأ في متجر ديتيلز: $error"),
+            content: Text("خطأ في متجر ديتيلز: $error"),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
