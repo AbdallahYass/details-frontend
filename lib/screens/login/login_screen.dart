@@ -112,6 +112,13 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _isLoading = true);
     try {
       debugPrint("🚀 بدأت عملية تسجيل الدخول...");
+      if (kIsWeb) {
+        debugPrint("🌍 رابط الموقع الحالي (Origin): ${Uri.base.origin}");
+        debugPrint(
+          "⚠️ تأكد من إضافة هذا الرابط تماماً في Google Cloud Console -> Authorized JavaScript origins",
+        );
+      }
+
       final GoogleSignIn googleSignIn = GoogleSignIn(
         // ⚠️ هام للويب: تأكد أن هذا هو Web Client ID وليس Android Client ID
         // وتأكد من إضافة http://localhost:PORT في Authorized JavaScript origins في Google Cloud
@@ -151,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen>
 
       if (googleAuth.idToken == null) {
         if (kIsWeb) {
-          throw "idToken مفقود! تأكد من إضافة رابط الموقع (Origin) في Google Cloud Console واستخدام Web Client ID الصحيح.";
+          throw "idToken مفقود! تأكد من إضافة ${Uri.base.origin} في Google Cloud Console واستخدام Web Client ID الصحيح.";
         } else {
           throw "idToken مفقود! المشكلة في إعدادات SHA-1 أو الـ Support Email في فايربيس.";
         }
