@@ -113,7 +113,8 @@ class _LoginScreenState extends State<LoginScreen>
     try {
       debugPrint("🚀 بدأت عملية تسجيل الدخول...");
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        // استخدام clientId للويب و serverClientId للموبايل لضمان وصول idToken
+        // ⚠️ هام للويب: تأكد أن هذا هو Web Client ID وليس Android Client ID
+        // وتأكد من إضافة http://localhost:PORT في Authorized JavaScript origins في Google Cloud
         clientId: kIsWeb
             ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
             : null,
@@ -126,6 +127,10 @@ class _LoginScreenState extends State<LoginScreen>
           'openid',
         ],
       );
+
+      // ⚠️ خطوة مهمة: تسجيل الخروج أولاً لضمان عدم استرجاع جلسة قديمة من الكاش
+      // هذا يحل مشكلة idToken: null عند إعادة المحاولة
+      await googleSignIn.signOut();
 
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       if (googleUser == null) {
@@ -145,7 +150,11 @@ class _LoginScreenState extends State<LoginScreen>
       );
 
       if (googleAuth.idToken == null) {
-        throw "idToken طلع Null! المشكلة في إعدادات SHA-1 أو الـ Support Email في فايربيس.";
+        if (kIsWeb) {
+          throw "idToken مفقود! تأكد من إضافة رابط الموقع (Origin) في Google Cloud Console واستخدام Web Client ID الصحيح.";
+        } else {
+          throw "idToken مفقود! المشكلة في إعدادات SHA-1 أو الـ Support Email في فايربيس.";
+        }
       }
 
       // 4. إرسال التوكن للباك إند الخاص بك (Node.js)
