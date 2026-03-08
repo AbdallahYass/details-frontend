@@ -111,10 +111,8 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _loginWithGoogle() async {
     setState(() => _isLoading = true);
     try {
-      // 1. إعداد جوجل مع الـ Client ID اللي أعطيتني ياه
-      // هذا السطر هو اللي رح يخلي idToken ما يطلع Null
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        clientId:
+        serverClientId:
             '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com',
       );
 
