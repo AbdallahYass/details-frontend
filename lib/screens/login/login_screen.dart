@@ -111,17 +111,7 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _loginWithGoogle() async {
     setState(() => _isLoading = true);
     try {
-      debugPrint("🚀 بدأت عملية تسجيل الدخول...");
-      if (kIsWeb) {
-        debugPrint("🌍 رابط الموقع الحالي (Origin): ${Uri.base.origin}");
-        debugPrint(
-          "⚠️ تأكد من إضافة هذا الرابط تماماً في Google Cloud Console -> Authorized JavaScript origins",
-        );
-      }
-
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        // ⚠️ هام للويب: تأكد أن هذا هو Web Client ID وليس Android Client ID
-        // وتأكد من إضافة http://localhost:PORT في Authorized JavaScript origins في Google Cloud
         clientId: kIsWeb
             ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
             : null,
@@ -141,27 +131,14 @@ class _LoginScreenState extends State<LoginScreen>
 
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       if (googleUser == null) {
-        debugPrint("❌ الخطأ: المستخدم لم يفتح النافذة أو أغلقها.");
         return;
       }
 
-      debugPrint("✅ تم اختيار الحساب: ${googleUser.email}");
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
-      debugPrint(
-        "🔑 idToken: ${googleAuth.idToken != null ? 'موجود' : 'فارغ (Null)'}",
-      );
-      debugPrint(
-        "🔑 accessToken: ${googleAuth.accessToken != null ? 'موجود' : 'فارغ (Null)'}",
-      );
-
       if (googleAuth.idToken == null) {
-        if (kIsWeb) {
-          throw "idToken مفقود! تأكد من إضافة ${Uri.base.origin} في Google Cloud Console واستخدام Web Client ID الصحيح.";
-        } else {
-          throw "idToken مفقود! المشكلة في إعدادات SHA-1 أو الـ Support Email في فايربيس.";
-        }
+        throw "فشل في استلام بيانات الاعتماد من جوجل. يرجى المحاولة مرة أخرى.";
       }
 
       // 4. إرسال التوكن للباك إند الخاص بك (Node.js)
@@ -184,11 +161,10 @@ class _LoginScreenState extends State<LoginScreen>
         throw "خطأ من السيرفر (Node.js): ${response.body}";
       }
     } catch (error) {
-      debugPrint("Google Login Error: $error");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("خطأ في متجر ديتيلز: $error"),
+            content: Text("فشل تسجيل الدخول: $error"),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 5),
           ),
