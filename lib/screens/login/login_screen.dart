@@ -113,8 +113,13 @@ class _LoginScreenState extends State<LoginScreen>
     try {
       debugPrint("🚀 بدأت عملية تسجيل الدخول...");
       final GoogleSignIn googleSignIn = GoogleSignIn(
-        serverClientId:
-            '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com',
+        // استخدام clientId للويب و serverClientId للموبايل لضمان وصول idToken
+        clientId: kIsWeb
+            ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
+            : null,
+        serverClientId: !kIsWeb
+            ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
+            : null,
         scopes: [
           'email',
           'https://www.googleapis.com/auth/userinfo.profile',
