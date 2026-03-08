@@ -12,10 +12,25 @@ import 'package:details_app/providers/cart_provider.dart';
 import 'package:details_app/providers/orders_provider.dart';
 import 'package:details_app/constants/app_theme.dart';
 import 'package:details_app/providers/router.dart';
+import 'package:flutter/foundation.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  if (kIsWeb) {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: "AIzaSyAUMaUSPPNfVTKudn58zM0WMs5dG4umx0c",
+        authDomain: "details-store-3be7c.firebaseapp.com",
+        projectId: "details-store-3be7c",
+        storageBucket: "details-store-3be7c.firebasestorage.app",
+        messagingSenderId: "131777577750",
+        appId: "1:131777577750:web:c9ce46e86de97152cfc637",
+        measurementId: "G-V5XQCFK678",
+      ),
+    );
+  } else {
+    await Firebase.initializeApp(); // للأندرويد، بقرأ من ملف الـ JSON تلقائياً
+  }
   setPathUrlStrategy();
   runApp(
     MultiProvider(
