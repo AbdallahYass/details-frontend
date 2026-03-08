@@ -108,61 +108,54 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  // ---- دالة تسجيل الدخول بواسطة جوجل الجديدة ----
   Future<void> _loginWithGoogle() async {
     setState(() => _isLoading = true);
     try {
       // 1. فتح نافذة حسابات جوجل
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
 
+      // فحص: هل المستخدم كنسل أو سكر النافذة؟
       if (googleUser == null) {
-        // المستخدم تراجع وسكر النافذة
+        debugPrint("المستخدم ألغى عملية تسجيل الدخول");
         setState(() => _isLoading = false);
         return;
       }
 
-      // 2. سحب كود الأمان (idToken)
+      // 2. سحب كود الأمان
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
       final String? idToken = googleAuth.idToken;
 
-      if (idToken != null) {
-        // 3. إرسال الكود للباك إند الخاص بك
-        final response = await http.post(
-          Uri.parse('https://api.details-store.com/api/auth/google'),
-          headers: {'Content-Type': 'application/json'},
-          body: json.encode({'idToken': idToken}),
-        );
+      // فحص: هل جوجل أعطانا التوكن؟ (لو الـ SHA-1 غلط رح يكون نل)
+      if (idToken == null) {
+        throw "فشل الحصول على idToken من جوجل. تأكد من إعدادات الـ SHA-1 في فايربيس.";
+      }
 
-        if (response.statusCode == 200) {
-          final data = json.decode(response.body);
-          final token = data['token'];
+      // 3. إرسال الكود للباك إند
+      final response = await http.post(
+        Uri.parse('https://api.details-store.com/api/auth/google'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'idToken': idToken}),
+      );
 
-          // حفظ التوكن في الجهاز
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final token = data['token'];
+        if (token != null) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('token', token);
-
-          // توجيه المستخدم للصفحة الرئيسية بعد النجاح
-          if (mounted) {
-            context.go('/');
-          }
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("فشل تسجيل الدخول من السيرفر"),
-                backgroundColor: AppColors.error,
-              ),
-            );
-          }
+          if (mounted) context.go('/');
         }
+      } else {
+        throw "خطأ من السيرفر: ${response.body}";
       }
     } catch (error) {
+      debugPrint("Google Login Error: $error");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("حدث خطأ: $error"),
-            backgroundColor: AppColors.error,
+            backgroundColor: Colors.red,
           ),
         );
       }
