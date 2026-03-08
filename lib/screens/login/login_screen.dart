@@ -111,36 +111,38 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _loginWithGoogle() async {
     setState(() => _isLoading = true);
     try {
-      // 1. الإعداد النهائي (استخدمنا serverClientId لضمان الحصول على idToken)
+      debugPrint("🚀 بدأت عملية تسجيل الدخول...");
       final GoogleSignIn googleSignIn = GoogleSignIn(
         serverClientId:
             '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com',
       );
 
-      // 2. محاولة تسجيل الدخول
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-
       if (googleUser == null) {
-        debugPrint("المستخدم ألغى عملية تسجيل الدخول");
-        if (mounted) setState(() => _isLoading = false);
+        debugPrint("❌ الخطأ: المستخدم لم يفتح النافذة أو أغلقها.");
         return;
       }
 
-      // 3. الحصول على كود الأمان
+      debugPrint("✅ تم اختيار الحساب: ${googleUser.email}");
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
-      final String? idToken = googleAuth.idToken;
 
-      // فحص: إذا التوكن نل، المشكلة بتكون 100% SHA-1 في فايربيس
-      if (idToken == null) {
-        throw "لم نتمكن من استلام idToken. تأكد من إضافة SHA-1 لمشروعك في فايربيس وتحديث ملف google-services.json";
+      debugPrint(
+        "🔑 idToken: ${googleAuth.idToken != null ? 'موجود' : 'فارغ (Null)'}",
+      );
+      debugPrint(
+        "🔑 accessToken: ${googleAuth.accessToken != null ? 'موجود' : 'فارغ (Null)'}",
+      );
+
+      if (googleAuth.idToken == null) {
+        throw "idToken طلع Null! المشكلة في إعدادات SHA-1 أو الـ Support Email في فايربيس.";
       }
 
       // 4. إرسال التوكن للباك إند الخاص بك (Node.js)
       final response = await http.post(
         Uri.parse('https://api.details-store.com/api/auth/google'),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({'idToken': idToken}),
+        body: json.encode({'idToken': googleAuth.idToken}),
       );
 
       if (response.statusCode == 200) {
