@@ -386,10 +386,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                     onPressed: _fetchGoogleDataMobile,
                   ),
             const SizedBox(width: 20),
-            _buildSocialButton(
-              child: const Icon(Icons.apple, size: 32, color: Colors.black),
-              onPressed: () {},
-            ),
           ],
         ),
       ],
