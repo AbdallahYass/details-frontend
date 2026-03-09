@@ -162,6 +162,9 @@ class _LoginScreenState extends State<LoginScreen>
           if (mounted) context.go('/');
         }
       } else {
+        // إصلاح المشكلة: إذا رفض السيرفر الدخول (مثلاً الحساب محذوف)،
+        // نقوم بتسجيل الخروج من جوجل فوراً لمنع المحاولة التلقائية في المرة القادمة
+        await _googleSignIn.signOut();
         throw "خطأ من السيرفر (Node.js): ${response.body}";
       }
     } catch (error) {
