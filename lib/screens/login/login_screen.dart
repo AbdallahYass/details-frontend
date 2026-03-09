@@ -151,6 +151,7 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
+  // دالة مشتركة لإرسال التوكن لسيرفر الـ Node.js
   Future<void> _handleGoogleBackendAuth(GoogleSignInAccount googleUser) async {
     setState(() => _isLoading = true);
     try {
@@ -158,30 +159,43 @@ class _LoginScreenState extends State<LoginScreen>
           await googleUser.authentication;
 
       if (googleAuth.idToken == null) {
-        debugPrint("❌ Google Sign In Error: idToken is null.");
-        await _googleSignIn.disconnect(); // استخدام disconnect للتنظيف العميق
+        await _googleSignIn.disconnect();
         throw "فشل التحقق من الهوية (idToken مفقود).";
       }
 
+      // إرسال التوكن للباك إند
       final response = await http.post(
         Uri.parse('https://api.details-store.com/api/auth/google'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({'idToken': googleAuth.idToken}),
       );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final token = data['token'];
+      final data = json.decode(response.body);
 
-        if (token != null) {
+      if (response.statusCode == 200) {
+        final token = data['token'];
+        final userData = data['user'];
+
+        if (token != null && userData != null) {
+          // التعديل هنا: إخبار الـ AuthProvider بالنجاح ليقوم هو بالحفظ والتحديث
+          final authProvider = Provider.of<AuthProvider>(
+            context,
+            listen: false,
+          );
+
+          // سنقوم بمحاكاة نجاح الدخول داخل الـ provider (أو يمكنك إضافة دالة مخصصة هناك)
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('token', token);
+          await prefs.setString('userData', json.encode(userData));
+
+          // تحديث حالة التطبيق والانتقال للرئيسية
+          await authProvider.tryAutoLogin();
           if (mounted) context.go('/');
         }
       } else {
-        // 3. هذا السطر هو من سينقذك من مشكلة "الحساب المحذوف" نهائياً
+        // إذا الحساب محذوف من السيرفر (404)
         await _googleSignIn.disconnect();
-        throw "خطأ من السيرفر (Node.js): ${response.body}";
+        throw data['message'] ?? "خطأ من السيرفر";
       }
     } catch (error) {
       if (mounted) {
@@ -189,7 +203,6 @@ class _LoginScreenState extends State<LoginScreen>
           SnackBar(
             content: Text("فشل تسجيل الدخول: $error"),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
           ),
         );
       }

@@ -38,13 +38,21 @@ class _HomePageState extends State<HomePage>
 
     _loadAllData();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // التعديل هنا: فحص الجلسة فور الدخول للتأكد من أن الحساب غير محذوف
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      if (auth.isAuthenticated) {
-        Provider.of<NotificationProvider>(
-          context,
-          listen: false,
-        ).fetchNotifications(context, authProvider: auth);
+
+      if (auth.token != null) {
+        // بدلاً من الوثوق بالتوكن، نقوم بتجربة تسجيل دخول صامت سريع للتحقق من السيرفر
+        await auth.tryAutoLogin();
+
+        // إذا نجح التحقق ولا يزال المستخدم موجوداً، نجلب الإشعارات
+        if (mounted && auth.isAuthenticated) {
+          Provider.of<NotificationProvider>(
+            context,
+            listen: false,
+          ).fetchNotifications(context, authProvider: auth);
+        }
       }
     });
   }
@@ -387,14 +395,7 @@ class _HomePageState extends State<HomePage>
               ),
             ),
           ),
-          // زر تسجيل الخروج (مؤقت لحذف الذاكرة القديمة)
-          IconButton(
-            icon: const Icon(Icons.logout, color: Color(0xFFD4AF37), size: 20),
-            onPressed: () async {
-              await Provider.of<AuthProvider>(context, listen: false).logout();
-              if (mounted) context.go('/login');
-            },
-          ),
+          // تم حذف زر تسجيل الخروج المؤقت من هنا
         ],
       ),
     );

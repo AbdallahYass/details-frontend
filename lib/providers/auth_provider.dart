@@ -4,13 +4,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:details_app/app_imports.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-// نموذج مستخدم بسيط (يمكنك نقله لملف منفصل لاحقاً)
+// نموذج المستخدم
 class User {
   final String id;
   final String name;
   final String email;
   final String phone;
   final bool isAdmin;
+  final String? avatar;
 
   User({
     required this.id,
@@ -18,15 +19,17 @@ class User {
     required this.email,
     this.phone = '',
     this.isAdmin = false,
+    this.avatar,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['_id'] ?? '',
+      id: json['_id'] ?? json['id'] ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       phone: json['phone'] ?? '',
       isAdmin: json['isAdmin'] ?? false,
+      avatar: json['avatar'],
     );
   }
 
@@ -36,6 +39,7 @@ class User {
     'email': email,
     'phone': phone,
     'isAdmin': isAdmin,
+    'avatar': avatar,
   };
 }
 
@@ -51,13 +55,16 @@ class AuthProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  // تسجيل الدخول
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  // 1. تسجيل الدخول العادي
   Future<bool> login(
     String email,
     String password, {
     bool rememberMe = true,
   }) async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
@@ -75,10 +82,9 @@ class AuthProvider with ChangeNotifier {
         _user = User.fromJson(data['user']);
 
         if (rememberMe) {
-          // حفظ البيانات محلياً
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('token', _token!);
-          await prefs.setString('userData', json.encode(data['user']));
+          await prefs.setString('userData', json.encode(_user!.toJson()));
         }
 
         _isLoading = false;
@@ -88,8 +94,7 @@ class AuthProvider with ChangeNotifier {
         _errorMessage = data['message'];
       }
     } catch (e) {
-      debugPrint('Login Error: $e');
-      _errorMessage = e.toString();
+      _errorMessage = "فشل الاتصال بالسيرفر";
     }
 
     _isLoading = false;
@@ -97,47 +102,127 @@ class AuthProvider with ChangeNotifier {
     return false;
   }
 
+  // 2. تسجيل الدخول عبر جوجل (الحل المتكامل)
+  Future<bool> signInWithGoogle() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      // تنظيف أي جلسة سابقة عالقة في جوجل
+      await _googleSignIn.signOut();
+
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      final url = Uri.parse('https://api.details-store.com/api/auth/google');
+      final response = await http.post(
+        url,
+        body: json.encode({'idToken': googleAuth.idToken}),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        _token = data['token'];
+        _user = User.fromJson(data['user']);
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', _token!);
+        await prefs.setString('userData', json.encode(_user!.toJson()));
+
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        // إذا كان الحساب محذوف من الداتابيس (404)
+        _errorMessage = data['message'];
+        await _googleSignIn.disconnect(); // قطع الارتباط تماماً
+      }
+    } catch (e) {
+      _errorMessage = "خطأ أثناء تسجيل الدخول بجوجل";
+    }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
+  // 3. تسجيل الخروج (تنظيف شامل لفك "التعليقة")
   Future<void> logout() async {
     _token = null;
     _user = null;
 
-    // 1. مسح البيانات المحلية من التطبيق
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await prefs.clear(); // مسح الذاكرة المحلية
 
-    // 2. مسح جلسة جوجل (الخطوة الأهم لمنع الحسابات الشبحية)
     try {
-      // نستخدم دالة صامتة لفصل الحساب نهائياً سواء كان ويب أو موبايل
-      final GoogleSignIn googleSignIn = GoogleSignIn();
-      if (await googleSignIn.isSignedIn()) {
-        await googleSignIn.disconnect();
+      // أهم سطر لمنع الدخول التلقائي بحساب محذوف
+      if (await _googleSignIn.isSignedIn()) {
+        await _googleSignIn.disconnect();
       }
     } catch (e) {
-      debugPrint('Google SignOut Error: $e');
+      debugPrint('Google Disconnect Error: $e');
     }
 
     notifyListeners();
   }
 
-  // استعادة الجلسة عند فتح التطبيق
+  // 4. استعادة الجلسة والتحقق من وجود الحساب (المنقذ من "الحساب الشبح")
   Future<void> tryAutoLogin() async {
     final prefs = await SharedPreferences.getInstance();
     if (!prefs.containsKey('token')) return;
 
     final extractedToken = prefs.getString('token');
-    final userData = json.decode(prefs.getString('userData') ?? '{}');
 
-    _token = extractedToken;
-    _user = User.fromJson(userData);
-    notifyListeners();
+    try {
+      // نسأل السيرفر: هل هذا التوكن لا يزال صالحاً وصاحبه موجود؟
+      final url = Uri.parse(
+        'https://api.details-store.com/api/auth/validate-token',
+      );
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $extractedToken',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        _token = extractedToken;
+        _user = User.fromJson(data['user']);
+        notifyListeners();
+      }
+      // إذا الحساب محذوف أو التوكن منتهي (401 أو 404)
+      else if (response.statusCode == 401 || response.statusCode == 404) {
+        await logout(); // طرد فوري وتنظيف للذاكرة
+      }
+    } catch (e) {
+      // في حالة عدم وجود إنترنت، نعتمد على الذاكرة مؤقتاً
+      if (prefs.containsKey('userData')) {
+        _token = extractedToken;
+        _user = User.fromJson(json.decode(prefs.getString('userData')!));
+        notifyListeners();
+      }
+    }
   }
 
-  // تفعيل الحساب عبر OTP وتسجيل الدخول
+  // --- بقية الدوال (بدون تغيير في المنطق الأساسي) ---
+
   Future<bool> verifyEmail(String email, String otp) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
-
     try {
       final url = Uri.parse(
         'https://api.details-store.com/api/auth/verify-email',
@@ -147,40 +232,31 @@ class AuthProvider with ChangeNotifier {
         body: json.encode({'email': email, 'otp': otp}),
         headers: {'Content-Type': 'application/json'},
       );
-
       final data = json.decode(response.body);
-
       if (response.statusCode == 200) {
-        // تسجيل الدخول مباشرة بعد التفعيل
         _token = data['token'];
         _user = User.fromJson(data['user']);
-
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', _token!);
-        await prefs.setString('userData', json.encode(data['user']));
-
+        await prefs.setString('userData', json.encode(_user!.toJson()));
         _isLoading = false;
         notifyListeners();
         return true;
       } else {
-        final data = json.decode(response.body);
         _errorMessage = data['message'];
       }
     } catch (e) {
       _errorMessage = e.toString();
     }
-
     _isLoading = false;
     notifyListeners();
     return false;
   }
 
-  // طلب استعادة كلمة المرور (إرسال الإيميل)
   Future<bool> forgotPassword(String email) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
-
     try {
       final url = Uri.parse(
         'https://api.details-store.com/api/auth/forgot-password',
@@ -190,7 +266,6 @@ class AuthProvider with ChangeNotifier {
         body: json.encode({'email': email}),
         headers: {'Content-Type': 'application/json'},
       );
-
       if (response.statusCode == 200) {
         _isLoading = false;
         notifyListeners();
@@ -202,18 +277,15 @@ class AuthProvider with ChangeNotifier {
     } catch (e) {
       _errorMessage = e.toString();
     }
-
     _isLoading = false;
     notifyListeners();
     return false;
   }
 
-  // إعادة تعيين كلمة المرور (باستخدام التوكن)
   Future<bool> resetPassword(String token, String newPassword) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
-
     try {
       final url = Uri.parse(
         'https://api.details-store.com/api/auth/reset-password/$token',
@@ -223,7 +295,6 @@ class AuthProvider with ChangeNotifier {
         body: json.encode({'password': newPassword}),
         headers: {'Content-Type': 'application/json'},
       );
-
       if (response.statusCode == 200) {
         _isLoading = false;
         notifyListeners();
@@ -235,13 +306,11 @@ class AuthProvider with ChangeNotifier {
     } catch (e) {
       _errorMessage = e.toString();
     }
-
     _isLoading = false;
     notifyListeners();
     return false;
   }
 
-  // إرسال رمز التحقق (OTP) لإنشاء الحساب
   Future<bool> requestRegisterOtp(
     String name,
     String email,
@@ -251,7 +320,6 @@ class AuthProvider with ChangeNotifier {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
-
     try {
       final url = Uri.parse('https://api.details-store.com/api/auth/register');
       final response = await http.post(
@@ -264,7 +332,6 @@ class AuthProvider with ChangeNotifier {
         }),
         headers: {'Content-Type': 'application/json'},
       );
-
       if (response.statusCode == 200) {
         _isLoading = false;
         notifyListeners();
@@ -276,13 +343,11 @@ class AuthProvider with ChangeNotifier {
     } catch (e) {
       _errorMessage = e.toString();
     }
-
     _isLoading = false;
     notifyListeners();
     return false;
   }
 
-  // تحديث الملف الشخصي
   Future<bool> updateProfile({
     required String name,
     required String phone,
@@ -291,13 +356,10 @@ class AuthProvider with ChangeNotifier {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
-
     try {
       final url = Uri.parse('https://api.details-store.com/api/profile');
       final body = <String, dynamic>{'name': name, 'phone': phone};
-      if (password != null && password.isNotEmpty) {
-        body['password'] = password;
-      }
+      if (password != null && password.isNotEmpty) body['password'] = password;
 
       final response = await http.put(
         url,
@@ -307,14 +369,11 @@ class AuthProvider with ChangeNotifier {
           'Authorization': 'Bearer $_token',
         },
       );
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        // تحديث البيانات محلياً
         _user = User.fromJson(data);
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('userData', json.encode(_user!.toJson()));
-
         _isLoading = false;
         notifyListeners();
         return true;
@@ -325,7 +384,6 @@ class AuthProvider with ChangeNotifier {
     } catch (e) {
       _errorMessage = e.toString();
     }
-
     _isLoading = false;
     notifyListeners();
     return false;
