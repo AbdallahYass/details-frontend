@@ -100,6 +100,11 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
+  // دالة مساعدة لتجنب خطأ Null Check مع الترجمة
+  String _translate(String key) {
+    return AppLocalizations.of(context)?.translate(key) ?? key;
+  }
+
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
@@ -123,8 +128,7 @@ class _LoginScreenState extends State<LoginScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                authProvider.errorMessage ??
-                    AppLocalizations.of(context)!.translate('error_occurred'),
+                authProvider.errorMessage ?? _translate('error_occurred'),
               ),
               backgroundColor: AppColors.error,
             ),
@@ -143,6 +147,8 @@ class _LoginScreenState extends State<LoginScreen>
 
       if (googleAuth.idToken == null) {
         debugPrint("❌ Google Sign In Error: idToken is null.");
+        // مهم: تسجيل الخروج فوراً إذا فشل جلب التوكن لتجنب تعليق الجلسة
+        await _googleSignIn.signOut();
         throw "فشل التحقق من الهوية (idToken مفقود).";
       }
 
@@ -354,21 +360,15 @@ class _LoginScreenState extends State<LoginScreen>
                             const SizedBox(height: 20),
                             _buildElegantTextField(
                               controller: _emailController,
-                              label: AppLocalizations.of(
-                                context,
-                              )!.translate('email_label'),
+                              label: _translate('email_label'),
                               icon: Icons.email_outlined,
                               keyboardType: TextInputType.emailAddress,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return AppLocalizations.of(
-                                    context,
-                                  )!.translate('enter_email');
+                                  return _translate('enter_email');
                                 }
                                 if (!value.contains('@')) {
-                                  return AppLocalizations.of(
-                                    context,
-                                  )!.translate('valid_email');
+                                  return _translate('valid_email');
                                 }
                                 return null;
                               },
@@ -376,9 +376,7 @@ class _LoginScreenState extends State<LoginScreen>
                             const SizedBox(height: 16),
                             _buildElegantTextField(
                               controller: _passwordController,
-                              label: AppLocalizations.of(
-                                context,
-                              )!.translate('password_label'),
+                              label: _translate('password_label'),
                               icon: Icons.lock_outline,
                               obscureText: _obscurePassword,
                               isPassword: true,
@@ -389,14 +387,10 @@ class _LoginScreenState extends State<LoginScreen>
                               },
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return AppLocalizations.of(
-                                    context,
-                                  )!.translate('enter_password');
+                                  return _translate('enter_password');
                                 }
                                 if (value.length < 6) {
-                                  return AppLocalizations.of(
-                                    context,
-                                  )!.translate('short_password');
+                                  return _translate('short_password');
                                 }
                                 return null;
                               },
@@ -422,9 +416,7 @@ class _LoginScreenState extends State<LoginScreen>
                                   },
                                 ),
                                 Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.translate('remember_me'),
+                                  _translate('remember_me'),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF9E773A),
@@ -443,9 +435,7 @@ class _LoginScreenState extends State<LoginScreen>
                                     );
                                   },
                                   child: Text(
-                                    AppLocalizations.of(
-                                      context,
-                                    )!.translate('forgot_password'),
+                                    _translate('forgot_password'),
                                     style: const TextStyle(
                                       color: Color(0xFF9E773A),
                                       fontWeight: FontWeight.bold,
@@ -481,9 +471,7 @@ class _LoginScreenState extends State<LoginScreen>
                                   ),
                                 ),
                                 child: Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.translate('login_button'),
+                                  _translate('login_button'),
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -519,9 +507,7 @@ class _LoginScreenState extends State<LoginScreen>
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.translate('no_account'),
+                                  _translate('no_account'),
                                   style: const TextStyle(
                                     color: AppColors.textSecondary,
                                   ),
@@ -531,9 +517,7 @@ class _LoginScreenState extends State<LoginScreen>
                                     context.push('/register');
                                   },
                                   child: Text(
-                                    AppLocalizations.of(
-                                      context,
-                                    )!.translate('create_account_link'),
+                                    _translate('create_account_link'),
                                     style: const TextStyle(
                                       color: Color(0xFFD4AF37),
                                       fontWeight: FontWeight.bold,
