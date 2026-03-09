@@ -365,32 +365,6 @@ class _RegisterScreenState extends State<RegisterScreen>
     return Column(
       children: [
         Row(
-          children: [
-            Expanded(
-              child: Divider(
-                color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              child: Text(
-                'أو سجل عبر: / Or Sign Up',
-                style: const TextStyle(
-                  color: Color(0xFFD4AF37),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-            Expanded(
-              child: Divider(
-                color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             kIsWeb

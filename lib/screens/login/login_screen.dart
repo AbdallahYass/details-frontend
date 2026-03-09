@@ -530,40 +530,6 @@ class _LoginScreenState extends State<LoginScreen>
                             ),
                             const SizedBox(height: 15),
                             Row(
-                              children: [
-                                Expanded(
-                                  child: Divider(
-                                    color: const Color(
-                                      0xFFD4AF37,
-                                    ).withValues(alpha: 0.5),
-                                    thickness: 1,
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 15,
-                                  ),
-                                  child: Text(
-                                    'أو سجل عبر: / Or Sign In',
-                                    style: const TextStyle(
-                                      color: Color(0xFFD4AF37),
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Divider(
-                                    color: const Color(
-                                      0xFFD4AF37,
-                                    ).withValues(alpha: 0.5),
-                                    thickness: 1,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 15),
-                            Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 kIsWeb
@@ -590,27 +556,6 @@ class _LoginScreenState extends State<LoginScreen>
                                         ),
                                         onPressed: _loginWithGoogleMobile,
                                       ),
-                                if (!kIsWeb) const SizedBox(width: 20),
-                                _buildSocialButton(
-                                  child: const Icon(
-                                    Icons.apple,
-                                    size: 32,
-                                    color: Colors.black,
-                                  ),
-                                  onPressed: () {},
-                                ),
-                                const SizedBox(width: 20),
-                                _buildSocialButton(
-                                  child: const Text(
-                                    'f',
-                                    style: TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF9E773A),
-                                    ),
-                                  ),
-                                  onPressed: () {},
-                                ),
                               ],
                             ),
                             const SizedBox(height: 8),
