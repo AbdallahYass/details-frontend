@@ -118,15 +118,12 @@ class _LoginScreenState extends State<LoginScreen>
         serverClientId: !kIsWeb
             ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
             : null,
-        scopes: [
-          'email',
-          'https://www.googleapis.com/auth/userinfo.profile',
-          'openid',
-        ],
+        // Removing explicit scopes on web often resolves null idToken issues
+        // as the default behavior includes necessary OpenID scopes.
       );
 
-      // ⚠️ خطوة مهمة: تسجيل الخروج أولاً لضمان عدم استرجاع جلسة قديمة من الكاش
-      // هذا يحل مشكلة idToken: null عند إعادة المحاولة
+      // تسجيل الخروج لضمان جلسة نظيفة، لكن قد نحتاج لتعطيله إذا استمرت المشكلة
+      // في بعض الأحيان التكرار السريع يسبب حظر مؤقت
       await googleSignIn.signOut();
 
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
@@ -138,7 +135,15 @@ class _LoginScreenState extends State<LoginScreen>
           await googleUser.authentication;
 
       if (googleAuth.idToken == null) {
-        throw "فشل في استلام بيانات الاعتماد من جوجل. يرجى المحاولة مرة أخرى.";
+        debugPrint(
+          "❌ Google Sign In Error: idToken is null. AccessToken: ${googleAuth.accessToken != null}",
+        );
+        if (kIsWeb) {
+          debugPrint(
+            "⚠️ Web Config Check: Ensure 'https://www.details-store.com' is in Authorized JavaScript origins in GCP.",
+          );
+        }
+        throw "فشل التحقق من الهوية (idToken مفقود). تأكد من إعدادات Google Cloud Console (Authorized Origins) وعدم حظر ملفات تعريف الارتباط.";
       }
 
       // 4. إرسال التوكن للباك إند الخاص بك (Node.js)
