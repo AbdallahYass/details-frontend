@@ -1,15 +1,20 @@
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
-import 'package:details_app/constants/app_colors.dart';
-import 'package:details_app/providers/auth_provider.dart';
-import 'package:details_app/l10n/app_localizations.dart';
+// ignore_for_file: use_build_context_synchronously
+
+import 'package:details_app/app_imports.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
+import 'package:google_sign_in/google_sign_in.dart';
+import 'web_auth_stub.dart'
+    if (dart.library.js_interop) 'package:google_sign_in_web/web_only.dart'
+    as web;
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  // إضافة إمكانية استقبال بيانات مسبقة (مثل الإيميل والاسم من جوجل)
+  final String? initialEmail;
+  final String? initialName;
+
+  const RegisterScreen({super.key, this.initialEmail, this.initialName});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -18,8 +23,8 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
+  late TextEditingController _nameController;
+  late TextEditingController _emailController;
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
@@ -28,8 +33,17 @@ class _RegisterScreenState extends State<RegisterScreen>
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isWebReady = !kIsWeb; // حماية الويب
 
-  // Animation Controllers
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: kIsWeb
+        ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
+        : null,
+    serverClientId: !kIsWeb
+        ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
+        : null,
+  );
+
   late AnimationController _rotationController;
   late AnimationController _entranceController;
   late Animation<double> _fadeAnimation;
@@ -38,13 +52,15 @@ class _RegisterScreenState extends State<RegisterScreen>
   @override
   void initState() {
     super.initState();
-    // تحريك الخلفية ببطء
+    // تهيئة الكونترولرز مع البيانات القادمة إن وجدت
+    _nameController = TextEditingController(text: widget.initialName);
+    _emailController = TextEditingController(text: widget.initialEmail);
+
     _rotationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 10),
     )..repeat();
 
-    // أنيميشن دخول العناصر
     _entranceController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -66,6 +82,30 @@ class _RegisterScreenState extends State<RegisterScreen>
         );
 
     _entranceController.forward();
+
+    // الاستماع لجوجل (لجلب البيانات فقط عند التسجيل)
+    _googleSignIn.onCurrentUserChanged.listen((account) {
+      if (account != null) {
+        setState(() {
+          _nameController.text = account.displayName ?? "";
+          _emailController.text = account.email;
+        });
+      }
+    });
+
+    if (kIsWeb) {
+      _initWebSafe();
+    }
+  }
+
+  Future<void> _initWebSafe() async {
+    try {
+      await _googleSignIn.signInSilently();
+    } catch (e) {
+      debugPrint("Silent Sign In Error: $e");
+    } finally {
+      if (mounted) setState(() => _isWebReady = true);
+    }
   }
 
   @override
@@ -80,13 +120,16 @@ class _RegisterScreenState extends State<RegisterScreen>
     super.dispose();
   }
 
+  String _translate(String key) {
+    return AppLocalizations.of(context)?.translate(key) ?? key;
+  }
+
   Future<void> _handleRegister() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-      // 1. إرسال الرمز أولاً
       final success = await authProvider.requestRegisterOtp(
         _nameController.text.trim(),
         _emailController.text.trim(),
@@ -97,7 +140,6 @@ class _RegisterScreenState extends State<RegisterScreen>
       if (mounted) {
         setState(() => _isLoading = false);
         if (success) {
-          // 2. التوجيه لشاشة التحقق مع تمرير البيانات
           context.push(
             '/verify-otp',
             extra: {
@@ -111,14 +153,29 @@ class _RegisterScreenState extends State<RegisterScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                authProvider.errorMessage ??
-                    AppLocalizations.of(context)!.translate('error_occurred'),
+                authProvider.errorMessage ?? _translate('error_occurred'),
               ),
               backgroundColor: AppColors.error,
             ),
           );
         }
       }
+    }
+  }
+
+  // دالة جلب البيانات من جوجل للموبايل
+  Future<void> _fetchGoogleDataMobile() async {
+    try {
+      await _googleSignIn.signOut();
+      final account = await _googleSignIn.signIn();
+      if (account != null) {
+        setState(() {
+          _nameController.text = account.displayName ?? "";
+          _emailController.text = account.email;
+        });
+      }
+    } catch (e) {
+      debugPrint("Fetch Google Error: $e");
     }
   }
 
@@ -138,61 +195,8 @@ class _RegisterScreenState extends State<RegisterScreen>
             Positioned.fill(
               child: Image.asset('assets/images/bg.png', fit: BoxFit.cover),
             ),
-            // --- خلفية متحركة ---
-            Positioned(
-              top: -120,
-              right: -120,
-              child: AnimatedBuilder(
-                animation: _rotationController,
-                builder: (context, child) {
-                  return Transform.rotate(
-                    angle: _rotationController.value * 2 * math.pi,
-                    child: child,
-                  );
-                },
-                child: Container(
-                  width: 400,
-                  height: 400,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
-                      width: 2,
-                    ),
-                    gradient: SweepGradient(
-                      colors: [
-                        const Color(0xFFD4AF37).withValues(alpha: 0.2),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: -180,
-              left: -180,
-              child: AnimatedBuilder(
-                animation: _rotationController,
-                builder: (context, child) {
-                  return Transform.rotate(
-                    angle: -_rotationController.value * 2 * math.pi,
-                    child: child,
-                  );
-                },
-                child: Container(
-                  width: 500,
-                  height: 500,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.primary.withValues(alpha: 0.15),
-                      width: 40,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            // --- الزخرفة المتحركة ---
+            _buildAnimatedBackground(),
 
             SafeArea(
               child: Center(
@@ -208,326 +212,77 @@ class _RegisterScreenState extends State<RegisterScreen>
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // الشعار والنصوص
-                            Center(
-                              child: Container(
-                                padding: const EdgeInsets.all(15),
-                                child: Image.asset(
-                                  'assets/images/logo.png',
-                                  height: 180,
-                                  width: 180,
-                                  errorBuilder: (c, _, __) => const Icon(
-                                    Icons.account_circle,
-                                    size: 200,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Column(
-                              children: [
-                                Text(
-                                  'DETAILS',
-                                  style: TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w300,
-                                    color: AppColors.textPrimary,
-                                    letterSpacing: 10.0,
-                                    height: 1.2,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Container(
-                                      width: 30,
-                                      height: 1,
-                                      color: const Color(0xFFD4AF37),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                      ),
-                                      child: Text(
-                                        'STORE',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          color: const Color(0xFFD4AF37),
-                                          letterSpacing: 3.0,
-                                        ),
-                                      ),
-                                    ),
-                                    Container(
-                                      width: 30,
-                                      height: 1,
-                                      color: const Color(0xFFD4AF37),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                            _buildHeader(),
                             const SizedBox(height: 30),
 
-                            // حقل الاسم
                             _buildElegantTextField(
                               controller: _nameController,
-                              label: AppLocalizations.of(
-                                context,
-                              )!.translate('name_label'),
+                              label: _translate('name_label'),
                               icon: Icons.person_outline,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return AppLocalizations.of(
-                                    context,
-                                  )!.translate('enter_name');
-                                }
-                                return null;
-                              },
+                              validator: (v) =>
+                                  v!.isEmpty ? _translate('enter_name') : null,
                             ),
                             const SizedBox(height: 16),
 
-                            // حقل البريد الإلكتروني
                             _buildElegantTextField(
                               controller: _emailController,
-                              label: AppLocalizations.of(
-                                context,
-                              )!.translate('email_label'),
+                              label: _translate('email_label'),
                               icon: Icons.email_outlined,
                               keyboardType: TextInputType.emailAddress,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return AppLocalizations.of(
-                                    context,
-                                  )!.translate('enter_email');
-                                }
-                                if (!value.contains('@')) {
-                                  return AppLocalizations.of(
-                                    context,
-                                  )!.translate('valid_email');
-                                }
-                                return null;
-                              },
+                              validator: (v) => !v!.contains('@')
+                                  ? _translate('valid_email')
+                                  : null,
                             ),
                             const SizedBox(height: 16),
 
-                            // حقل الهاتف
                             _buildElegantTextField(
                               controller: _phoneController,
-                              label: AppLocalizations.of(
-                                context,
-                              )!.translate('phone_label'),
+                              label: _translate('phone_label'),
                               icon: Icons.phone_android,
                               keyboardType: TextInputType.phone,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return AppLocalizations.of(
-                                    context,
-                                  )!.translate('enter_phone');
-                                }
-                                return null;
-                              },
+                              validator: (v) =>
+                                  v!.isEmpty ? _translate('enter_phone') : null,
                             ),
                             const SizedBox(height: 16),
 
-                            // حقل كلمة المرور
                             _buildElegantTextField(
                               controller: _passwordController,
-                              label: AppLocalizations.of(
-                                context,
-                              )!.translate('password_label'),
+                              label: _translate('password_label'),
                               icon: Icons.lock_outline,
                               obscureText: _obscurePassword,
                               isPassword: true,
-                              onTogglePassword: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
-                              validator: (value) {
-                                if (value == null || value.length < 6) {
-                                  return AppLocalizations.of(
-                                    context,
-                                  )!.translate('short_password');
-                                }
-                                return null;
-                              },
+                              onTogglePassword: () => setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
+                              validator: (v) => v!.length < 6
+                                  ? _translate('short_password')
+                                  : null,
                             ),
                             const SizedBox(height: 16),
 
-                            // حقل تأكيد كلمة المرور
                             _buildElegantTextField(
                               controller: _confirmPasswordController,
-                              label: AppLocalizations.of(
-                                context,
-                              )!.translate('confirm_password_label'),
+                              label: _translate('confirm_password_label'),
                               icon: Icons.lock_outline,
                               obscureText: _obscureConfirmPassword,
                               isPassword: true,
-                              onTogglePassword: () {
-                                setState(() {
-                                  _obscureConfirmPassword =
-                                      !_obscureConfirmPassword;
-                                });
-                              },
-                              validator: (value) {
-                                if (value != _passwordController.text) {
-                                  return AppLocalizations.of(
-                                    context,
-                                  )!.translate('passwords_not_match');
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 30),
-
-                            // زر التسجيل
-                            Container(
-                              width: double.infinity,
-                              height: 55,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(
-                                      0xFF9E773A,
-                                    ).withValues(alpha: 0.3),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
+                              onTogglePassword: () => setState(
+                                () => _obscureConfirmPassword =
+                                    !_obscureConfirmPassword,
                               ),
-                              child: ElevatedButton(
-                                onPressed: _isLoading ? null : _handleRegister,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF9E773A),
-                                  shadowColor: Colors.transparent,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                child: Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.translate('register_button'),
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
+                              validator: (v) => v != _passwordController.text
+                                  ? _translate('passwords_not_match')
+                                  : null,
                             ),
-
                             const SizedBox(height: 30),
 
-                            // فاصل "أو سجل عبر"
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Divider(
-                                    color: const Color(
-                                      0xFFD4AF37,
-                                    ).withValues(alpha: 0.5),
-                                    thickness: 1,
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 15,
-                                  ),
-                                  child: Text(
-                                    'أو سجل عبر: / Or Sign Up',
-                                    style: const TextStyle(
-                                      color: Color(0xFFD4AF37),
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Divider(
-                                    color: const Color(
-                                      0xFFD4AF37,
-                                    ).withValues(alpha: 0.5),
-                                    thickness: 1,
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 25),
-
-                            // أزرار السوشيال ميديا
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _buildSocialButton(
-                                  child: const Text(
-                                    'G',
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF9E773A),
-                                    ),
-                                  ),
-                                  onPressed: () {},
-                                ),
-                                const SizedBox(width: 20),
-                                _buildSocialButton(
-                                  child: const Icon(
-                                    Icons.apple,
-                                    size: 32,
-                                    color: Colors.black,
-                                  ),
-                                  onPressed: () {},
-                                ),
-                                const SizedBox(width: 20),
-                                _buildSocialButton(
-                                  child: const Text(
-                                    'f',
-                                    style: TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF9E773A),
-                                    ),
-                                  ),
-                                  onPressed: () {},
-                                ),
-                              ],
-                            ),
-
+                            _buildRegisterButton(),
                             const SizedBox(height: 30),
 
-                            // رابط تسجيل الدخول
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.translate('have_account'),
-                                  style: const TextStyle(
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                                TextButton(
-                                  onPressed: () => context.pop(),
-                                  child: Text(
-                                    AppLocalizations.of(
-                                      context,
-                                    )!.translate('login_link'),
-                                    style: const TextStyle(
-                                      color: Color(0xFFD4AF37),
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                            _buildSocialSection(),
+                            const SizedBox(height: 30),
+
+                            _buildLoginLink(),
                           ],
                         ),
                       ),
@@ -540,6 +295,182 @@ class _RegisterScreenState extends State<RegisterScreen>
           ],
         ),
       ),
+    );
+  }
+
+  // --- دوال بناء الواجهة (UI Helpers) ---
+
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        Image.asset('assets/images/logo.png', height: 120, width: 120),
+        const SizedBox(height: 10),
+        Text(
+          'DETAILS',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w300,
+            color: AppColors.textPrimary,
+            letterSpacing: 8.0,
+          ),
+        ),
+        Text(
+          'STORE',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFFD4AF37),
+            letterSpacing: 3.0,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRegisterButton() {
+    return Container(
+      width: double.infinity,
+      height: 55,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF9E773A).withValues(alpha: 0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _handleRegister,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF9E773A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+        child: Text(
+          _translate('register_button'),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSocialSection() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Divider(
+                color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              child: Text(
+                'أو سجل عبر: / Or Sign Up',
+                style: const TextStyle(
+                  color: Color(0xFFD4AF37),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Divider(
+                color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            kIsWeb
+                ? SizedBox(
+                    height: 40,
+                    child: _isWebReady
+                        ? web.renderButton()
+                        : const CircularProgressIndicator(),
+                  )
+                : _buildSocialButton(
+                    child: const Text(
+                      'G',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF9E773A),
+                      ),
+                    ),
+                    onPressed: _fetchGoogleDataMobile,
+                  ),
+            const SizedBox(width: 20),
+            _buildSocialButton(
+              child: const Icon(Icons.apple, size: 32, color: Colors.black),
+              onPressed: () {},
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoginLink() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          _translate('have_account'),
+          style: const TextStyle(color: AppColors.textSecondary),
+        ),
+        TextButton(
+          onPressed: () => context.pop(),
+          child: Text(
+            _translate('login_link'),
+            style: const TextStyle(
+              color: Color(0xFFD4AF37),
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAnimatedBackground() {
+    return Stack(
+      children: [
+        Positioned(
+          top: -120,
+          right: -120,
+          child: AnimatedBuilder(
+            animation: _rotationController,
+            builder: (context, child) => Transform.rotate(
+              angle: _rotationController.value * 2 * math.pi,
+              child: child,
+            ),
+            child: Container(
+              width: 400,
+              height: 400,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
+                  width: 2,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -558,13 +489,6 @@ class _RegisterScreenState extends State<RegisterScreen>
         color: AppColors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFB89560), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: TextFormField(
         controller: controller,
@@ -577,7 +501,6 @@ class _RegisterScreenState extends State<RegisterScreen>
         ),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(color: Color(0xFF666666), fontSize: 14),
           prefixIcon: Icon(icon, color: const Color(0xFFB89560)),
           suffixIcon: isPassword
               ? IconButton(
@@ -614,13 +537,6 @@ class _RegisterScreenState extends State<RegisterScreen>
           shape: BoxShape.circle,
           color: AppColors.white,
           border: Border.all(color: const Color(0xFFB89560), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
         child: Center(child: child),
       ),

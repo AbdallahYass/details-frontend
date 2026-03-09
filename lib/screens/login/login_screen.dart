@@ -29,7 +29,6 @@ class _LoginScreenState extends State<LoginScreen>
   bool _obscurePassword = true;
   bool _rememberMe = false;
 
-  // 1. متغير لحماية الويب من خطأ Null Check
   bool _isWebReady = !kIsWeb;
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
@@ -84,13 +83,11 @@ class _LoginScreenState extends State<LoginScreen>
       }
     });
 
-    // 2. تهيئة الويب بشكل آمن جداً
     if (kIsWeb) {
       _initWebSafe();
     }
   }
 
-  // دالة التهيئة الآمنة للويب
   Future<void> _initWebSafe() async {
     try {
       await _googleSignIn.signInSilently();
@@ -99,7 +96,7 @@ class _LoginScreenState extends State<LoginScreen>
     } finally {
       if (mounted) {
         setState(() {
-          _isWebReady = true; // الآن فقط نسمح برسم الزر
+          _isWebReady = true;
         });
       }
     }
@@ -116,6 +113,36 @@ class _LoginScreenState extends State<LoginScreen>
 
   String _translate(String key) {
     return AppLocalizations.of(context)?.translate(key) ?? key;
+  }
+
+  // نافذة ذكية تظهر عند محاولة الدخول بحساب محذوف
+  void _showRegisterDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: Text(_translate('account_not_found_title')),
+        content: Text(_translate('account_not_found_desc')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(_translate('cancel')),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            onPressed: () {
+              Navigator.pop(context);
+              context.push('/register');
+            },
+            child: Text(
+              _translate('create_account_link'),
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _handleLogin() async {
@@ -151,7 +178,6 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  // دالة مشتركة لإرسال التوكن لسيرفر الـ Node.js
   Future<void> _handleGoogleBackendAuth(GoogleSignInAccount googleUser) async {
     setState(() => _isLoading = true);
     try {
@@ -163,7 +189,6 @@ class _LoginScreenState extends State<LoginScreen>
         throw "فشل التحقق من الهوية (idToken مفقود).";
       }
 
-      // إرسال التوكن للباك إند
       final response = await http.post(
         Uri.parse('https://api.details-store.com/api/auth/google'),
         headers: {'Content-Type': 'application/json'},
@@ -177,23 +202,23 @@ class _LoginScreenState extends State<LoginScreen>
         final userData = data['user'];
 
         if (token != null && userData != null) {
-          // التعديل هنا: إخبار الـ AuthProvider بالنجاح ليقوم هو بالحفظ والتحديث
           final authProvider = Provider.of<AuthProvider>(
             context,
             listen: false,
           );
-
-          // سنقوم بمحاكاة نجاح الدخول داخل الـ provider (أو يمكنك إضافة دالة مخصصة هناك)
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('token', token);
           await prefs.setString('userData', json.encode(userData));
 
-          // تحديث حالة التطبيق والانتقال للرئيسية
           await authProvider.tryAutoLogin();
           if (mounted) context.go('/');
         }
+      }
+      // التعديل الهام هنا: التعامل مع الحساب المحذوف (404)
+      else if (response.statusCode == 404) {
+        await _googleSignIn.disconnect(); // كسر حلقة الدخول التلقائي
+        if (mounted) _showRegisterDialog();
       } else {
-        // إذا الحساب محذوف من السيرفر (404)
         await _googleSignIn.disconnect();
         throw data['message'] ?? "خطأ من السيرفر";
       }
@@ -244,6 +269,7 @@ class _LoginScreenState extends State<LoginScreen>
                 cacheWidth: 1080,
               ),
             ),
+            // ... (أكواد الأشكال الهندسية والأنيميشن كما هي)
             Positioned(
               top: -120,
               right: -120,
@@ -354,13 +380,13 @@ class _LoginScreenState extends State<LoginScreen>
                                           height: 1,
                                           color: const Color(0xFFD4AF37),
                                         ),
-                                        const Padding(
-                                          padding: EdgeInsets.symmetric(
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
                                             horizontal: 12,
                                           ),
                                           child: Text(
                                             'STORE',
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
                                               color: Color(0xFFD4AF37),
@@ -513,11 +539,13 @@ class _LoginScreenState extends State<LoginScreen>
                                     thickness: 1,
                                   ),
                                 ),
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 15),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 15,
+                                  ),
                                   child: Text(
                                     'أو سجل عبر: / Or Sign In',
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       color: Color(0xFFD4AF37),
                                       fontWeight: FontWeight.bold,
                                       fontSize: 15,
@@ -538,7 +566,6 @@ class _LoginScreenState extends State<LoginScreen>
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // 4. المحرك الأساسي: هنا سيظهر لودينج خفيف إذا لم يكتمل الويب
                                 kIsWeb
                                     ? SizedBox(
                                         height: 40,
@@ -563,9 +590,7 @@ class _LoginScreenState extends State<LoginScreen>
                                         ),
                                         onPressed: _loginWithGoogleMobile,
                                       ),
-
                                 if (!kIsWeb) const SizedBox(width: 20),
-
                                 _buildSocialButton(
                                   child: const Icon(
                                     Icons.apple,
@@ -599,9 +624,7 @@ class _LoginScreenState extends State<LoginScreen>
                                   ),
                                 ),
                                 TextButton(
-                                  onPressed: () {
-                                    context.push('/register');
-                                  },
+                                  onPressed: () => context.push('/register'),
                                   child: Text(
                                     _translate('create_account_link'),
                                     style: const TextStyle(
