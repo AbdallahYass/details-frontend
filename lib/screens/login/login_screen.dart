@@ -118,8 +118,7 @@ class _LoginScreenState extends State<LoginScreen>
         serverClientId: !kIsWeb
             ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
             : null,
-        // Removing explicit scopes on web often resolves null idToken issues
-        // as the default behavior includes necessary OpenID scopes.
+        signInOption: SignInOption.standard,
       );
 
       // تسجيل الخروج لضمان جلسة نظيفة، لكن قد نحتاج لتعطيله إذا استمرت المشكلة
@@ -143,7 +142,7 @@ class _LoginScreenState extends State<LoginScreen>
             "⚠️ Web Config Check: Ensure 'https://www.details-store.com' is in Authorized JavaScript origins in GCP.",
           );
         }
-        throw "فشل التحقق من الهوية (idToken مفقود). تأكد من إعدادات Google Cloud Console (Authorized Origins) وعدم حظر ملفات تعريف الارتباط.";
+        throw "فشل التحقق من الهوية (idToken مفقود). تأكد من إعدادات Google Cloud Console وسياسة COOP في vercel.json.";
       }
 
       // 4. إرسال التوكن للباك إند الخاص بك (Node.js)
