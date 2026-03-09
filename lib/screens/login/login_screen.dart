@@ -67,11 +67,11 @@ class _LoginScreenState extends State<LoginScreen>
 
     _slideAnimation =
         Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
-          CurvedAnimation(
-            parent: _entranceController,
-            curve: const Interval(0.2, 1.0, curve: Curves.easeOutCubic),
-          ),
-        );
+      CurvedAnimation(
+        parent: _entranceController,
+        curve: const Interval(0.2, 1.0, curve: Curves.easeOutCubic),
+      ),
+    );
 
     _entranceController.forward();
 
@@ -87,7 +87,10 @@ class _LoginScreenState extends State<LoginScreen>
 
     // من الجيد استدعاء الدخول الصامت على الويب لضمان اكتمال التهيئة
     if (kIsWeb) {
-      _googleSignIn.signInSilently();
+      _googleSignIn.signInSilently().catchError((e) {
+        debugPrint("Silent Sign In Error: $e");
+        return null;
+      });
     }
   }
 
@@ -106,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
+    if (_formKey.currentState?.validate() ?? false) {
       setState(() => _isLoading = true);
 
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
