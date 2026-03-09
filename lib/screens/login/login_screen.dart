@@ -531,10 +531,8 @@ class _LoginScreenState extends State<LoginScreen>
                                 kIsWeb
                                     ? SizedBox(
                                         height: 40,
-                                        child: web.renderButton(
-                                          configuration:
-                                              web.GsiButtonConfiguration(),
-                                        ),
+                                        // استدعاء الزر فارغاً بدون أي configuration!
+                                        child: web.renderButton(),
                                       )
                                     : _buildSocialButton(
                                         child: const Text(
