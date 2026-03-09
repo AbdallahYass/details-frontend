@@ -4,8 +4,12 @@ import 'package:details_app/app_imports.dart';
 import 'forgot_password_screen.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:flutter/services.dart';
+// تمت الإضافة للتحقق من منصة الويب kIsWeb
 import 'dart:math' as math;
 import 'package:google_sign_in/google_sign_in.dart';
+import 'web_auth_stub.dart'
+    if (dart.library.js_interop) 'package:google_sign_in_web/web_only.dart'
+    as web;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,6 +29,17 @@ class _LoginScreenState extends State<LoginScreen>
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _rememberMe = false;
+
+  // تعريف GoogleSignIn على مستوى الكلاس
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: kIsWeb
+        ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
+        : null,
+    serverClientId: !kIsWeb
+        ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
+        : null,
+    signInOption: SignInOption.standard,
+  );
 
   // Animation Controllers
   late AnimationController _rotationController;
@@ -63,6 +78,15 @@ class _LoginScreenState extends State<LoginScreen>
         );
 
     _entranceController.forward();
+
+    // الاستماع لعملية تسجيل الدخول (مطلوب جداً للويب)
+    _googleSignIn.onCurrentUserChanged.listen((
+      GoogleSignInAccount? account,
+    ) async {
+      if (account != null) {
+        await _handleGoogleBackendAuth(account);
+      }
+    });
   }
 
   @override
@@ -108,28 +132,10 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  Future<void> _loginWithGoogle() async {
+  // دالة مشتركة لإرسال التوكن لسيرفر الـ Node.js
+  Future<void> _handleGoogleBackendAuth(GoogleSignInAccount googleUser) async {
     setState(() => _isLoading = true);
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn(
-        clientId: kIsWeb
-            ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
-            : null,
-        serverClientId: !kIsWeb
-            ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
-            : null,
-        signInOption: SignInOption.standard,
-      );
-
-      // تسجيل الخروج لضمان جلسة نظيفة، لكن قد نحتاج لتعطيله إذا استمرت المشكلة
-      // في بعض الأحيان التكرار السريع يسبب حظر مؤقت
-      await googleSignIn.signOut();
-
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-      if (googleUser == null) {
-        return;
-      }
-
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
@@ -137,15 +143,9 @@ class _LoginScreenState extends State<LoginScreen>
         debugPrint(
           "❌ Google Sign In Error: idToken is null. AccessToken: ${googleAuth.accessToken != null}",
         );
-        if (kIsWeb) {
-          debugPrint(
-            "⚠️ Web Config Check: Ensure 'https://www.details-store.com' is in Authorized JavaScript origins in GCP.",
-          );
-        }
-        throw "فشل التحقق من الهوية (idToken مفقود). تأكد من إعدادات Google Cloud Console وسياسة COOP في vercel.json.";
+        throw "فشل التحقق من الهوية (idToken مفقود).";
       }
 
-      // 4. إرسال التوكن للباك إند الخاص بك (Node.js)
       final response = await http.post(
         Uri.parse('https://api.details-store.com/api/auth/google'),
         headers: {'Content-Type': 'application/json'},
@@ -176,6 +176,19 @@ class _LoginScreenState extends State<LoginScreen>
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // هذه الدالة تعمل على الموبايل فقط
+  Future<void> _loginWithGoogleMobile() async {
+    try {
+      await _googleSignIn.signOut();
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser != null) {
+        await _handleGoogleBackendAuth(googleUser);
+      }
+    } catch (error) {
+      debugPrint("Google Sign In Mobile Error: $error");
     }
   }
 
@@ -254,7 +267,6 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               ),
             ),
-
             SafeArea(
               child: Center(
                 child: SingleChildScrollView(
@@ -513,19 +525,35 @@ class _LoginScreenState extends State<LoginScreen>
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // تم ربط زر جوجل هنا 👇
-                                _buildSocialButton(
-                                  child: const Text(
-                                    'G',
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF9E773A),
-                                    ),
-                                  ),
-                                  onPressed: _loginWithGoogle,
-                                ),
-                                const SizedBox(width: 20),
+                                // هنا التعديل الجوهري لعرض زر الويب
+                                kIsWeb
+                                    ? SizedBox(
+                                        height: 40,
+                                        child: web.renderButton(
+                                          configuration:
+                                              web.GsiButtonConfiguration(
+                                                theme:
+                                                    web.GsiButtonTheme.outline,
+                                                shape: web.GsiButtonShape.pill,
+                                                size: web.GsiButtonSize.large,
+                                              ),
+                                        ),
+                                      )
+                                    : _buildSocialButton(
+                                        child: const Text(
+                                          'G',
+                                          style: TextStyle(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
+                                            color: Color(0xFF9E773A),
+                                          ),
+                                        ),
+                                        onPressed: _loginWithGoogleMobile,
+                                      ),
+
+                                // مسافة أفقية إذا لم نكن على الويب
+                                if (!kIsWeb) const SizedBox(width: 20),
+
                                 _buildSocialButton(
                                   child: const Icon(
                                     Icons.apple,
