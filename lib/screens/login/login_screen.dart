@@ -4,7 +4,6 @@ import 'package:details_app/app_imports.dart';
 import 'forgot_password_screen.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:flutter/services.dart';
-// تمت الإضافة للتحقق من منصة الويب kIsWeb
 import 'dart:math' as math;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'web_auth_stub.dart'
@@ -30,15 +29,8 @@ class _LoginScreenState extends State<LoginScreen>
   bool _obscurePassword = true;
   bool _rememberMe = false;
 
-  // تعريف GoogleSignIn على مستوى الكلاس
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    clientId: kIsWeb
-        ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
-        : null,
-    serverClientId: !kIsWeb
-        ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
-        : null,
-  );
+  // 1. التعديل هنا: استخدام .instance بدلاً من الأقواس
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
 
   // Animation Controllers
   late AnimationController _rotationController;
@@ -78,12 +70,24 @@ class _LoginScreenState extends State<LoginScreen>
 
     _entranceController.forward();
 
-    // الاستماع لعملية تسجيل الدخول (مطلوب جداً للويب)
-    _googleSignIn.onCurrentUserChanged.listen((
-      GoogleSignInAccount? account,
-    ) async {
-      if (account != null) {
-        await _handleGoogleBackendAuth(account);
+    // تهيئة جوجل والبدء بالاستماع للأحداث بالطريقة الجديدة
+    _initGoogleSignIn();
+  }
+
+  // 2. دالة جديدة لتهيئة GoogleSignIn والاستماع للأحداث
+  Future<void> _initGoogleSignIn() async {
+    await _googleSignIn.initialize(
+      clientId: kIsWeb
+          ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
+          : null,
+      serverClientId: !kIsWeb
+          ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
+          : null,
+    );
+
+    _googleSignIn.authenticationEvents.listen((event) async {
+      if (event is GoogleSignInAuthenticationEventSignIn) {
+        await _handleGoogleBackendAuth(event.user);
       }
     });
   }
@@ -135,8 +139,8 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _handleGoogleBackendAuth(GoogleSignInAccount googleUser) async {
     setState(() => _isLoading = true);
     try {
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+      // 3. التعديل هنا: تمت إزالة كلمة await لأن authentication لم تعد Future
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
       if (googleAuth.idToken == null) {
         debugPrint("❌ Google Sign In Error: idToken is null.");
@@ -177,13 +181,14 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   // هذه الدالة تعمل على الموبايل فقط
+  // هذه الدالة تعمل على الموبايل فقط
   Future<void> _loginWithGoogleMobile() async {
     try {
       await _googleSignIn.signOut();
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser != null) {
-        await _handleGoogleBackendAuth(googleUser);
-      }
+
+      // التعديل هنا: إزالة ? وإزالة التحقق من null
+      final googleUser = await _googleSignIn.authenticate();
+      await _handleGoogleBackendAuth(googleUser);
     } catch (error) {
       debugPrint("Google Sign In Mobile Error: $error");
     }
@@ -317,7 +322,7 @@ class _LoginScreenState extends State<LoginScreen>
                                       children: [
                                         Container(
                                           width: 40,
-                                          height: 1, //
+                                          height: 1,
                                           color: const Color(0xFFD4AF37),
                                         ),
                                         const Padding(
@@ -522,18 +527,13 @@ class _LoginScreenState extends State<LoginScreen>
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // هنا التعديل الجوهري لعرض زر الويب
+                                // 5. التعديل هنا: تبسيط زر الويب لتجنب أخطاء Configuration
                                 kIsWeb
                                     ? SizedBox(
                                         height: 40,
                                         child: web.renderButton(
                                           configuration:
-                                              web.GsiButtonConfiguration(
-                                                theme:
-                                                    web.GsiButtonTheme.outline,
-                                                shape: web.GsiButtonShape.pill,
-                                                size: web.GsiButtonSize.large,
-                                              ),
+                                              web.GsiButtonConfiguration(),
                                         ),
                                       )
                                     : _buildSocialButton(
@@ -548,7 +548,6 @@ class _LoginScreenState extends State<LoginScreen>
                                         onPressed: _loginWithGoogleMobile,
                                       ),
 
-                                // مسافة أفقية إذا لم نكن على الويب
                                 if (!kIsWeb) const SizedBox(width: 20),
 
                                 _buildSocialButton(
