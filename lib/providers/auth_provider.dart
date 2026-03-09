@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:details_app/app_imports.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 // نموذج مستخدم بسيط (يمكنك نقله لملف منفصل لاحقاً)
 class User {
@@ -96,12 +97,25 @@ class AuthProvider with ChangeNotifier {
     return false;
   }
 
-  // تسجيل الخروج
   Future<void> logout() async {
     _token = null;
     _user = null;
+
+    // 1. مسح البيانات المحلية من التطبيق
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+
+    // 2. مسح جلسة جوجل (الخطوة الأهم لمنع الحسابات الشبحية)
+    try {
+      // نستخدم دالة صامتة لفصل الحساب نهائياً سواء كان ويب أو موبايل
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      if (await googleSignIn.isSignedIn()) {
+        await googleSignIn.disconnect();
+      }
+    } catch (e) {
+      debugPrint('Google SignOut Error: $e');
+    }
+
     notifyListeners();
   }
 

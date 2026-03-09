@@ -29,7 +29,9 @@ class _LoginScreenState extends State<LoginScreen>
   bool _obscurePassword = true;
   bool _rememberMe = false;
 
-  // 1. التعريف الصحيح والرسمي لجوجل (بدون instance)
+  // 1. متغير لحماية الويب من خطأ Null Check
+  bool _isWebReady = !kIsWeb;
+
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     clientId: kIsWeb
         ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
@@ -39,7 +41,6 @@ class _LoginScreenState extends State<LoginScreen>
         : null,
   );
 
-  // Animation Controllers
   late AnimationController _rotationController;
   late AnimationController _entranceController;
   late Animation<double> _fadeAnimation;
@@ -67,16 +68,14 @@ class _LoginScreenState extends State<LoginScreen>
 
     _slideAnimation =
         Tween<Offset>(begin: const Offset(0, 0.2), end: Offset.zero).animate(
-      CurvedAnimation(
-        parent: _entranceController,
-        curve: const Interval(0.2, 1.0, curve: Curves.easeOutCubic),
-      ),
-    );
+          CurvedAnimation(
+            parent: _entranceController,
+            curve: const Interval(0.2, 1.0, curve: Curves.easeOutCubic),
+          ),
+        );
 
     _entranceController.forward();
 
-    // 2. هذا هو "السطر السحري" الذي يمنع خطأ Null Check على الويب
-    // الاستماع هنا يُجبر مكتبة الويب على تهيئة نفسها واستخدام الـ clientId
     _googleSignIn.onCurrentUserChanged.listen((
       GoogleSignInAccount? account,
     ) async {
@@ -85,12 +84,24 @@ class _LoginScreenState extends State<LoginScreen>
       }
     });
 
-    // من الجيد استدعاء الدخول الصامت على الويب لضمان اكتمال التهيئة
+    // 2. تهيئة الويب بشكل آمن جداً
     if (kIsWeb) {
-      _googleSignIn.signInSilently().catchError((e) {
-        debugPrint("Silent Sign In Error: $e");
-        return null;
-      });
+      _initWebSafe();
+    }
+  }
+
+  // دالة التهيئة الآمنة للويب
+  Future<void> _initWebSafe() async {
+    try {
+      await _googleSignIn.signInSilently();
+    } catch (e) {
+      debugPrint("Silent Sign In Error: $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isWebReady = true; // الآن فقط نسمح برسم الزر
+        });
+      }
     }
   }
 
@@ -103,7 +114,6 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
-  // دالة مساعدة لتجنب خطأ Null Check مع الترجمة
   String _translate(String key) {
     return AppLocalizations.of(context)?.translate(key) ?? key;
   }
@@ -144,14 +154,12 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _handleGoogleBackendAuth(GoogleSignInAccount googleUser) async {
     setState(() => _isLoading = true);
     try {
-      // إرجاع كلمة await هنا لأنها بالطريقة الرسمية تعود بـ Future
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
       if (googleAuth.idToken == null) {
         debugPrint("❌ Google Sign In Error: idToken is null.");
-        // مهم: تسجيل الخروج فوراً إذا فشل جلب التوكن لتجنب تعليق الجلسة
-        await _googleSignIn.signOut();
+        await _googleSignIn.disconnect(); // استخدام disconnect للتنظيف العميق
         throw "فشل التحقق من الهوية (idToken مفقود).";
       }
 
@@ -171,9 +179,8 @@ class _LoginScreenState extends State<LoginScreen>
           if (mounted) context.go('/');
         }
       } else {
-        // إصلاح المشكلة: إذا رفض السيرفر الدخول (مثلاً الحساب محذوف)،
-        // نقوم بتسجيل الخروج من جوجل فوراً لمنع المحاولة التلقائية في المرة القادمة
-        await _googleSignIn.signOut();
+        // 3. هذا السطر هو من سينقذك من مشكلة "الحساب المحذوف" نهائياً
+        await _googleSignIn.disconnect();
         throw "خطأ من السيرفر (Node.js): ${response.body}";
       }
     } catch (error) {
@@ -194,7 +201,6 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _loginWithGoogleMobile() async {
     try {
       await _googleSignIn.signOut();
-      // استخدام signIn() الرسمية للموبايل
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser != null) {
         await _handleGoogleBackendAuth(googleUser);
@@ -485,12 +491,53 @@ class _LoginScreenState extends State<LoginScreen>
                             ),
                             const SizedBox(height: 15),
                             Row(
+                              children: [
+                                Expanded(
+                                  child: Divider(
+                                    color: const Color(
+                                      0xFFD4AF37,
+                                    ).withValues(alpha: 0.5),
+                                    thickness: 1,
+                                  ),
+                                ),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 15),
+                                  child: Text(
+                                    'أو سجل عبر: / Or Sign In',
+                                    style: TextStyle(
+                                      color: Color(0xFFD4AF37),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Divider(
+                                    color: const Color(
+                                      0xFFD4AF37,
+                                    ).withValues(alpha: 0.5),
+                                    thickness: 1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 15),
+                            Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
+                                // 4. المحرك الأساسي: هنا سيظهر لودينج خفيف إذا لم يكتمل الويب
                                 kIsWeb
                                     ? SizedBox(
                                         height: 40,
-                                        child: web.renderButton(),
+                                        child: _isWebReady
+                                            ? web.renderButton()
+                                            : const Center(
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      color: Color(0xFFD4AF37),
+                                                    ),
+                                              ),
                                       )
                                     : _buildSocialButton(
                                         child: const Text(
@@ -503,6 +550,29 @@ class _LoginScreenState extends State<LoginScreen>
                                         ),
                                         onPressed: _loginWithGoogleMobile,
                                       ),
+
+                                if (!kIsWeb) const SizedBox(width: 20),
+
+                                _buildSocialButton(
+                                  child: const Icon(
+                                    Icons.apple,
+                                    size: 32,
+                                    color: Colors.black,
+                                  ),
+                                  onPressed: () {},
+                                ),
+                                const SizedBox(width: 20),
+                                _buildSocialButton(
+                                  child: const Text(
+                                    'f',
+                                    style: TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF9E773A),
+                                    ),
+                                  ),
+                                  onPressed: () {},
+                                ),
                               ],
                             ),
                             const SizedBox(height: 8),

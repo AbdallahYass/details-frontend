@@ -387,6 +387,14 @@ class _HomePageState extends State<HomePage>
               ),
             ),
           ),
+          // زر تسجيل الخروج (مؤقت لحذف الذاكرة القديمة)
+          IconButton(
+            icon: const Icon(Icons.logout, color: Color(0xFFD4AF37), size: 20),
+            onPressed: () async {
+              await Provider.of<AuthProvider>(context, listen: false).logout();
+              if (mounted) context.go('/login');
+            },
+          ),
         ],
       ),
     );
