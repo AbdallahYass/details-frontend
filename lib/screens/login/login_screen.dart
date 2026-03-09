@@ -38,7 +38,6 @@ class _LoginScreenState extends State<LoginScreen>
     serverClientId: !kIsWeb
         ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
         : null,
-    signInOption: SignInOption.standard,
   );
 
   // Animation Controllers
@@ -140,9 +139,7 @@ class _LoginScreenState extends State<LoginScreen>
           await googleUser.authentication;
 
       if (googleAuth.idToken == null) {
-        debugPrint(
-          "❌ Google Sign In Error: idToken is null. AccessToken: ${googleAuth.accessToken != null}",
-        );
+        debugPrint("❌ Google Sign In Error: idToken is null.");
         throw "فشل التحقق من الهوية (idToken مفقود).";
       }
 
