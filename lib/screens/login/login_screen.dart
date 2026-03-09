@@ -29,8 +29,15 @@ class _LoginScreenState extends State<LoginScreen>
   bool _obscurePassword = true;
   bool _rememberMe = false;
 
-  // 1. التعديل هنا: استخدام .instance بدلاً من الأقواس
-  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  // 1. التعريف الصحيح والرسمي لجوجل (بدون instance)
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: kIsWeb
+        ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
+        : null,
+    serverClientId: !kIsWeb
+        ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
+        : null,
+  );
 
   // Animation Controllers
   late AnimationController _rotationController;
@@ -41,13 +48,11 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void initState() {
     super.initState();
-    // تحريك الخلفية ببطء
     _rotationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 10),
     )..repeat();
 
-    // أنيميشن دخول العناصر
     _entranceController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -70,26 +75,20 @@ class _LoginScreenState extends State<LoginScreen>
 
     _entranceController.forward();
 
-    // تهيئة جوجل والبدء بالاستماع للأحداث بالطريقة الجديدة
-    _initGoogleSignIn();
-  }
-
-  // 2. دالة جديدة لتهيئة GoogleSignIn والاستماع للأحداث
-  Future<void> _initGoogleSignIn() async {
-    await _googleSignIn.initialize(
-      clientId: kIsWeb
-          ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
-          : null,
-      serverClientId: !kIsWeb
-          ? '131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com'
-          : null,
-    );
-
-    _googleSignIn.authenticationEvents.listen((event) async {
-      if (event is GoogleSignInAuthenticationEventSignIn) {
-        await _handleGoogleBackendAuth(event.user);
+    // 2. هذا هو "السطر السحري" الذي يمنع خطأ Null Check على الويب
+    // الاستماع هنا يُجبر مكتبة الويب على تهيئة نفسها واستخدام الـ clientId
+    _googleSignIn.onCurrentUserChanged.listen((
+      GoogleSignInAccount? account,
+    ) async {
+      if (account != null) {
+        await _handleGoogleBackendAuth(account);
       }
     });
+
+    // من الجيد استدعاء الدخول الصامت على الويب لضمان اكتمال التهيئة
+    if (kIsWeb) {
+      _googleSignIn.signInSilently();
+    }
   }
 
   @override
@@ -135,12 +134,12 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  // دالة مشتركة لإرسال التوكن لسيرفر الـ Node.js
   Future<void> _handleGoogleBackendAuth(GoogleSignInAccount googleUser) async {
     setState(() => _isLoading = true);
     try {
-      // 3. التعديل هنا: تمت إزالة كلمة await لأن authentication لم تعد Future
-      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+      // إرجاع كلمة await هنا لأنها بالطريقة الرسمية تعود بـ Future
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
 
       if (googleAuth.idToken == null) {
         debugPrint("❌ Google Sign In Error: idToken is null.");
@@ -180,15 +179,14 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  // هذه الدالة تعمل على الموبايل فقط
-  // هذه الدالة تعمل على الموبايل فقط
   Future<void> _loginWithGoogleMobile() async {
     try {
       await _googleSignIn.signOut();
-
-      // التعديل هنا: إزالة ? وإزالة التحقق من null
-      final googleUser = await _googleSignIn.authenticate();
-      await _handleGoogleBackendAuth(googleUser);
+      // استخدام signIn() الرسمية للموبايل
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser != null) {
+        await _handleGoogleBackendAuth(googleUser);
+      }
     } catch (error) {
       debugPrint("Google Sign In Mobile Error: $error");
     }
@@ -493,13 +491,44 @@ class _LoginScreenState extends State<LoginScreen>
                             ),
                             const SizedBox(height: 15),
                             Row(
+                              children: [
+                                Expanded(
+                                  child: Divider(
+                                    color: const Color(
+                                      0xFFD4AF37,
+                                    ).withValues(alpha: 0.5),
+                                    thickness: 1,
+                                  ),
+                                ),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 15),
+                                  child: Text(
+                                    'أو سجل عبر: / Or Sign In',
+                                    style: TextStyle(
+                                      color: Color(0xFFD4AF37),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Divider(
+                                    color: const Color(
+                                      0xFFD4AF37,
+                                    ).withValues(alpha: 0.5),
+                                    thickness: 1,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 15),
+                            Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // 5. التعديل هنا: تبسيط زر الويب لتجنب أخطاء Configuration
+                                // زر الويب سيتم رسمه الآن بدون أخطاء لأنه تم تهيئته في الـ initState
                                 kIsWeb
                                     ? SizedBox(
                                         height: 40,
-                                        // استدعاء الزر فارغاً بدون أي configuration!
                                         child: web.renderButton(),
                                       )
                                     : _buildSocialButton(
@@ -513,6 +542,29 @@ class _LoginScreenState extends State<LoginScreen>
                                         ),
                                         onPressed: _loginWithGoogleMobile,
                                       ),
+
+                                if (!kIsWeb) const SizedBox(width: 20),
+
+                                _buildSocialButton(
+                                  child: const Icon(
+                                    Icons.apple,
+                                    size: 32,
+                                    color: Colors.black,
+                                  ),
+                                  onPressed: () {},
+                                ),
+                                const SizedBox(width: 20),
+                                _buildSocialButton(
+                                  child: const Text(
+                                    'f',
+                                    style: TextStyle(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF9E773A),
+                                    ),
+                                  ),
+                                  onPressed: () {},
+                                ),
                               ],
                             ),
                             const SizedBox(height: 8),
