@@ -16,6 +16,7 @@ import 'package:flutter/foundation.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   if (kIsWeb) {
     await Firebase.initializeApp(
       options: const FirebaseOptions(
@@ -29,9 +30,11 @@ Future<void> main() async {
       ),
     );
   } else {
-    await Firebase.initializeApp(); // للأندرويد، بقرأ من ملف الـ JSON تلقائياً
+    await Firebase.initializeApp(); // يقرأ من ملف google-services.json تلقائياً للموبايل
   }
+
   setPathUrlStrategy();
+
   runApp(
     MultiProvider(
       providers: [
@@ -62,7 +65,16 @@ class DetailsStoreApp extends StatefulWidget {
 
 class _DetailsStoreAppState extends State<DetailsStoreApp> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<AuthProvider>(context, listen: false).tryAutoLogin();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // مراقبة تغييرات الإعدادات (مثل اللغة)
     final settings = context.watch<SettingsProvider>();
 
     return MaterialApp.router(

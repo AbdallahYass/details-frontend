@@ -115,36 +115,6 @@ class _LoginScreenState extends State<LoginScreen>
     return AppLocalizations.of(context)?.translate(key) ?? key;
   }
 
-  // نافذة ذكية تظهر عند محاولة الدخول بحساب محذوف
-  void _showRegisterDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        title: Text(_translate('account_not_found_title')),
-        content: Text(_translate('account_not_found_desc')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(_translate('cancel')),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            onPressed: () {
-              Navigator.pop(context);
-              context.push('/register');
-            },
-            child: Text(
-              _translate('create_account_link'),
-              style: const TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _handleLogin() async {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _isLoading = true);
@@ -197,6 +167,7 @@ class _LoginScreenState extends State<LoginScreen>
 
       final data = json.decode(response.body);
 
+      // 1. إذا الحساب موجود (سيرفرك رجع 200)
       if (response.statusCode == 200) {
         final token = data['token'];
         final userData = data['user'];
@@ -214,13 +185,28 @@ class _LoginScreenState extends State<LoginScreen>
           if (mounted) context.go('/');
         }
       }
-      // التعديل الهام هنا: التعامل مع الحساب المحذوف (404)
+      // 2. إذا الحساب غير موجود (سيرفرك رجع 404)
       else if (response.statusCode == 404) {
-        await _googleSignIn.disconnect(); // كسر حلقة الدخول التلقائي
-        if (mounted) _showRegisterDialog();
-      } else {
+        // نفصل جلسة جوجل عشان المتصفح ما يضل "عالق" بالحساب المحذوف
         await _googleSignIn.disconnect();
-        throw data['message'] ?? "خطأ من السيرفر";
+
+        if (mounted) {
+          // إظهار الملاحظة (SnackBar) اللي طلبتها بدون أي تعبئة تلقائية
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                "هذا الحساب غير موجود، يرجى إنشاء حساب لتتمكن من التسجيل.",
+              ),
+              backgroundColor: Color(0xFF9E773A), // لون المتجر الذهبي
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
+      }
+      // 3. أي خطأ آخر
+      else {
+        await _googleSignIn.disconnect();
+        throw data['message'] ?? "حدث خطأ غير متوقع";
       }
     } catch (error) {
       if (mounted) {

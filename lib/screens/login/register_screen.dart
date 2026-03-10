@@ -8,13 +8,12 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'web_auth_stub.dart'
     if (dart.library.js_interop) 'package:google_sign_in_web/web_only.dart'
     as web;
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RegisterScreen extends StatefulWidget {
-  // إضافة إمكانية استقبال بيانات مسبقة (مثل الإيميل والاسم من جوجل)
-  final String? initialEmail;
-  final String? initialName;
-
-  const RegisterScreen({super.key, this.initialEmail, this.initialName});
+  const RegisterScreen({super.key});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -23,8 +22,8 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _nameController;
-  late TextEditingController _emailController;
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
@@ -33,7 +32,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  bool _isWebReady = !kIsWeb; // حماية الويب
+  bool _isWebReady = !kIsWeb;
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     clientId: kIsWeb
@@ -52,10 +51,6 @@ class _RegisterScreenState extends State<RegisterScreen>
   @override
   void initState() {
     super.initState();
-    // تهيئة الكونترولرز مع البيانات القادمة إن وجدت
-    _nameController = TextEditingController(text: widget.initialName);
-    _emailController = TextEditingController(text: widget.initialEmail);
-
     _rotationController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 10),
@@ -83,13 +78,12 @@ class _RegisterScreenState extends State<RegisterScreen>
 
     _entranceController.forward();
 
-    // الاستماع لجوجل (لجلب البيانات فقط عند التسجيل)
-    _googleSignIn.onCurrentUserChanged.listen((account) {
+    // الاستماع لعملية تسجيل الدخول (مطلوب جداً للويب)
+    _googleSignIn.onCurrentUserChanged.listen((
+      GoogleSignInAccount? account,
+    ) async {
       if (account != null) {
-        setState(() {
-          _nameController.text = account.displayName ?? "";
-          _emailController.text = account.email;
-        });
+        await _handleGoogleBackendAuth(account);
       }
     });
 
@@ -124,12 +118,77 @@ class _RegisterScreenState extends State<RegisterScreen>
     return AppLocalizations.of(context)?.translate(key) ?? key;
   }
 
+  // --- دالة تسجيل الدخول/التسجيل عبر جوجل (نفس دالة شاشة الدخول) ---
+  Future<void> _handleGoogleBackendAuth(GoogleSignInAccount googleUser) async {
+    setState(() => _isLoading = true);
+    try {
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      if (googleAuth.idToken == null) {
+        await _googleSignIn.disconnect();
+        throw "فشل التحقق من الهوية (idToken مفقود).";
+      }
+
+      final response = await http.post(
+        Uri.parse('https://api.details-store.com/api/auth/google'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'idToken': googleAuth.idToken}),
+      );
+
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        final token = data['token'];
+        final userData = data['user'];
+
+        if (token != null && userData != null) {
+          final authProvider = Provider.of<AuthProvider>(
+            context,
+            listen: false,
+          );
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('token', token);
+          await prefs.setString('userData', json.encode(userData));
+
+          await authProvider.tryAutoLogin();
+          if (mounted) context.go('/');
+        }
+      } else {
+        // ملاحظة هامة: إذا كنت تريد أن يقوم زر جوجل بإنشاء حساب تلقائياً،
+        // يجب أن تعدل كود الباك اند ليرد بـ 201 وينشئ حساباً إذا لم يجده.
+        await _googleSignIn.disconnect();
+        throw data['message'] ?? "فشل التسجيل عبر جوجل";
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("خطأ: $error"), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // دالة تشغيل تسجيل جوجل للموبايل
+  Future<void> _loginWithGoogleMobile() async {
+    try {
+      await _googleSignIn.signOut();
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser != null) {
+        await _handleGoogleBackendAuth(googleUser);
+      }
+    } catch (error) {
+      debugPrint("Google Sign In Mobile Error: $error");
+    }
+  }
+
+  // تسجيل يدوي (النموذج التقليدي)
   Future<void> _handleRegister() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
-
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
       final success = await authProvider.requestRegisterOtp(
         _nameController.text.trim(),
         _emailController.text.trim(),
@@ -163,22 +222,6 @@ class _RegisterScreenState extends State<RegisterScreen>
     }
   }
 
-  // دالة جلب البيانات من جوجل للموبايل
-  Future<void> _fetchGoogleDataMobile() async {
-    try {
-      await _googleSignIn.signOut();
-      final account = await _googleSignIn.signIn();
-      if (account != null) {
-        setState(() {
-          _nameController.text = account.displayName ?? "";
-          _emailController.text = account.email;
-        });
-      }
-    } catch (e) {
-      debugPrint("Fetch Google Error: $e");
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -195,9 +238,7 @@ class _RegisterScreenState extends State<RegisterScreen>
             Positioned.fill(
               child: Image.asset('assets/images/bg.png', fit: BoxFit.cover),
             ),
-            // --- الزخرفة المتحركة ---
             _buildAnimatedBackground(),
-
             SafeArea(
               child: Center(
                 child: SingleChildScrollView(
@@ -214,7 +255,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                           children: [
                             _buildHeader(),
                             const SizedBox(height: 30),
-
                             _buildElegantTextField(
                               controller: _nameController,
                               label: _translate('name_label'),
@@ -223,7 +263,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                                   v!.isEmpty ? _translate('enter_name') : null,
                             ),
                             const SizedBox(height: 16),
-
                             _buildElegantTextField(
                               controller: _emailController,
                               label: _translate('email_label'),
@@ -234,7 +273,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                                   : null,
                             ),
                             const SizedBox(height: 16),
-
                             _buildElegantTextField(
                               controller: _phoneController,
                               label: _translate('phone_label'),
@@ -244,7 +282,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                                   v!.isEmpty ? _translate('enter_phone') : null,
                             ),
                             const SizedBox(height: 16),
-
                             _buildElegantTextField(
                               controller: _passwordController,
                               label: _translate('password_label'),
@@ -259,7 +296,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                                   : null,
                             ),
                             const SizedBox(height: 16),
-
                             _buildElegantTextField(
                               controller: _confirmPasswordController,
                               label: _translate('confirm_password_label'),
@@ -275,13 +311,10 @@ class _RegisterScreenState extends State<RegisterScreen>
                                   : null,
                             ),
                             const SizedBox(height: 30),
-
                             _buildRegisterButton(),
-                            const SizedBox(height: 30),
-
+                            const SizedBox(height: 25),
                             _buildSocialSection(),
                             const SizedBox(height: 30),
-
                             _buildLoginLink(),
                           ],
                         ),
@@ -298,8 +331,71 @@ class _RegisterScreenState extends State<RegisterScreen>
     );
   }
 
-  // --- دوال بناء الواجهة (UI Helpers) ---
+  // --- نفس تصميم شاشة الدخول ---
+  Widget _buildSocialSection() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Divider(
+                color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              child: Text(
+                'أو سجل عبر: / Or Sign In',
+                style: const TextStyle(
+                  color: Color(0xFFD4AF37),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Divider(
+                color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            kIsWeb
+                ? SizedBox(
+                    height: 40,
+                    child: _isWebReady
+                        ? web.renderButton()
+                        : const CircularProgressIndicator(
+                            color: Color(0xFFD4AF37),
+                          ),
+                  )
+                : _buildSocialButton(
+                    child: const Text(
+                      'G',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF9E773A),
+                      ),
+                    ),
+                    onPressed: _loginWithGoogleMobile, // الدخول المباشر
+                  ),
+            const SizedBox(width: 20),
+            _buildSocialButton(
+              child: const Icon(Icons.apple, size: 32, color: Colors.black),
+              onPressed: () {},
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 
+  // (بقية دوال الـ UI مثل _buildHeader و _buildRegisterButton تبقى كما هي في الكود السابق)
   Widget _buildHeader() {
     return Column(
       children: [
@@ -358,37 +454,6 @@ class _RegisterScreenState extends State<RegisterScreen>
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildSocialSection() {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            kIsWeb
-                ? SizedBox(
-                    height: 40,
-                    child: _isWebReady
-                        ? web.renderButton()
-                        : const CircularProgressIndicator(),
-                  )
-                : _buildSocialButton(
-                    child: const Text(
-                      'G',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF9E773A),
-                      ),
-                    ),
-                    onPressed: _fetchGoogleDataMobile,
-                  ),
-            const SizedBox(width: 20),
-          ],
-        ),
-      ],
     );
   }
 

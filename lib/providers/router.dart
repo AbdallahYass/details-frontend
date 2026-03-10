@@ -94,14 +94,7 @@ final router = GoRouter(
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
       path: '/register',
-      builder: (context, state) {
-        // استقبال البيانات من الـ extra إذا كانت موجودة
-        final extra = state.extra as Map<String, dynamic>?;
-        return RegisterScreen(
-          initialEmail: extra?['email'],
-          initialName: extra?['name'],
-        );
-      },
+      builder: (context, state) => const RegisterScreen(),
     ),
     GoRoute(
       path: '/verify-otp',
