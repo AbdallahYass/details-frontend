@@ -118,7 +118,6 @@ class _RegisterScreenState extends State<RegisterScreen>
     return AppLocalizations.of(context)?.translate(key) ?? key;
   }
 
-  // --- دالة تسجيل الدخول/التسجيل عبر جوجل (نفس دالة شاشة الدخول) ---
   Future<void> _handleGoogleBackendAuth(GoogleSignInAccount googleUser) async {
     setState(() => _isLoading = true);
     try {
@@ -127,7 +126,7 @@ class _RegisterScreenState extends State<RegisterScreen>
 
       if (googleAuth.idToken == null) {
         await _googleSignIn.disconnect();
-        throw "فشل التحقق من الهوية (idToken مفقود).";
+        return;
       }
 
       final response = await http.post(
@@ -136,9 +135,9 @@ class _RegisterScreenState extends State<RegisterScreen>
         body: json.encode({'idToken': googleAuth.idToken}),
       );
 
-      final data = json.decode(response.body);
-
+      // فحص إذا كان الرد ليس ناجحاً قبل محاولة فك الشفرة (decode)
       if (response.statusCode == 200) {
+        final data = json.decode(response.body);
         final token = data['token'];
         final userData = data['user'];
 
@@ -150,17 +149,33 @@ class _RegisterScreenState extends State<RegisterScreen>
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('token', token);
           await prefs.setString('userData', json.encode(userData));
-
           await authProvider.tryAutoLogin();
           if (mounted) context.go('/');
         }
-      } else {
-        // ملاحظة هامة: إذا كنت تريد أن يقوم زر جوجل بإنشاء حساب تلقائياً،
-        // يجب أن تعدل كود الباك اند ليرد بـ 201 وينشئ حساباً إذا لم يجده.
+      }
+      // التعامل مع الحساب المحذوف بهدوء
+      else if (response.statusCode == 404) {
         await _googleSignIn.disconnect();
-        throw data['message'] ?? "فشل التسجيل عبر جوجل";
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("هذا الحساب غير مسجل، يرجى إنشاء حساب جديد."),
+              backgroundColor: Color(0xFF9E773A),
+            ),
+          );
+        }
+      } else {
+        // في حال وجود خطأ آخر، لا نحاول عمل decode إذا كان الـ body فارغاً
+        await _googleSignIn.disconnect();
+        String message = "فشل تسجيل الدخول";
+        try {
+          final errorData = json.decode(response.body);
+          message = errorData['message'] ?? message;
+        } catch (_) {}
+        throw message;
       }
     } catch (error) {
+      debugPrint("❌ Login Error: $error");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("خطأ: $error"), backgroundColor: Colors.red),
