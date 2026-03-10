@@ -258,6 +258,7 @@ class AppLocalizations {
       'color_name_ar': 'Color Name (Arabic)',
       'color_name_en': 'Color Name (English)',
       'hex_code': 'Hex Code (e.g. #000000)',
+      'logged_out_successfully': 'Logged out successfully',
     },
     'ar': {
       'app_name': 'متجر ديتيلز',
@@ -504,6 +505,7 @@ class AppLocalizations {
       'color_name_ar': 'اسم اللون (عربي)',
       'color_name_en': 'اسم اللون (إنجليزي)',
       'hex_code': 'كود اللون (مثال #000000)',
+      'logged_out_successfully': 'تم تسجيل الخروج بنجاح',
     },
   };
 

@@ -313,7 +313,19 @@ class AppDrawer extends StatelessWidget {
                         onTap: () async {
                           Navigator.pop(context);
                           await auth.logout();
-                          if (context.mounted) context.go('/');
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.translate('logged_out_successfully'),
+                                ),
+                                backgroundColor: const Color(0xFF9E773A),
+                              ),
+                            );
+                            context.go('/');
+                          }
                         },
                       ),
                     ],
