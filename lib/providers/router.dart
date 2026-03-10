@@ -14,7 +14,6 @@ import 'package:details_app/screens/home/checkout_screen.dart';
 import 'package:details_app/screens/home/orders_screen.dart';
 import 'package:details_app/screens/home/about_screen.dart';
 import 'package:details_app/screens/home/wishlist_screen.dart';
-import 'package:details_app/screens/login/account_screen.dart';
 import 'package:details_app/screens/login/profile_screen.dart';
 import 'package:details_app/screens/login/edit_profile_screen.dart';
 import 'package:details_app/screens/splash/splash_screen.dart';
@@ -70,14 +69,6 @@ final router = GoRouter(
             GoRoute(
               path: '/wishlist',
               builder: (context, state) => const WishlistScreen(),
-            ),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/account',
-              builder: (context, state) => const AccountScreen(),
             ),
           ],
         ),
