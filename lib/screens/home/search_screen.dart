@@ -4,6 +4,7 @@ import 'package:details_app/app_imports.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -17,20 +18,80 @@ class _SearchScreenState extends State<SearchScreen> {
   List<Product> _searchResults = [];
   bool _isLoading = false;
   bool _hasSearched = false;
+  Timer? _debounce;
+  List<String> _recentSearches = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecentSearches();
+  }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
-  Future<void> _performSearch(String query) async {
+  Future<void> _loadRecentSearches() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _recentSearches = prefs.getStringList('recent_searches') ?? [];
+      });
+    }
+  }
+
+  Future<void> _addToRecentSearches(String query) async {
+    if (query.trim().isEmpty) return;
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _recentSearches.remove(query);
+        _recentSearches.insert(0, query);
+        if (_recentSearches.length > 10) {
+          _recentSearches = _recentSearches.sublist(0, 10);
+        }
+      });
+      await prefs.setStringList('recent_searches', _recentSearches);
+    }
+  }
+
+  Future<void> _clearRecentSearches() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _recentSearches.clear();
+      });
+      await prefs.remove('recent_searches');
+    }
+  }
+
+  Future<void> _removeRecentSearch(String query) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _recentSearches.remove(query);
+      });
+      await prefs.setStringList('recent_searches', _recentSearches);
+    }
+  }
+
+  Future<void> _performSearch(
+    String query, {
+    bool saveToHistory = false,
+  }) async {
     if (query.trim().isEmpty) {
       setState(() {
         _searchResults = [];
         _hasSearched = false;
       });
       return;
+    }
+
+    if (saveToHistory) {
+      _addToRecentSearches(query);
     }
 
     setState(() {
@@ -60,6 +121,14 @@ class _SearchScreenState extends State<SearchScreen> {
       setState(() => _isLoading = false);
       debugPrint('Search error: $e');
     }
+  }
+
+  void _onSearchChanged(String query) {
+    setState(() {}); // لتحديث أيقونة المسح
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      _performSearch(query);
+    });
   }
 
   @override
@@ -120,26 +189,6 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       child: Row(
         children: [
-          // زر الرجوع
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
-                ),
-              ),
-              child: const Icon(
-                Icons.arrow_back_ios_new,
-                size: 18,
-                color: Color(0xFF452512),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
           // حقل البحث
           Expanded(
             child: Container(
@@ -194,10 +243,11 @@ class _SearchScreenState extends State<SearchScreen> {
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 ),
-                onChanged: (val) {
-                  setState(() {}); // لتحديث أيقونة المسح
+                onChanged: _onSearchChanged,
+                onSubmitted: (val) {
+                  if (_debounce?.isActive ?? false) _debounce!.cancel();
+                  _performSearch(val, saveToHistory: true);
                 },
-                onSubmitted: _performSearch,
               ),
             ),
           ),
@@ -208,6 +258,9 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildBody() {
     if (!_hasSearched) {
+      if (_recentSearches.isNotEmpty) {
+        return _buildRecentSearchesList();
+      }
       return Center(
         child: SingleChildScrollView(
           child: Column(
@@ -284,6 +337,62 @@ class _SearchScreenState extends State<SearchScreen> {
       itemBuilder: (context, index) {
         return _buildProductCard(_searchResults[index]);
       },
+    );
+  }
+
+  Widget _buildRecentSearchesList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                AppLocalizations.of(context)!.translate('recent_searches'),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF452512),
+                ),
+              ),
+              if (_recentSearches.isNotEmpty)
+                GestureDetector(
+                  onTap: _clearRecentSearches,
+                  child: Text(
+                    AppLocalizations.of(context)!.translate('clear_all'),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.red,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: _recentSearches.length,
+            itemBuilder: (context, index) {
+              final term = _recentSearches[index];
+              return ListTile(
+                leading: const Icon(Icons.history, color: Colors.grey),
+                title: Text(term),
+                trailing: IconButton(
+                  icon: const Icon(Icons.close, size: 16, color: Colors.grey),
+                  onPressed: () => _removeRecentSearch(term),
+                ),
+                onTap: () {
+                  _searchController.text = term;
+                  _performSearch(term, saveToHistory: true);
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
