@@ -6,9 +6,7 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   
   <meta name="description" content="متجر ديتيلز - خيارك الأول لأفضل المنتجات والخدمات"> 
-  
-  <meta name="google-signin-client_id" content="131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com">
-  
+
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <meta property="og:type" content="website">
@@ -31,6 +29,31 @@
 
   <title>Details Store | متجر ديتيلز</title>
   <link rel="manifest" href="manifest.json">
+
+  <script>
+    // 1. القضاء على تحذيرات FedCM عبر تهيئة الهوية الجديدة
+    window.onload = function () {
+      google.accounts.id.initialize({
+        client_id: "131777577750-dlj9t8sgpc09a6tnvoh119dt7lc0b4uh.apps.googleusercontent.com",
+        use_fedcm_for_prompt: true, // تفعيل النظام الجديد لإيقاف التحذير
+        auto_select: false,
+        callback: (response) => {
+          // التعامل مع الرد يتم داخلياً عبر Flutter Google Sign In
+        }
+      });
+    };
+
+    // 2. كود "إسكات" تحذيرات GSI_LOGGER المزعجة في الكونسول
+    (function() {
+      const originalWarn = console.warn;
+      console.warn = function() {
+        if (arguments[0] && typeof arguments[0] === 'string' && arguments[0].includes('GSI_LOGGER')) {
+          return; // تجاهل هذا التحذير تحديداً
+        }
+        originalWarn.apply(console, arguments);
+      };
+    })();
+  </script>
 </head>
 <body>
   <video id="video" playsinline muted autoplay style="display:none;"></video>

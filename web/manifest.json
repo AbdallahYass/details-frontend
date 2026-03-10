@@ -1,13 +1,14 @@
 {
-    "name": "Details Store | متجر ديتايلز",
+    "name": "Details Store | متجر ديتيلز",
     "short_name": "Details",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#000000",
-    "description": "تصفح أحدث المنتجات والعروض الحصرية لدى متجر ديتايلز.",
+    "description": "تصفح أحدث المنتجات والعروض الحصرية لدى متجر ديتيلز.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
+    "categories": ["shopping", "fashion"],
     "icons": [
         {
             "src": "icons/logo2.png",
@@ -30,6 +31,22 @@
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "العربة",
+            "short_name": "العربة",
+            "description": "مشاهدة محتويات السلة",
+            "url": "/cart",
+            "icons": [{ "src": "icons/logo2.png", "sizes": "192x192" }]
+        },
+        {
+            "name": "المفضلة",
+            "short_name": "المفضلة",
+            "description": "مشاهدة المنتجات المفضلة",
+            "url": "/wishlist",
+            "icons": [{ "src": "icons/logo2.png", "sizes": "192x192" }]
         }
     ]
 }
