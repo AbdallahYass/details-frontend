@@ -1,7 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:details_app/app_imports.dart';
-import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -156,8 +155,6 @@ class _SearchScreenState extends State<SearchScreen> {
               Expanded(child: _buildBody()),
             ],
           ),
-
-          if (_isLoading) const CustomLoadingOverlay(isOverlay: false),
         ],
       ),
     );
@@ -345,7 +342,7 @@ class _SearchScreenState extends State<SearchScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 5),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -359,7 +356,56 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
               if (_recentSearches.isNotEmpty)
                 GestureDetector(
-                  onTap: _clearRecentSearches,
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        backgroundColor: const Color(0xFFFDFBF7),
+                        title: Text(
+                          AppLocalizations.of(
+                                context,
+                              )!.translate('confirm_deletion') ??
+                              'تأكيد الحذف',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF452512),
+                          ),
+                        ),
+                        content: Text(
+                          AppLocalizations.of(
+                                context,
+                              )!.translate('clear_history_confirm') ??
+                              'هل أنت متأكد من مسح سجل البحث بالكامل؟',
+                          style: const TextStyle(color: Color(0xFF452512)),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(
+                              AppLocalizations.of(
+                                    context,
+                                  )!.translate('cancel') ??
+                                  'إلغاء',
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _clearRecentSearches();
+                            },
+                            child: Text(
+                              AppLocalizations.of(
+                                    context,
+                                  )!.translate('delete') ??
+                                  'مسح',
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                   child: Text(
                     AppLocalizations.of(context)!.translate('clear_all'),
                     style: const TextStyle(
@@ -374,6 +420,7 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
         Expanded(
           child: ListView.builder(
+            padding: EdgeInsets.zero,
             itemCount: _recentSearches.length,
             itemBuilder: (context, index) {
               final term = _recentSearches[index];

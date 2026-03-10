@@ -261,6 +261,9 @@ class AppLocalizations {
       'logged_out_successfully': 'Logged out successfully',
       'recent_searches': 'Recent Searches',
       'clear_all': 'Clear All',
+      'confirm_deletion': 'Confirm Deletion',
+      'clear_history_confirm':
+          'Are you sure you want to clear the entire search history?',
     },
     'ar': {
       'app_name': 'متجر ديتيلز',
@@ -510,6 +513,8 @@ class AppLocalizations {
       'logged_out_successfully': 'تم تسجيل الخروج بنجاح',
       'recent_searches': 'عمليات البحث السابقة',
       'clear_all': 'مسح الكل',
+      'confirm_deletion': 'تأكيد الحذف',
+      'clear_history_confirm': 'هل أنت متأكد من مسح سجل البحث بالكامل؟',
     },
   };
 
