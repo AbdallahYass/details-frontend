@@ -351,32 +351,6 @@ class _RegisterScreenState extends State<RegisterScreen>
     return Column(
       children: [
         Row(
-          children: [
-            Expanded(
-              child: Divider(
-                color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              child: Text(
-                'أو سجل عبر: / Or Sign In',
-                style: const TextStyle(
-                  color: Color(0xFFD4AF37),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-            Expanded(
-              child: Divider(
-                color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             kIsWeb
@@ -400,10 +374,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                     onPressed: _loginWithGoogleMobile, // الدخول المباشر
                   ),
             const SizedBox(width: 20),
-            _buildSocialButton(
-              child: const Icon(Icons.apple, size: 32, color: Colors.black),
-              onPressed: () {},
-            ),
           ],
         ),
       ],
