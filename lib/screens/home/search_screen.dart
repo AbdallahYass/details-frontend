@@ -21,6 +21,9 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _hasSearched = false;
   Timer? _debounce;
   List<String> _recentSearches = [];
+  List<Product> _recentlyViewed = [];
+  List<String> _suggestions = [];
+  bool _showingSuggestions = false;
 
   // Pagination & Sorting
   final ScrollController _scrollController = ScrollController();
@@ -38,6 +41,7 @@ class _SearchScreenState extends State<SearchScreen> {
   void initState() {
     super.initState();
     _loadRecentSearches();
+    _loadRecentlyViewed();
     _scrollController.addListener(_scrollListener);
   }
 
@@ -104,12 +108,48 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
+  Future<void> _loadRecentlyViewed() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    final String? saved = prefs.getString('recently_viewed_products');
+    if (saved != null) {
+      try {
+        final List<dynamic> decoded = json.decode(saved);
+        setState(() {
+          _recentlyViewed = decoded.map((e) => Product.fromJson(e)).toList();
+        });
+      } catch (e) {
+        debugPrint('Error loading recently viewed: $e');
+      }
+    }
+  }
+
+  Future<void> _addToRecentlyViewed(Product p) async {
+    setState(() {
+      _recentlyViewed.removeWhere((item) => item.id == p.id);
+      _recentlyViewed.insert(0, p);
+      if (_recentlyViewed.length > 5) {
+        _recentlyViewed = _recentlyViewed.sublist(0, 5);
+      }
+    });
+
+    final prefs = await SharedPreferences.getInstance();
+    try {
+      await prefs.setString(
+        'recently_viewed_products',
+        json.encode(_recentlyViewed.map((e) => e.toJson()).toList()),
+      );
+    } catch (e) {
+      debugPrint('Error saving recently viewed: $e');
+    }
+  }
+
   Future<void> _performSearch(
     String query, {
     bool saveToHistory = false,
     bool isPagination = false,
   }) async {
-    if (query.trim().isEmpty) {
+    if (query.trim().isEmpty && !isPagination) {
       setState(() {
         _searchResults = [];
         _hasSearched = false;
@@ -126,6 +166,7 @@ class _SearchScreenState extends State<SearchScreen> {
       setState(() {
         _isLoading = true;
         _hasSearched = true;
+        _showingSuggestions = false;
         _hasError = false;
         _page = 1;
         _hasMore = true;
@@ -202,10 +243,45 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
+  Future<void> _fetchSuggestions(String query) async {
+    try {
+      final uri = Uri.parse(
+        'https://api.details-store.com/api/products?search=$query&limit=5',
+      );
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        var body = json.decode(response.body);
+        List<dynamic> data = [];
+        if (body is List) {
+          data = body;
+        } else if (body is Map && body.containsKey('data')) {
+          data = body['data'];
+        }
+
+        if (mounted) {
+          setState(() {
+            _suggestions = data
+                .map((json) => Product.fromJson(json).getName(context))
+                .toSet()
+                .toList();
+            _showingSuggestions = true;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Suggestion error: $e");
+    }
+  }
+
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () {
-      _performSearch(query);
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      if (query.trim().isEmpty) {
+        setState(() => _showingSuggestions = false);
+        return;
+      }
+      _fetchSuggestions(query);
     });
   }
 
@@ -441,6 +517,10 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildBody(AppLocalizations loc) {
+    if (_showingSuggestions && _suggestions.isNotEmpty) {
+      return _buildSuggestionsList();
+    }
+
     if (_hasError) {
       return Center(
         child: Column(
@@ -521,45 +601,15 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     if (!_hasSearched) {
-      if (_recentSearches.isNotEmpty) {
-        return _buildRecentSearchesList(loc);
-      }
-      return Center(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD4AF37).withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.search_rounded,
-                  size: 60,
-                  color: Color(0xFFD4AF37),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                loc.translate('start_typing'),
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF452512),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "ابحث عن منتجاتك المفضلة...",
-                style: TextStyle(
-                  fontSize: 14,
-                  color: const Color(0xFF452512).withValues(alpha: 0.6),
-                ),
-              ),
-            ],
-          ),
+      return SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (_recentSearches.isNotEmpty) _buildRecentSearchesList(loc),
+            if (_recentlyViewed.isNotEmpty) _buildRecentlyViewedSection(loc),
+            if (_recentSearches.isEmpty && _recentlyViewed.isEmpty)
+              _buildEmptyState(loc),
+          ],
         ),
       );
     }
@@ -612,6 +662,68 @@ class _SearchScreenState extends State<SearchScreen> {
             child: CircularProgressIndicator(color: Color(0xFFD4AF37)),
           ),
       ],
+    );
+  }
+
+  Widget _buildSuggestionsList() {
+    return ListView.builder(
+      itemCount: _suggestions.length,
+      itemBuilder: (context, index) {
+        return ListTile(
+          leading: const Icon(Icons.search, color: Colors.grey),
+          title: Text(
+            _suggestions[index],
+            style: const TextStyle(color: Color(0xFF452512)),
+          ),
+          onTap: () {
+            _searchController.text = _suggestions[index];
+            _performSearch(_suggestions[index], saveToHistory: true);
+            FocusScope.of(context).unfocus();
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyState(AppLocalizations loc) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.only(top: 50),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFD4AF37).withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.search_rounded,
+                size: 60,
+                color: Color(0xFFD4AF37),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              loc.translate('start_typing'),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF452512),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "ابحث عن منتجاتك المفضلة...",
+              style: TextStyle(
+                fontSize: 14,
+                color: const Color(0xFF452512).withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -684,27 +796,62 @@ class _SearchScreenState extends State<SearchScreen> {
             ],
           ),
         ),
-        Expanded(
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          itemCount: _recentSearches.length,
+          itemBuilder: (context, index) {
+            final term = _recentSearches[index];
+            return ListTile(
+              leading: const Icon(Icons.history, color: Colors.grey),
+              title: Text(term),
+              trailing: IconButton(
+                icon: const Icon(Icons.close, size: 16, color: Colors.grey),
+                onPressed: () => _removeRecentSearch(term),
+              ),
+              onTap: () {
+                _searchController.text = term;
+                _performSearch(term, saveToHistory: true);
+              },
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRecentlyViewedSection(AppLocalizations loc) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Text(
+            "منتجات شاهدتها مؤخراً",
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF452512),
+            ),
+          ),
+        ),
+        SizedBox(
+          height: 260,
           child: ListView.builder(
-            padding: EdgeInsets.zero,
-            itemCount: _recentSearches.length,
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _recentlyViewed.length,
             itemBuilder: (context, index) {
-              final term = _recentSearches[index];
-              return ListTile(
-                leading: const Icon(Icons.history, color: Colors.grey),
-                title: Text(term),
-                trailing: IconButton(
-                  icon: const Icon(Icons.close, size: 16, color: Colors.grey),
-                  onPressed: () => _removeRecentSearch(term),
-                ),
-                onTap: () {
-                  _searchController.text = term;
-                  _performSearch(term, saveToHistory: true);
-                },
+              return Container(
+                width: 160,
+                margin: const EdgeInsetsDirectional.only(end: 12),
+                child: _buildProductCard(_recentlyViewed[index], loc),
               );
             },
           ),
         ),
+        const SizedBox(height: 20),
       ],
     );
   }
@@ -738,8 +885,10 @@ class _SearchScreenState extends State<SearchScreen> {
                           top: Radius.circular(12),
                         ),
                         child: GestureDetector(
-                          onTap: () =>
-                              context.push('/product/${p.id}', extra: p),
+                          onTap: () {
+                            _addToRecentlyViewed(p);
+                            context.push('/product/${p.id}', extra: p);
+                          },
                           child: Hero(
                             tag: 'search_${p.id}',
                             child: CachedNetworkImage(

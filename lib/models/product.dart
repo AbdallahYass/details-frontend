@@ -128,6 +128,26 @@ class Product {
     );
   }
 
+  // الدالة الجديدة لتحويل المنتج إلى نص وحفظه في الجهاز
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'name': name,
+      'description': description,
+      'price': price,
+      'imageUrl': imageUrl,
+      'images': images,
+      'brand': brand,
+      'dimensions': dimensions,
+      'isSoldOut': isSoldOut,
+      'category': category,
+      'popularity': popularity,
+      'quantity': quantity,
+      'sizes': sizes.map((s) => s.toJson()).toList(),
+      'colors': colors.map((c) => c.toJson()).toList(),
+    };
+  }
+
   String getName(BuildContext context) {
     final locale = Localizations.localeOf(context).languageCode;
     return name[locale] ?? name['en'] ?? '';
