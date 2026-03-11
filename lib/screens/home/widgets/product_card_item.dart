@@ -172,6 +172,28 @@ class ProductCardItem extends StatelessWidget {
                         ),
                       ),
                     ),
+                    Positioned(
+                      bottom: 8,
+                      left: 8,
+                      child: GestureDetector(
+                        onTap: () => context.push(
+                          '/product/${product.id}',
+                          extra: product,
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.visibility_outlined,
+                            size: 16,
+                            color: AppColors.grey,
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
