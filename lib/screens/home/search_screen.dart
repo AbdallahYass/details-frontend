@@ -1,6 +1,6 @@
 // ignore_for_file: use_build_context_synchronously, empty_catches
 
-import 'package:details_app/app_imports.dart'; // تأكد من استيراد SearchService هنا
+import 'package:details_app/app_imports.dart'; // تأكد أن SearchService تم استيراده
 import 'package:details_app/services/search_service.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -61,7 +61,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _scrollListener() {
-    // 🛡️ حماية لمنع الـ Crash
+    // حماية لمنع الكراش في حال عدم بناء الـ Scroll
     if (!_scrollController.hasClients) return;
 
     if (_scrollController.position.pixels >=
@@ -204,8 +204,8 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     try {
-      // استخدام السيرفيس الجديد الذي يدعم الكاش! 🔥
-      final result = await SearchService.searchProducts(
+      // Type Safe & Cached Search Call
+      final SearchResult result = await SearchService.searchProducts(
         query: query,
         page: _page,
         sortOption: _sortOption,
@@ -213,16 +213,14 @@ class _SearchScreenState extends State<SearchScreen> {
 
       if (mounted) {
         setState(() {
-          final List<Product> newProducts = result['products'];
-
           if (isPagination) {
-            _searchResults.addAll(newProducts);
+            _searchResults.addAll(result.products);
           } else {
-            _searchResults = newProducts;
+            _searchResults = result.products;
           }
 
-          _hasMore = result['hasMore'];
-          if (newProducts.isNotEmpty) _page++;
+          _hasMore = result.hasMore;
+          if (result.products.isNotEmpty) _page++;
 
           _isLoading = false;
           _isLoadingMore = false;
@@ -235,14 +233,15 @@ class _SearchScreenState extends State<SearchScreen> {
           _isLoading = false;
           _isLoadingMore = false;
         });
-        if (isPagination) {
+
+        final isTimeout = e is TimeoutException;
+        final errorMsg = isTimeout
+            ? 'الشبكة ضعيفة جداً، حاول مجدداً'
+            : AppLocalizations.of(context)!.translate('error_occurred');
+
+        if (isPagination || isTimeout) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                AppLocalizations.of(context)!.translate('error_occurred'),
-              ),
-              backgroundColor: Colors.red,
-            ),
+            SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
           );
         }
       }
@@ -264,7 +263,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
-    // تم تعديل وقت الانتظار لـ 400ms للحفاظ على أداء السيرفر 🛠️
+    // 400ms Debounce
     _debounce = Timer(const Duration(milliseconds: 400), () {
       if (query.trim().isEmpty) {
         setState(() => _showingSuggestions = false);
@@ -638,8 +637,11 @@ class _SearchScreenState extends State<SearchScreen> {
 
         return ListTile(
           leading: const Icon(Icons.search, color: Colors.grey),
-          // ↗ إضافة أيقونة السهم الجانبي الاحترافية
-          trailing: const Icon(Icons.north_west, size: 16, color: Colors.grey),
+          trailing: const Icon(
+            Icons.north_west,
+            size: 16,
+            color: Colors.grey,
+          ), // UX: أيقونة الإكمال
           title: RichText(
             text: TextSpan(
               style: const TextStyle(color: Color(0xFF452512), fontSize: 16),
