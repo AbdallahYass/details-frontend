@@ -623,19 +623,6 @@ class _HomePageState extends State<HomePage>
                   ],
                 ],
               ),
-              if (provider.selectedCategory == null)
-                TextButton(
-                  onPressed: () {
-                    // الانتقال لصفحة كافة التصنيفات
-                  },
-                  child: Text(
-                    AppLocalizations.of(context)!.translate('view_all'),
-                    style: const TextStyle(
-                      color: AppColors.secondary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
             ],
           ),
         ),
