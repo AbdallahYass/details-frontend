@@ -264,6 +264,8 @@ class AppLocalizations {
       'confirm_deletion': 'Confirm Deletion',
       'clear_history_confirm':
           'Are you sure you want to clear the entire search history?',
+      "search_favorites_hint": "Search for your favorite products...",
+      "recently_viewed": "Recently Viewed",
     },
     'ar': {
       'app_name': 'متجر ديتيلز',
@@ -515,6 +517,8 @@ class AppLocalizations {
       'clear_all': 'مسح الكل',
       'confirm_deletion': 'تأكيد الحذف',
       'clear_history_confirm': 'هل أنت متأكد من مسح سجل البحث بالكامل؟',
+      "search_favorites_hint": "ابحث عن منتجاتك المفضلة...",
+      "recently_viewed": "منتجات شاهدتها مؤخراً",
     },
   };
 

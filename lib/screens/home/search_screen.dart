@@ -47,6 +47,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   void dispose() {
+    _speech.stop();
     _debounce?.cancel();
     _scrollController.dispose();
     _searchController.dispose();
@@ -179,7 +180,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
     try {
       final uri = Uri.parse(
-        'https://api.details-store.com/api/products?search=$query&page=$_page&limit=10&sort=$_sortOption',
+        'https://api.details-store.com/api/products?search=${Uri.encodeComponent(query)}&page=$_page&limit=10&sort=$_sortOption',
       );
       final response = await http.get(uri);
 
@@ -246,7 +247,7 @@ class _SearchScreenState extends State<SearchScreen> {
   Future<void> _fetchSuggestions(String query) async {
     try {
       final uri = Uri.parse(
-        'https://api.details-store.com/api/products?search=$query&limit=5',
+        'https://api.details-store.com/api/products?search=${Uri.encodeComponent(query)}&limit=5',
       );
       final response = await http.get(uri);
 
@@ -276,7 +277,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
-    _debounce = Timer(const Duration(milliseconds: 300), () {
+    _debounce = Timer(const Duration(milliseconds: 400), () {
       if (query.trim().isEmpty) {
         setState(() => _showingSuggestions = false);
         return;
@@ -290,7 +291,12 @@ class _SearchScreenState extends State<SearchScreen> {
       bool available = await _speech.initialize();
       if (available) {
         setState(() => _isListening = true);
+
+        final currentLocale = Localizations.localeOf(context);
+        final localeId = currentLocale.languageCode == 'ar' ? 'ar_SA' : 'en_US';
+
         _speech.listen(
+          localeId: localeId,
           onResult: (val) {
             setState(() {
               _searchController.text = val.recognizedWords;
@@ -517,8 +523,11 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildBody(AppLocalizations loc) {
+    // إضافة مساحة سفلية لتجنب تغطية المحتوى بواسطة الشريط السفلي
+    const bottomPadding = EdgeInsets.only(bottom: 120);
+
     if (_showingSuggestions && _suggestions.isNotEmpty) {
-      return _buildSuggestionsList();
+      return _buildSuggestionsList(bottomPadding);
     }
 
     if (_hasError) {
@@ -548,7 +557,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
     if (_isLoading) {
       return GridView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16).add(bottomPadding),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           childAspectRatio: 0.58,
@@ -602,12 +611,16 @@ class _SearchScreenState extends State<SearchScreen> {
 
     if (!_hasSearched) {
       return SingleChildScrollView(
+        padding: bottomPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildTrendingSearches(loc),
             if (_recentSearches.isNotEmpty) _buildRecentSearchesList(loc),
             if (_recentlyViewed.isNotEmpty) _buildRecentlyViewedSection(loc),
-            if (_recentSearches.isEmpty && _recentlyViewed.isEmpty)
+            if (_recentSearches.isEmpty &&
+                _recentlyViewed.isEmpty &&
+                _searchController.text.isEmpty)
               _buildEmptyState(loc),
           ],
         ),
@@ -643,7 +656,7 @@ class _SearchScreenState extends State<SearchScreen> {
         Expanded(
           child: GridView.builder(
             controller: _scrollController,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16).add(bottomPadding),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               childAspectRatio: 0.58,
@@ -657,23 +670,45 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
         ),
         if (_isLoadingMore)
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: CircularProgressIndicator(color: Color(0xFFD4AF37)),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 10,
+            ).add(bottomPadding),
+            child: Shimmer.fromColors(
+              baseColor: Colors.grey[300]!,
+              highlightColor: Colors.grey[100]!,
+              child: Row(
+                children: List.generate(
+                  2,
+                  (index) => Expanded(child: _buildShimmerProductCard()),
+                ),
+              ),
+            ),
           ),
       ],
     );
   }
 
-  Widget _buildSuggestionsList() {
+  Widget _buildSuggestionsList(EdgeInsets padding) {
     return ListView.builder(
+      padding: padding,
       itemCount: _suggestions.length,
       itemBuilder: (context, index) {
+        final suggestion = _suggestions[index];
+        final query = _searchController.text;
+
+        // Highlighting Logic
+        // Note: Simple case-insensitive highlight
+        // For more complex highlighting, a rich text parser is needed.
+
         return ListTile(
           leading: const Icon(Icons.search, color: Colors.grey),
-          title: Text(
-            _suggestions[index],
-            style: const TextStyle(color: Color(0xFF452512)),
+          title: RichText(
+            text: TextSpan(
+              style: const TextStyle(color: Color(0xFF452512), fontSize: 16),
+              children: _highlightOccurrences(suggestion, query),
+            ),
           ),
           onTap: () {
             _searchController.text = _suggestions[index];
@@ -682,6 +717,47 @@ class _SearchScreenState extends State<SearchScreen> {
           },
         );
       },
+    );
+  }
+
+  List<TextSpan> _highlightOccurrences(String source, String query) {
+    if (query.isEmpty || !source.toLowerCase().contains(query.toLowerCase())) {
+      return [TextSpan(text: source)];
+    }
+    final matches = query.toLowerCase().allMatches(source.toLowerCase());
+    int lastMatchEnd = 0;
+    final List<TextSpan> children = [];
+    for (var match in matches) {
+      if (match.start != lastMatchEnd) {
+        children.add(
+          TextSpan(text: source.substring(lastMatchEnd, match.start)),
+        );
+      }
+      children.add(
+        TextSpan(
+          text: source.substring(match.start, match.end),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color(0xFFD4AF37),
+          ),
+        ),
+      );
+      lastMatchEnd = match.end;
+    }
+    if (lastMatchEnd != source.length) {
+      children.add(TextSpan(text: source.substring(lastMatchEnd)));
+    }
+    return children;
+  }
+
+  Widget _buildShimmerProductCard() {
+    return Container(
+      height: 180,
+      margin: const EdgeInsets.symmetric(horizontal: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
     );
   }
 
@@ -715,7 +791,7 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              "ابحث عن منتجاتك المفضلة...",
+              loc.translate('search_favorites_hint'),
               style: TextStyle(
                 fontSize: 14,
                 color: const Color(0xFF452512).withValues(alpha: 0.6),
@@ -724,6 +800,47 @@ class _SearchScreenState extends State<SearchScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTrendingSearches(AppLocalizations loc) {
+    // كلمات مفتاحية شائعة (يمكن استبدالها بـ API لاحقاً)
+    final trendingTags = ['Watch', 'Perfume', 'Dress', 'Bag', 'Shoes', 'Gift'];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+          child: Text(
+            loc.translate('most_popular'), // استخدام مفتاح موجود للـ Trending
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF452512),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: trendingTags.map((tag) {
+              return ActionChip(
+                label: Text(tag),
+                backgroundColor: Colors.white,
+                surfaceTintColor: const Color(0xFFFDFBF7),
+                elevation: 1,
+                onPressed: () {
+                  _searchController.text = tag;
+                  _performSearch(tag, saveToHistory: true);
+                },
+              );
+            }).toList(),
+          ),
+        ),
+      ],
     );
   }
 
@@ -828,7 +945,7 @@ class _SearchScreenState extends State<SearchScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Text(
-            "منتجات شاهدتها مؤخراً",
+            loc.translate('recently_viewed'),
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
