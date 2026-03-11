@@ -7,6 +7,7 @@ class ProductSize {
   ProductSize({required this.size, required this.quantity});
 
   factory ProductSize.fromJson(dynamic json) {
+    if (json == null) return ProductSize(size: '', quantity: 0);
     if (json is String) {
       return ProductSize(size: json, quantity: 0);
     }
@@ -33,6 +34,7 @@ class ProductColor {
   });
 
   factory ProductColor.fromJson(dynamic json) {
+    if (json == null) return ProductColor(nameAr: '', nameEn: '', hex: '');
     if (json is String) {
       return ProductColor(nameAr: '', nameEn: '', hex: json);
     }
