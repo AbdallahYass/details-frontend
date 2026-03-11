@@ -1,7 +1,7 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, empty_catches
 
-import 'package:details_app/app_imports.dart';
-import 'package:http/http.dart' as http;
+import 'package:details_app/app_imports.dart'; // تأكد من استيراد SearchService هنا
+import 'package:details_app/services/search_service.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
@@ -20,10 +20,15 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _isLoading = false;
   bool _hasSearched = false;
   Timer? _debounce;
+
   List<String> _recentSearches = [];
   List<Product> _recentlyViewed = [];
   List<String> _suggestions = [];
   bool _showingSuggestions = false;
+
+  // Trending Searches State
+  List<String> _trendingTags = [];
+  bool _isLoadingTrending = true;
 
   // Pagination & Sorting
   final ScrollController _scrollController = ScrollController();
@@ -42,6 +47,7 @@ class _SearchScreenState extends State<SearchScreen> {
     super.initState();
     _loadRecentSearches();
     _loadRecentlyViewed();
+    _loadTrendingTags();
     _scrollController.addListener(_scrollListener);
   }
 
@@ -55,6 +61,9 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _scrollListener() {
+    // 🛡️ حماية لمنع الـ Crash
+    if (!_scrollController.hasClients) return;
+
     if (_scrollController.position.pixels >=
             _scrollController.position.maxScrollExtent - 200 &&
         !_isLoadingMore &&
@@ -62,6 +71,32 @@ class _SearchScreenState extends State<SearchScreen> {
         !_isLoading &&
         !_hasError) {
       _performSearch(_searchController.text, isPagination: true);
+    }
+  }
+
+  Future<void> _loadTrendingTags() async {
+    try {
+      final tags = await SearchService.fetchTrendingTags();
+      if (mounted) {
+        setState(() {
+          _trendingTags = tags;
+          _isLoadingTrending = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _trendingTags = [
+            'ساعات',
+            'عطور',
+            'حقائب',
+            'أحذية',
+            'فساتين',
+            'هدايا',
+          ];
+          _isLoadingTrending = false;
+        });
+      }
     }
   }
 
@@ -92,9 +127,7 @@ class _SearchScreenState extends State<SearchScreen> {
   Future<void> _clearRecentSearches() async {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
-      setState(() {
-        _recentSearches.clear();
-      });
+      setState(() => _recentSearches.clear());
       await prefs.remove('recent_searches');
     }
   }
@@ -102,9 +135,7 @@ class _SearchScreenState extends State<SearchScreen> {
   Future<void> _removeRecentSearch(String query) async {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
-      setState(() {
-        _recentSearches.remove(query);
-      });
+      setState(() => _recentSearches.remove(query));
       await prefs.setStringList('recent_searches', _recentSearches);
     }
   }
@@ -119,9 +150,7 @@ class _SearchScreenState extends State<SearchScreen> {
         setState(() {
           _recentlyViewed = decoded.map((e) => Product.fromJson(e)).toList();
         });
-      } catch (e) {
-        debugPrint('Error loading recently viewed: $e');
-      }
+      } catch (e) {}
     }
   }
 
@@ -140,9 +169,7 @@ class _SearchScreenState extends State<SearchScreen> {
         'recently_viewed_products',
         json.encode(_recentlyViewed.map((e) => e.toJson()).toList()),
       );
-    } catch (e) {
-      debugPrint('Error saving recently viewed: $e');
-    }
+    } catch (e) {}
   }
 
   Future<void> _performSearch(
@@ -159,9 +186,7 @@ class _SearchScreenState extends State<SearchScreen> {
       return;
     }
 
-    if (saveToHistory) {
-      _addToRecentSearches(query);
-    }
+    if (saveToHistory) _addToRecentSearches(query);
 
     if (!isPagination) {
       setState(() {
@@ -179,48 +204,29 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     try {
-      final uri = Uri.parse(
-        'https://api.details-store.com/api/products?search=${Uri.encodeComponent(query)}&page=$_page&limit=10&sort=$_sortOption',
+      // استخدام السيرفيس الجديد الذي يدعم الكاش! 🔥
+      final result = await SearchService.searchProducts(
+        query: query,
+        page: _page,
+        sortOption: _sortOption,
       );
-      final response = await http.get(uri);
 
-      if (response.statusCode == 200) {
-        var body = json.decode(response.body);
-        List<dynamic> data = [];
-        if (body is List) {
-          data = body;
-        } else if (body is Map && body.containsKey('data')) {
-          data = body['data'];
-        }
+      if (mounted) {
+        setState(() {
+          final List<Product> newProducts = result['products'];
 
-        if (mounted) {
-          setState(() {
-            final newProducts = data
-                .map((json) => Product.fromJson(json))
-                .toList();
+          if (isPagination) {
+            _searchResults.addAll(newProducts);
+          } else {
+            _searchResults = newProducts;
+          }
 
-            if (newProducts.length < 10) _hasMore = false;
+          _hasMore = result['hasMore'];
+          if (newProducts.isNotEmpty) _page++;
 
-            if (isPagination) {
-              _searchResults.addAll(newProducts);
-            } else {
-              _searchResults = newProducts;
-            }
-
-            if (newProducts.isNotEmpty) _page++;
-
-            _isLoading = false;
-            _isLoadingMore = false;
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            if (!isPagination) _hasError = true;
-            _isLoading = false;
-            _isLoadingMore = false;
-          });
-        }
+          _isLoading = false;
+          _isLoadingMore = false;
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -240,49 +246,31 @@ class _SearchScreenState extends State<SearchScreen> {
           );
         }
       }
-      debugPrint('Search error: $e');
     }
   }
 
-  Future<void> _fetchSuggestions(String query) async {
+  Future<void> _fetchSuggestionsForUI(String query) async {
     try {
-      final uri = Uri.parse(
-        'https://api.details-store.com/api/products?search=${Uri.encodeComponent(query)}&limit=5',
-      );
-      final response = await http.get(uri);
-
-      if (response.statusCode == 200) {
-        var body = json.decode(response.body);
-        List<dynamic> data = [];
-        if (body is List) {
-          data = body;
-        } else if (body is Map && body.containsKey('data')) {
-          data = body['data'];
-        }
-
-        if (mounted) {
-          setState(() {
-            _suggestions = data
-                .map((json) => Product.fromJson(json).getName(context))
-                .toSet()
-                .toList();
-            _showingSuggestions = true;
-          });
-        }
+      final langCode = Localizations.localeOf(context).languageCode;
+      final tags = await SearchService.fetchSuggestions(query, langCode);
+      if (mounted) {
+        setState(() {
+          _suggestions = tags;
+          _showingSuggestions = true;
+        });
       }
-    } catch (e) {
-      debugPrint("Suggestion error: $e");
-    }
+    } catch (e) {}
   }
 
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
+    // تم تعديل وقت الانتظار لـ 400ms للحفاظ على أداء السيرفر 🛠️
     _debounce = Timer(const Duration(milliseconds: 400), () {
       if (query.trim().isEmpty) {
         setState(() => _showingSuggestions = false);
         return;
       }
-      _fetchSuggestions(query);
+      _fetchSuggestionsForUI(query);
     });
   }
 
@@ -382,7 +370,6 @@ class _SearchScreenState extends State<SearchScreen> {
       backgroundColor: const Color(0xFFFDFBF7),
       body: Stack(
         children: [
-          // الخلفية
           Positioned.fill(
             child: Image.asset(
               'assets/images/bg.png',
@@ -391,13 +378,9 @@ class _SearchScreenState extends State<SearchScreen> {
               cacheWidth: 1080,
             ),
           ),
-
           Column(
             children: [
-              // شريط البحث المخصص
               _buildSearchHeader(loc),
-
-              // محتوى النتائج
               Expanded(child: _buildBody(loc)),
             ],
           ),
@@ -432,13 +415,11 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       child: Row(
         children: [
-          // Sort Button
           IconButton(
             icon: const Icon(Icons.sort, color: Color(0xFF452512)),
             onPressed: () => _showSortOptions(loc),
           ),
           const SizedBox(width: 8),
-          // حقل البحث
           Expanded(
             child: Container(
               height: 45,
@@ -489,6 +470,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                   ),
                                   onPressed: () {
                                     _searchController.clear();
+                                    setState(() => _showingSuggestions = false);
                                     _performSearch('');
                                   },
                                 )
@@ -523,7 +505,6 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildBody(AppLocalizations loc) {
-    // إضافة مساحة سفلية لتجنب تغطية المحتوى بواسطة الشريط السفلي
     const bottomPadding = EdgeInsets.only(bottom: 120);
 
     if (_showingSuggestions && _suggestions.isNotEmpty) {
@@ -565,47 +546,7 @@ class _SearchScreenState extends State<SearchScreen> {
           mainAxisSpacing: 16,
         ),
         itemCount: 6,
-        itemBuilder: (_, __) => Shimmer.fromColors(
-          baseColor: Colors.grey[300]!,
-          highlightColor: Colors.grey[100]!,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.transparent, // تم التعديل
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // مكان الصورة الوهمية
-                Expanded(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-                // مكان العنوان الوهمي
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Container(
-                    height: 12,
-                    width: double.infinity,
-                    color: Colors.white,
-                  ),
-                ),
-                // مكان السعر الوهمي
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Container(height: 12, width: 60, color: Colors.white),
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          ),
-        ),
+        itemBuilder: (_, __) => _buildShimmerProductCard(),
       );
     }
 
@@ -620,7 +561,8 @@ class _SearchScreenState extends State<SearchScreen> {
             if (_recentlyViewed.isNotEmpty) _buildRecentlyViewedSection(loc),
             if (_recentSearches.isEmpty &&
                 _recentlyViewed.isEmpty &&
-                _searchController.text.isEmpty)
+                _searchController.text.isEmpty &&
+                !_isLoadingTrending)
               _buildEmptyState(loc),
           ],
         ),
@@ -675,14 +617,10 @@ class _SearchScreenState extends State<SearchScreen> {
               horizontal: 16,
               vertical: 10,
             ).add(bottomPadding),
-            child: Shimmer.fromColors(
-              baseColor: Colors.grey[300]!,
-              highlightColor: Colors.grey[100]!,
-              child: Row(
-                children: List.generate(
-                  2,
-                  (index) => Expanded(child: _buildShimmerProductCard()),
-                ),
+            child: Row(
+              children: List.generate(
+                2,
+                (index) => Expanded(child: _buildShimmerProductCard()),
               ),
             ),
           ),
@@ -698,12 +636,10 @@ class _SearchScreenState extends State<SearchScreen> {
         final suggestion = _suggestions[index];
         final query = _searchController.text;
 
-        // Highlighting Logic
-        // Note: Simple case-insensitive highlight
-        // For more complex highlighting, a rich text parser is needed.
-
         return ListTile(
           leading: const Icon(Icons.search, color: Colors.grey),
+          // ↗ إضافة أيقونة السهم الجانبي الاحترافية
+          trailing: const Icon(Icons.north_west, size: 16, color: Colors.grey),
           title: RichText(
             text: TextSpan(
               style: const TextStyle(color: Color(0xFF452512), fontSize: 16),
@@ -751,12 +687,42 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildShimmerProductCard() {
-    return Container(
-      height: 180,
-      margin: const EdgeInsets.symmetric(horizontal: 6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        height: 180,
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                height: 12,
+                width: double.infinity,
+                color: Colors.white,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Container(height: 12, width: 60, color: Colors.white),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
@@ -804,21 +770,38 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildTrendingSearches(AppLocalizations loc) {
-    // كلمات مفتاحية شائعة (يمكن استبدالها بـ API لاحقاً)
-    final trendingTags = ['Watch', 'Perfume', 'Dress', 'Bag', 'Shoes', 'Gift'];
+    if (_isLoadingTrending) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(
+          child: CircularProgressIndicator(color: Color(0xFFD4AF37)),
+        ),
+      );
+    }
+    if (_trendingTags.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-          child: Text(
-            loc.translate('most_popular'), // استخدام مفتاح موجود للـ Trending
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF452512),
-            ),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.local_fire_department,
+                color: Colors.orange,
+                size: 20,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                loc.translate('most_popular'),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF452512),
+                ),
+              ),
+            ],
           ),
         ),
         Padding(
@@ -826,7 +809,7 @@ class _SearchScreenState extends State<SearchScreen> {
           child: Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: trendingTags.map((tag) {
+            children: _trendingTags.map((tag) {
               return ActionChip(
                 label: Text(tag),
                 backgroundColor: Colors.white,
@@ -1029,7 +1012,6 @@ class _SearchScreenState extends State<SearchScreen> {
                         ),
                       ),
                     ),
-                    // Badges
                     if (p.isSoldOut)
                       Positioned(
                         top: 8,
@@ -1053,7 +1035,6 @@ class _SearchScreenState extends State<SearchScreen> {
                           ),
                         ),
                       ),
-                    // Fav Button
                     Positioned(
                       top: 8,
                       right: 8,
@@ -1080,8 +1061,8 @@ class _SearchScreenState extends State<SearchScreen> {
                             SnackBar(
                               content: Text(
                                 added
-                                    ? loc.translate('added_to_wishlist')
-                                    : loc.translate('removed_from_wishlist'),
+                                    ? (loc.translate('added_to_wishlist'))
+                                    : (loc.translate('removed_from_wishlist')),
                               ),
                               duration: const Duration(seconds: 1),
                               backgroundColor: const Color(0xFF9E773A),
@@ -1105,7 +1086,6 @@ class _SearchScreenState extends State<SearchScreen> {
                   ],
                 ),
               ),
-              // Info Section
               Padding(
                 padding: const EdgeInsets.all(10),
                 child: Column(
