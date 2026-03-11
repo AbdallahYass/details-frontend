@@ -4,6 +4,7 @@ import 'package:url_strategy/url_strategy.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:details_app/l10n/app_localizations.dart';
+import 'package:details_app/providers/home_provider.dart';
 import 'package:details_app/providers/wishlist_provider.dart';
 import 'package:details_app/providers/notification_provider.dart';
 import 'package:details_app/providers/auth_provider.dart';
@@ -38,6 +39,7 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => HomeProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProxyProvider<AuthProvider, WishlistProvider>(
