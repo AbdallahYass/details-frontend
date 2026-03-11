@@ -31,20 +31,20 @@ class _HomePageState extends State<HomePage>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // تحميل البيانات عبر المزود
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<HomeProvider>(context, listen: false).loadAllData();
-    });
-
-    // التعديل هنا: فحص الجلسة فور الدخول للتأكد من أن الحساب غير محذوف
+    // دمج عمليات التهيئة في استدعاء واحد لضمان التسلسل والأداء
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+
+      final homeProvider = Provider.of<HomeProvider>(context, listen: false);
       final auth = Provider.of<AuthProvider>(context, listen: false);
 
+      // 1. تحميل بيانات الصفحة الرئيسية
+      homeProvider.loadAllData();
+
+      // 2. التحقق من حالة الحساب والإشعارات
       if (auth.token != null) {
-        // بدلاً من الوثوق بالتوكن، نقوم بتجربة تسجيل دخول صامت سريع للتحقق من السيرفر
         await auth.tryAutoLogin();
 
-        // إذا نجح التحقق ولا يزال المستخدم موجوداً، نجلب الإشعارات
         if (mounted && auth.isAuthenticated) {
           Provider.of<NotificationProvider>(
             context,
@@ -504,25 +504,13 @@ class _HomePageState extends State<HomePage>
                   horizontal: 20,
                   vertical: 10,
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      category.getName(context),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF452512),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () => _switchCategory(category.slug),
-                      child: Text(
-                        AppLocalizations.of(context)!.translate('view_all'),
-                        style: const TextStyle(color: AppColors.secondary),
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  category.getName(context),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF452512),
+                  ),
                 ),
               ),
               SizedBox(
