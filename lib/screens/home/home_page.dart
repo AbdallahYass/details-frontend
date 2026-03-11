@@ -139,6 +139,49 @@ class _HomePageState extends State<HomePage>
     });
   }
 
+  // دالة مساعدة للانتقال إلى صفحة التصنيف
+  Future<void> _navigateToCategory(String slug) async {
+    final int currentRequest = ++_requestId;
+    setState(() {
+      _selectedCategory = slug;
+      isLoading = true;
+      errorMessage = null;
+      products = [];
+    });
+
+    try {
+      final results = await Future.wait([
+        _homeRepository.fetchProducts(category: _selectedCategory),
+        _homeRepository.fetchBanners(
+          location: 'category',
+          category: _selectedCategory,
+        ),
+      ]);
+      if (mounted && currentRequest == _requestId) {
+        setState(() {
+          products = results[0] as List<Product>;
+          banners = results[1] as List<BannerModel>;
+          isLoading = false;
+          _bannerIndexNotifier.value = 0;
+          if (_heroController.hasClients) {
+            _heroController.jumpToPage(0);
+          }
+        });
+        _startHeroScroll();
+      }
+    } catch (e) {
+      debugPrint("Error loading category data: $e");
+      if (mounted && currentRequest == _requestId) {
+        setState(() {
+          isLoading = false;
+          errorMessage = AppLocalizations.of(
+            context,
+          )!.translate('error_occurred');
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -532,13 +575,25 @@ class _HomePageState extends State<HomePage>
                   horizontal: 20,
                   vertical: 10,
                 ),
-                child: Text(
-                  category.getName(context),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF452512),
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      category.getName(context),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF452512),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _navigateToCategory(category.slug),
+                      child: Text(
+                        AppLocalizations.of(context)!.translate('view_all'),
+                        style: const TextStyle(color: AppColors.secondary),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(
@@ -1051,15 +1106,31 @@ class _HomePageState extends State<HomePage>
         padding: const EdgeInsets.all(10),
         child: Column(
           children: [
-            Text(
-              AppLocalizations.of(context)!.translate('categories'),
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w300,
-                color: const Color(0xFF452512),
-                //letterSpacing: 12.0,
-                height: 1.2,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  AppLocalizations.of(context)!.translate('categories'),
+                  style: const TextStyle(
+                    fontSize: 24, // تم تصغير الخط قليلاً ليتناسب مع الصف
+                    fontWeight: FontWeight.w300,
+                    color: Color(0xFF452512),
+                    height: 1.2,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    // يمكن هنا إضافة منطق للانتقال لصفحة كافة التصنيفات إذا وجدت
+                  },
+                  child: Text(
+                    AppLocalizations.of(context)!.translate('view_all'),
+                    style: const TextStyle(
+                      color: AppColors.secondary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
             GridView.builder(
               padding: const EdgeInsets.all(15),
