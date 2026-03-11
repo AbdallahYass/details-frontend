@@ -4,6 +4,8 @@ import 'package:details_app/app_imports.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -20,17 +22,42 @@ class _SearchScreenState extends State<SearchScreen> {
   Timer? _debounce;
   List<String> _recentSearches = [];
 
+  // Pagination & Sorting
+  final ScrollController _scrollController = ScrollController();
+  int _page = 1;
+  bool _hasMore = true;
+  bool _isLoadingMore = false;
+  bool _hasError = false;
+  String _sortOption = 'newest';
+
+  // Voice Search
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  bool _isListening = false;
+
   @override
   void initState() {
     super.initState();
     _loadRecentSearches();
+    _scrollController.addListener(_scrollListener);
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
+    _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !_isLoadingMore &&
+        _hasMore &&
+        !_isLoading &&
+        !_hasError) {
+      _performSearch(_searchController.text, isPagination: true);
+    }
   }
 
   Future<void> _loadRecentSearches() async {
@@ -80,11 +107,13 @@ class _SearchScreenState extends State<SearchScreen> {
   Future<void> _performSearch(
     String query, {
     bool saveToHistory = false,
+    bool isPagination = false,
   }) async {
     if (query.trim().isEmpty) {
       setState(() {
         _searchResults = [];
         _hasSearched = false;
+        _hasError = false;
       });
       return;
     }
@@ -93,45 +122,180 @@ class _SearchScreenState extends State<SearchScreen> {
       _addToRecentSearches(query);
     }
 
-    setState(() {
-      _isLoading = true;
-      _hasSearched = true;
-    });
+    if (!isPagination) {
+      setState(() {
+        _isLoading = true;
+        _hasSearched = true;
+        _hasError = false;
+        _page = 1;
+        _hasMore = true;
+        _searchResults.clear();
+      });
+    } else {
+      if (!_hasMore) return;
+      setState(() => _isLoadingMore = true);
+    }
 
     try {
-      final response = await http.get(
-        Uri.parse('https://api.details-store.com/api/products?search=$query'),
+      final uri = Uri.parse(
+        'https://api.details-store.com/api/products?search=$query&page=$_page&limit=10&sort=$_sortOption',
       );
+      final response = await http.get(uri);
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
+        var body = json.decode(response.body);
+        List<dynamic> data = [];
+        if (body is List) {
+          data = body;
+        } else if (body is Map && body.containsKey('data')) {
+          data = body['data'];
+        }
+
         if (mounted) {
           setState(() {
-            _searchResults = data
+            final newProducts = data
                 .map((json) => Product.fromJson(json))
                 .toList();
+
+            if (newProducts.length < 10) _hasMore = false;
+
+            if (isPagination) {
+              _searchResults.addAll(newProducts);
+            } else {
+              _searchResults = newProducts;
+            }
+
+            if (newProducts.isNotEmpty) _page++;
+
             _isLoading = false;
+            _isLoadingMore = false;
           });
         }
       } else {
-        setState(() => _isLoading = false);
+        if (mounted) {
+          setState(() {
+            if (!isPagination) _hasError = true;
+            _isLoading = false;
+            _isLoadingMore = false;
+          });
+        }
       }
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          if (!isPagination) _hasError = true;
+          _isLoading = false;
+          _isLoadingMore = false;
+        });
+        if (isPagination) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)!.translate('error_occurred'),
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
       debugPrint('Search error: $e');
     }
   }
 
   void _onSearchChanged(String query) {
-    setState(() {}); // لتحديث أيقونة المسح
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 500), () {
       _performSearch(query);
     });
   }
 
+  void _listen() async {
+    if (!_isListening) {
+      bool available = await _speech.initialize();
+      if (available) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          onResult: (val) {
+            setState(() {
+              _searchController.text = val.recognizedWords;
+              if (val.finalResult) {
+                _isListening = false;
+                _performSearch(val.recognizedWords, saveToHistory: true);
+              }
+            });
+          },
+        );
+      }
+    } else {
+      setState(() => _isListening = false);
+      _speech.stop();
+    }
+  }
+
+  void _showSortOptions(AppLocalizations loc) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFFFDFBF7),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                loc.translate('sort_by'),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 10),
+              _buildSortOption(loc, 'newest', loc.translate('newest')),
+              _buildSortOption(
+                loc,
+                'price_asc',
+                loc.translate('price_low_high'),
+              ),
+              _buildSortOption(
+                loc,
+                'price_desc',
+                loc.translate('price_high_low'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSortOption(AppLocalizations loc, String value, String label) {
+    final isSelected = _sortOption == value;
+    return ListTile(
+      title: Text(
+        label,
+        style: TextStyle(
+          color: isSelected ? const Color(0xFFD4AF37) : Colors.black,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+      trailing: isSelected
+          ? const Icon(Icons.check, color: Color(0xFFD4AF37))
+          : null,
+      onTap: () {
+        Navigator.pop(context);
+        setState(() => _sortOption = value);
+        _performSearch(_searchController.text);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: const Color(0xFFFDFBF7),
       body: Stack(
@@ -149,10 +313,10 @@ class _SearchScreenState extends State<SearchScreen> {
           Column(
             children: [
               // شريط البحث المخصص
-              _buildSearchHeader(),
+              _buildSearchHeader(loc),
 
               // محتوى النتائج
-              Expanded(child: _buildBody()),
+              Expanded(child: _buildBody(loc)),
             ],
           ),
         ],
@@ -160,7 +324,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildSearchHeader() {
+  Widget _buildSearchHeader(AppLocalizations loc) {
     return Container(
       padding: EdgeInsets.only(
         top: MediaQuery.of(context).padding.top + 10,
@@ -186,6 +350,12 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
       child: Row(
         children: [
+          // Sort Button
+          IconButton(
+            icon: const Icon(Icons.sort, color: Color(0xFF452512)),
+            onPressed: () => _showSortOptions(loc),
+          ),
+          const SizedBox(width: 8),
           // حقل البحث
           Expanded(
             child: Container(
@@ -213,9 +383,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   fontWeight: FontWeight.w600,
                 ),
                 decoration: InputDecoration(
-                  hintText: AppLocalizations.of(
-                    context,
-                  )!.translate('search_hint'),
+                  hintText: loc.translate('search_hint'),
                   hintStyle: TextStyle(
                     color: const Color(0xFF452512).withValues(alpha: 0.5),
                     fontSize: 14,
@@ -224,19 +392,38 @@ class _SearchScreenState extends State<SearchScreen> {
                     Icons.search,
                     color: Color(0xFFD4AF37),
                   ),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(
-                            Icons.close,
-                            size: 18,
-                            color: Colors.grey,
-                          ),
-                          onPressed: () {
-                            _searchController.clear();
-                            _performSearch('');
-                          },
-                        )
-                      : null,
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: _searchController,
+                        builder: (context, value, child) {
+                          return value.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(
+                                    Icons.close,
+                                    size: 18,
+                                    color: Colors.grey,
+                                  ),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    _performSearch('');
+                                  },
+                                )
+                              : const SizedBox.shrink();
+                        },
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          _isListening ? Icons.mic : Icons.mic_none,
+                          color: _isListening
+                              ? Colors.red
+                              : const Color(0xFFD4AF37),
+                        ),
+                        onPressed: _listen,
+                      ),
+                    ],
+                  ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 ),
@@ -253,10 +440,89 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(AppLocalizations loc) {
+    if (_hasError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.wifi_off_rounded, size: 80, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              loc.translate('error_occurred'),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () => _performSearch(_searchController.text),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFD4AF37),
+                foregroundColor: Colors.white,
+              ),
+              child: Text(loc.translate('retry')),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_isLoading) {
+      return GridView.builder(
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.58,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 16,
+        ),
+        itemCount: 6,
+        itemBuilder: (_, __) => Shimmer.fromColors(
+          baseColor: Colors.grey[300]!,
+          highlightColor: Colors.grey[100]!,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.transparent, // تم التعديل
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // مكان الصورة الوهمية
+                Expanded(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+                // مكان العنوان الوهمي
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Container(
+                    height: 12,
+                    width: double.infinity,
+                    color: Colors.white,
+                  ),
+                ),
+                // مكان السعر الوهمي
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Container(height: 12, width: 60, color: Colors.white),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     if (!_hasSearched) {
       if (_recentSearches.isNotEmpty) {
-        return _buildRecentSearchesList();
+        return _buildRecentSearchesList(loc);
       }
       return Center(
         child: SingleChildScrollView(
@@ -277,7 +543,7 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
               const SizedBox(height: 20),
               Text(
-                AppLocalizations.of(context)!.translate('start_typing'),
+                loc.translate('start_typing'),
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -310,7 +576,7 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              AppLocalizations.of(context)!.translate('no_results'),
+              loc.translate('no_results'),
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -322,22 +588,34 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 0.58,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 16,
-      ),
-      itemCount: _searchResults.length,
-      itemBuilder: (context, index) {
-        return _buildProductCard(_searchResults[index]);
-      },
+    return Column(
+      children: [
+        Expanded(
+          child: GridView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.all(16),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.58,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 16,
+            ),
+            itemCount: _searchResults.length,
+            itemBuilder: (context, index) {
+              return _buildProductCard(_searchResults[index], loc);
+            },
+          ),
+        ),
+        if (_isLoadingMore)
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: CircularProgressIndicator(color: Color(0xFFD4AF37)),
+          ),
+      ],
     );
   }
 
-  Widget _buildRecentSearchesList() {
+  Widget _buildRecentSearchesList(AppLocalizations loc) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -347,7 +625,7 @@ class _SearchScreenState extends State<SearchScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                AppLocalizations.of(context)!.translate('recent_searches'),
+                loc.translate('recent_searches'),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -362,30 +640,21 @@ class _SearchScreenState extends State<SearchScreen> {
                       builder: (context) => AlertDialog(
                         backgroundColor: const Color(0xFFFDFBF7),
                         title: Text(
-                          AppLocalizations.of(
-                                context,
-                              )!.translate('confirm_deletion') ??
-                              'تأكيد الحذف',
+                          loc.translate('confirm_deletion'),
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF452512),
                           ),
                         ),
                         content: Text(
-                          AppLocalizations.of(
-                                context,
-                              )!.translate('clear_history_confirm') ??
-                              'هل أنت متأكد من مسح سجل البحث بالكامل؟',
+                          loc.translate('clear_history_confirm'),
                           style: const TextStyle(color: Color(0xFF452512)),
                         ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
                             child: Text(
-                              AppLocalizations.of(
-                                    context,
-                                  )!.translate('cancel') ??
-                                  'إلغاء',
+                              loc.translate('cancel'),
                               style: const TextStyle(color: Colors.grey),
                             ),
                           ),
@@ -395,10 +664,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               _clearRecentSearches();
                             },
                             child: Text(
-                              AppLocalizations.of(
-                                    context,
-                                  )!.translate('delete') ??
-                                  'مسح',
+                              loc.translate('delete'),
                               style: const TextStyle(color: Colors.red),
                             ),
                           ),
@@ -407,7 +673,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     );
                   },
                   child: Text(
-                    AppLocalizations.of(context)!.translate('clear_all'),
+                    loc.translate('clear_all'),
                     style: const TextStyle(
                       fontSize: 12,
                       color: Colors.red,
@@ -443,7 +709,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildProductCard(Product p) {
+  Widget _buildProductCard(Product p, AppLocalizations loc) {
     return Selector<WishlistProvider, bool>(
       selector: (context, wishlistProvider) =>
           wishlistProvider.isInWishlist(p.id),
@@ -512,7 +778,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            AppLocalizations.of(context)!.translate('sold_out'),
+                            loc.translate('sold_out'),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,
@@ -548,12 +814,8 @@ class _SearchScreenState extends State<SearchScreen> {
                             SnackBar(
                               content: Text(
                                 added
-                                    ? AppLocalizations.of(
-                                        context,
-                                      )!.translate('added_to_wishlist')
-                                    : AppLocalizations.of(
-                                        context,
-                                      )!.translate('removed_from_wishlist'),
+                                    ? loc.translate('added_to_wishlist')
+                                    : loc.translate('removed_from_wishlist'),
                               ),
                               duration: const Duration(seconds: 1),
                               backgroundColor: const Color(0xFF9E773A),
@@ -596,7 +858,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${p.price} ${AppLocalizations.of(context)!.translate('currency')}',
+                      '${p.price} ${loc.translate('currency')}',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 14,
