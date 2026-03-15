@@ -271,7 +271,6 @@ class _CartItemWidget extends StatelessWidget {
                 AppLocalizations.of(context)!.translate('confirm_deletion'),
               ),
               content: Text(
-                // الأفضل إضافة مفتاح جديد مثل 'confirm_cart_item_deletion'
                 AppLocalizations.of(
                   context,
                 )!.translate('delete_user_confirmation'),
@@ -394,6 +393,7 @@ class _CartItemCard extends StatelessWidget {
                     cartItem.title,
                     cartItem.imageUrl,
                     size: cartItem.size,
+                    color: cartItem.color,
                   ),
                   child: const Icon(Icons.add_circle, color: AppColors.primary),
                 ),
