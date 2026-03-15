@@ -83,160 +83,27 @@ class _CartScreenState extends State<CartScreen> {
                   ),
                   if (cartItems.isNotEmpty)
                     SliverToBoxAdapter(
-                      child: SafeArea(
-                        top: false,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                          ).copyWith(top: 10, bottom: 120),
-                          child: Column(
-                            children: [
-                              // Coupon Section
-                              Container(
-                                margin: const EdgeInsets.only(bottom: 20),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFDFBF7),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: const Color(
-                                      0xFFB89560,
-                                    ).withValues(alpha: 0.3),
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.local_offer_outlined,
-                                      color: Color(0xFF9E773A),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: TextField(
-                                        controller: _couponController,
-                                        decoration: InputDecoration(
-                                          hintText: AppLocalizations.of(
-                                            context,
-                                          )!.translate('enter_coupon_code'),
-                                          border: InputBorder.none,
-                                        ),
-                                      ),
-                                    ),
-                                    TextButton(
-                                      onPressed: () async {
-                                        if (_isLoading) return;
-                                        if (_couponController.text.isNotEmpty) {
-                                          FocusScope.of(context).unfocus();
-                                          setState(() => _isLoading = true);
-                                          final success = await cart
-                                              .applyCoupon(
-                                                _couponController.text,
-                                              );
-                                          setState(() => _isLoading = false);
-                                          if (success) {
-                                            _couponController.clear();
-                                          }
-                                          if (context.mounted) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  success
-                                                      ? AppLocalizations.of(
-                                                          context,
-                                                        )!.translate(
-                                                          'coupon_applied',
-                                                        )
-                                                      : AppLocalizations.of(
-                                                          context,
-                                                        )!.translate(
-                                                          'coupon_invalid',
-                                                        ),
-                                                ),
-                                                backgroundColor: success
-                                                    ? Colors.green
-                                                    : Colors.red,
-                                                behavior:
-                                                    SnackBarBehavior.floating,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                        }
-                                      },
-                                      child: Text(
-                                        AppLocalizations.of(
-                                          context,
-                                        )!.translate('apply'),
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF9E773A),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    AppLocalizations.of(
-                                      context,
-                                    )!.translate('total'),
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${cart.totalAmount.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 50,
-                                child: ElevatedButton(
-                                  onPressed: cart.totalAmount <= 0
-                                      ? null
-                                      : () {
-                                          context.push('/checkout');
-                                        },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF9E773A),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    AppLocalizations.of(
-                                      context,
-                                    )!.translate('checkout'),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      child: _CheckoutSection(
+                        cart: cart,
+                        couponController: _couponController,
+                        isLoading: _isLoading,
+                        onApplyCoupon: () async {
+                          if (_isLoading) return;
+                          if (_couponController.text.isNotEmpty) {
+                            FocusScope.of(context).unfocus();
+                            setState(() => _isLoading = true);
+                            final success = await cart.applyCoupon(
+                              _couponController.text,
+                            );
+                            setState(() => _isLoading = false);
+                            if (success) {
+                              _couponController.clear();
+                            }
+                            if (context.mounted) {
+                              _showCouponSnackBar(context, success);
+                            }
+                          }
+                        },
                       ),
                     ),
                 ],
@@ -245,6 +112,21 @@ class _CartScreenState extends State<CartScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  void _showCouponSnackBar(BuildContext context, bool success) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? AppLocalizations.of(context)!.translate('coupon_applied')
+              : AppLocalizations.of(context)!.translate('coupon_invalid'),
+        ),
+        backgroundColor: success ? Colors.green : Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -259,7 +141,7 @@ class _CartItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dismissible(
-      key: Key(cartItem.id.toString()),
+      key: ValueKey(cartItem.id),
       background: const _DeleteBackground(),
       direction: DismissDirection.endToStart,
       confirmDismiss: (direction) async {
@@ -377,6 +259,32 @@ class _CartItemCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
+                  if (cartItem.size != null || cartItem.color != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        children: [
+                          if (cartItem.size != null)
+                            Text(
+                              '${AppLocalizations.of(context)!.translate('size')}: ${cartItem.size}',
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
+                            ),
+                          if (cartItem.size != null && cartItem.color != null)
+                            const SizedBox(width: 8),
+                          if (cartItem.color != null)
+                            Text(
+                              '${AppLocalizations.of(context)!.translate('colors')}: ${cartItem.color}',
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   Text(
                     '${AppLocalizations.of(context)!.translate('total')}: ${(cartItem.price * cartItem.quantity).toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
                     style: const TextStyle(color: Colors.grey, fontSize: 14),
@@ -408,16 +316,176 @@ class _CartItemCard extends StatelessWidget {
                   ),
                 ),
                 InkWell(
-                  onTap: () {
+                  onTap: () async {
                     if (cartItem.quantity > 1) {
                       cart.removeSingleItem(cartItem.id);
                     } else {
-                      cart.removeItem(cartItem.id);
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text(
+                              AppLocalizations.of(
+                                context,
+                              )!.translate('confirm_deletion'),
+                            ),
+                            content: Text(
+                              AppLocalizations.of(
+                                context,
+                              )!.translate('delete_user_confirmation'),
+                            ),
+                            actions: <Widget>[
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
+                                child: Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.translate('cancel'),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(true),
+                                child: Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.translate('delete'),
+                                  style: const TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                      if (confirm == true) {
+                        cart.removeItem(cartItem.id);
+                      }
                     }
                   },
                   child: Icon(Icons.remove_circle, color: Colors.grey[400]),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CheckoutSection extends StatelessWidget {
+  final CartProvider cart;
+  final TextEditingController couponController;
+  final bool isLoading;
+  final VoidCallback onApplyCoupon;
+
+  const _CheckoutSection({
+    required this.cart,
+    required this.couponController,
+    required this.isLoading,
+    required this.onApplyCoupon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 20,
+        ).copyWith(top: 10, bottom: 120),
+        child: Column(
+          children: [
+            // Coupon Section
+            Container(
+              margin: const EdgeInsets.only(bottom: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFDFBF7),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFFB89560).withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.local_offer_outlined,
+                    color: Color(0xFF9E773A),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      controller: couponController,
+                      decoration: InputDecoration(
+                        hintText: AppLocalizations.of(
+                          context,
+                        )!.translate('enter_coupon_code'),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: isLoading ? null : onApplyCoupon,
+                    child: Text(
+                      AppLocalizations.of(context)!.translate('apply'),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isLoading
+                            ? Colors.grey
+                            : const Color(0xFF9E773A),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  AppLocalizations.of(context)!.translate('total'),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '${cart.totalAmount.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: cart.totalAmount <= 0
+                    ? null
+                    : () {
+                        context.push('/checkout');
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF9E773A),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  AppLocalizations.of(context)!.translate('checkout'),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
