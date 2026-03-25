@@ -1,5 +1,4 @@
 import 'package:details_app/app_imports.dart';
-import 'package:details_app/widgets/custom_loading_overlay.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -9,15 +8,6 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
-  final TextEditingController _couponController = TextEditingController();
-  bool _isLoading = false;
-
-  @override
-  void dispose() {
-    _couponController.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -82,51 +72,12 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                   ),
                   if (cartItems.isNotEmpty)
-                    SliverToBoxAdapter(
-                      child: _CheckoutSection(
-                        cart: cart,
-                        couponController: _couponController,
-                        isLoading: _isLoading,
-                        onApplyCoupon: () async {
-                          if (_isLoading) return;
-                          if (_couponController.text.isNotEmpty) {
-                            FocusScope.of(context).unfocus();
-                            setState(() => _isLoading = true);
-                            final success = await cart.applyCoupon(
-                              _couponController.text,
-                            );
-                            setState(() => _isLoading = false);
-                            if (success) {
-                              _couponController.clear();
-                            }
-                            if (context.mounted) {
-                              _showCouponSnackBar(context, success);
-                            }
-                          }
-                        },
-                      ),
-                    ),
+                    SliverToBoxAdapter(child: _CheckoutSection(cart: cart)),
                 ],
               ),
-              if (_isLoading) const CustomLoadingOverlay(),
             ],
           );
         },
-      ),
-    );
-  }
-
-  void _showCouponSnackBar(BuildContext context, bool success) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          success
-              ? AppLocalizations.of(context)!.translate('coupon_applied')
-              : AppLocalizations.of(context)!.translate('coupon_invalid'),
-        ),
-        backgroundColor: success ? Colors.green : Colors.red,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -374,18 +325,55 @@ class _CartItemCard extends StatelessWidget {
   }
 }
 
-class _CheckoutSection extends StatelessWidget {
+class _CheckoutSection extends StatefulWidget {
   final CartProvider cart;
-  final TextEditingController couponController;
-  final bool isLoading;
-  final VoidCallback onApplyCoupon;
 
-  const _CheckoutSection({
-    required this.cart,
-    required this.couponController,
-    required this.isLoading,
-    required this.onApplyCoupon,
-  });
+  const _CheckoutSection({required this.cart});
+
+  @override
+  State<_CheckoutSection> createState() => _CheckoutSectionState();
+}
+
+class _CheckoutSectionState extends State<_CheckoutSection> {
+  final TextEditingController couponController = TextEditingController();
+  bool isLoading = false;
+
+  @override
+  void dispose() {
+    couponController.dispose();
+    super.dispose();
+  }
+
+  Future<void> onApplyCoupon() async {
+    setState(() => isLoading = true);
+    if (couponController.text.isEmpty) {
+      setState(() => isLoading = false);
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+
+    final success = await widget.cart.applyCoupon(couponController.text);
+
+    if (!mounted) return;
+
+    setState(() => isLoading = false);
+
+    if (success) {
+      couponController.clear();
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? AppLocalizations.of(context)!.translate('coupon_applied')
+              : AppLocalizations.of(context)!.translate('coupon_invalid'),
+        ),
+        backgroundColor: success ? Colors.green : Colors.red,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -452,7 +440,7 @@ class _CheckoutSection extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${cart.totalAmount.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                  '${widget.cart.totalAmount.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -466,7 +454,7 @@ class _CheckoutSection extends StatelessWidget {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: cart.totalAmount <= 0
+                onPressed: widget.cart.totalAmount <= 0
                     ? null
                     : () {
                         context.push('/checkout');

@@ -16,6 +16,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
   final _cityController = TextEditingController();
   final _streetController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _couponController = TextEditingController();
   String _paymentMethod = 'cod'; // cash on delivery
   bool _isLoading = false;
   late AnimationController _rotationController;
@@ -35,6 +36,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     _cityController.dispose();
     _streetController.dispose();
     _phoneController.dispose();
+    _couponController.dispose();
     super.dispose();
   }
 
@@ -389,6 +391,105 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                               ],
                             ),
                             const SizedBox(height: 30),
+                            // Coupon Section
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 20),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFDFBF7),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: const Color(
+                                    0xFFB89560,
+                                  ).withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.local_offer_outlined,
+                                    color: Color(0xFF9E773A),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _couponController,
+                                      decoration: InputDecoration(
+                                        hintText: AppLocalizations.of(
+                                          context,
+                                        )!.translate('enter_coupon_code'),
+                                        border: InputBorder.none,
+                                      ),
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: _isLoading
+                                        ? null
+                                        : () async {
+                                            if (_couponController
+                                                .text
+                                                .isEmpty) {
+                                              return;
+                                            }
+
+                                            FocusScope.of(context).unfocus();
+                                            setState(() => _isLoading = true);
+                                            final localizations =
+                                                AppLocalizations.of(context)!;
+                                            final scaffoldMessenger =
+                                                ScaffoldMessenger.of(context);
+                                            final success = await cart
+                                                .applyCoupon(
+                                                  _couponController.text,
+                                                );
+
+                                            if (!mounted) return;
+
+                                            setState(() => _isLoading = false);
+
+                                            if (success) {
+                                              _couponController.clear();
+                                            }
+                                            scaffoldMessenger.showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  success
+                                                      ? localizations.translate(
+                                                          'coupon_applied',
+                                                        )
+                                                      : localizations.translate(
+                                                          'coupon_invalid',
+                                                        ),
+                                                ),
+                                                backgroundColor: success
+                                                    ? Colors.green
+                                                    : Colors.red,
+                                                behavior:
+                                                    SnackBarBehavior.floating,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                    child: Text(
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.translate('apply'),
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: _isLoading
+                                            ? Colors.grey
+                                            : const Color(0xFF9E773A),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(

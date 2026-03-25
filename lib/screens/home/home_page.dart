@@ -2,7 +2,6 @@
 
 import 'package:flutter/cupertino.dart';
 import 'package:details_app/app_imports.dart';
-import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:details_app/providers/notification_provider.dart';
 import 'package:details_app/providers/home_provider.dart';
 import 'widgets/announcement_bar.dart';
@@ -260,8 +259,6 @@ class _HomePageState extends State<HomePage>
                   ],
                 ],
               ),
-              if (provider.isLoading && provider.products.isEmpty)
-                const CustomLoadingOverlay(isOverlay: false),
             ],
           ),
         );

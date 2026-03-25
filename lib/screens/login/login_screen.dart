@@ -2,7 +2,6 @@
 
 import 'package:details_app/app_imports.dart';
 import 'forgot_password_screen.dart';
-import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import 'package:google_sign_in/google_sign_in.dart';
@@ -569,7 +568,6 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               ),
             ),
-            if (_isLoading) const CustomLoadingOverlay(),
           ],
         ),
       ),
