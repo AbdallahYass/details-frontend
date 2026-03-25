@@ -2,6 +2,8 @@ import 'package:details_app/app_imports.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -21,6 +23,9 @@ class _CheckoutScreenState extends State<CheckoutScreen>
   bool _isLoading = false;
   late AnimationController _rotationController;
 
+  List<Map<String, String>> _savedAddresses = [];
+  bool _saveAddress = false;
+
   @override
   void initState() {
     super.initState();
@@ -28,6 +33,52 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       vsync: this,
       duration: const Duration(seconds: 10),
     )..repeat();
+    _loadSavedData();
+  }
+
+  Future<void> _loadSavedData() async {
+    // جلب رقم الهاتف من حساب المستخدم إن وجد
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    if (auth.user != null && auth.user!.phone.isNotEmpty) {
+      _phoneController.text = auth.user!.phone;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final String? addressesJson = prefs.getString('saved_addresses');
+    if (addressesJson != null) {
+      try {
+        final List<dynamic> decoded = json.decode(addressesJson);
+        if (mounted) {
+          setState(() {
+            _savedAddresses = decoded
+                .map((e) => Map<String, String>.from(e))
+                .toList();
+          });
+        }
+      } catch (e) {
+        debugPrint('Error loading addresses: $e');
+      }
+    }
+  }
+
+  Future<void> _saveCurrentAddressLocally() async {
+    final newAddress = {
+      'city': _cityController.text.trim(),
+      'street': _streetController.text.trim(),
+      'phone': _phoneController.text.trim(),
+    };
+
+    bool exists = _savedAddresses.any(
+      (a) =>
+          a['city'] == newAddress['city'] &&
+          a['street'] == newAddress['street'],
+    );
+
+    if (!exists) {
+      _savedAddresses.insert(0, newAddress); // إضافة الأحدث في البداية
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('saved_addresses', json.encode(_savedAddresses));
+    }
   }
 
   @override
@@ -64,6 +115,10 @@ class _CheckoutScreenState extends State<CheckoutScreen>
 
     final cart = Provider.of<CartProvider>(context, listen: false);
     if (cart.items.isEmpty) return;
+
+    if (_saveAddress) {
+      await _saveCurrentAddressLocally();
+    }
 
     setState(() => _isLoading = true);
 
@@ -291,6 +346,55 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                           children: [
                             _buildSectionTitle(context, 'shipping_info'),
                             const SizedBox(height: 15),
+                            if (_savedAddresses.isNotEmpty) ...[
+                              SizedBox(
+                                height: 45,
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: _savedAddresses.length,
+                                  itemBuilder: (context, index) {
+                                    final address = _savedAddresses[index];
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4.0,
+                                      ),
+                                      child: ActionChip(
+                                        label: Text(
+                                          '${address['city']} - ${address['street']}',
+                                          style: const TextStyle(
+                                            color: AppColors.primary,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        backgroundColor: const Color(
+                                          0xFFFDFBF7,
+                                        ),
+                                        side: BorderSide(
+                                          color: const Color(
+                                            0xFFB89560,
+                                          ).withValues(alpha: 0.5),
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            _cityController.text =
+                                                address['city'] ?? '';
+                                            _streetController.text =
+                                                address['street'] ?? '';
+                                            if (address['phone'] != null &&
+                                                address['phone']!.isNotEmpty) {
+                                              _phoneController.text =
+                                                  address['phone']!;
+                                            }
+                                          });
+                                        },
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 15),
+                            ],
                             Container(
                               padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
@@ -360,6 +464,36 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                       }
                                       return null;
                                     },
+                                  ),
+                                  const SizedBox(height: 15),
+                                  Row(
+                                    children: [
+                                      SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: Checkbox(
+                                          value: _saveAddress,
+                                          onChanged: (val) => setState(
+                                            () => _saveAddress = val ?? false,
+                                          ),
+                                          activeColor: AppColors.primary,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          AppLocalizations.of(
+                                            context,
+                                          )!.translate(
+                                            'save_address_for_later',
+                                          ),
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
