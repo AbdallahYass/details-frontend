@@ -266,6 +266,11 @@ class AppLocalizations {
           'Are you sure you want to clear the entire search history?',
       "search_favorites_hint": "Search for your favorite products...",
       "recently_viewed": "Recently Viewed",
+      "saved_addresses": "Saved Addresses",
+      "add_new_address": "Add New Address",
+      "no_saved_addresses": "No saved addresses yet",
+      "address_added_success": "Address added successfully",
+      "address_deleted_success": "Address deleted successfully",
     },
     'ar': {
       'app_name': 'متجر ديتيلز',
@@ -519,6 +524,11 @@ class AppLocalizations {
       'clear_history_confirm': 'هل أنت متأكد من مسح سجل البحث بالكامل؟',
       "search_favorites_hint": "ابحث عن منتجاتك المفضلة...",
       "recently_viewed": "منتجات شاهدتها مؤخراً",
+      "saved_addresses": "العناوين المحفوظة",
+      "add_new_address": "إضافة عنوان جديد",
+      "no_saved_addresses": "لا توجد عناوين محفوظة بعد",
+      "address_added_success": "تم إضافة العنوان بنجاح",
+      "address_deleted_success": "تم حذف العنوان بنجاح",
     },
   };
 

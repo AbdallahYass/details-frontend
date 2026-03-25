@@ -2,8 +2,7 @@ import 'package:details_app/app_imports.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:details_app/providers/addresses_provider.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -23,7 +22,6 @@ class _CheckoutScreenState extends State<CheckoutScreen>
   bool _isLoading = false;
   late AnimationController _rotationController;
 
-  List<Map<String, String>> _savedAddresses = [];
   bool _saveAddress = false;
 
   @override
@@ -43,41 +41,11 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       _phoneController.text = auth.user!.phone;
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    final String? addressesJson = prefs.getString('saved_addresses');
-    if (addressesJson != null) {
-      try {
-        final List<dynamic> decoded = json.decode(addressesJson);
-        if (mounted) {
-          setState(() {
-            _savedAddresses = decoded
-                .map((e) => Map<String, String>.from(e))
-                .toList();
-          });
-        }
-      } catch (e) {
-        debugPrint('Error loading addresses: $e');
-      }
-    }
-  }
-
-  Future<void> _saveCurrentAddressLocally() async {
-    final newAddress = {
-      'city': _cityController.text.trim(),
-      'street': _streetController.text.trim(),
-      'phone': _phoneController.text.trim(),
-    };
-
-    bool exists = _savedAddresses.any(
-      (a) =>
-          a['city'] == newAddress['city'] &&
-          a['street'] == newAddress['street'],
-    );
-
-    if (!exists) {
-      _savedAddresses.insert(0, newAddress); // إضافة الأحدث في البداية
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('saved_addresses', json.encode(_savedAddresses));
+    if (auth.token != null) {
+      await Provider.of<AddressesProvider>(
+        context,
+        listen: false,
+      ).fetchAddresses(auth.token!);
     }
   }
 
@@ -113,12 +81,29 @@ class _CheckoutScreenState extends State<CheckoutScreen>
 
     if (!_formKey.currentState!.validate()) return;
 
+    // Capture context-sensitive objects before async operations
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final localizations = AppLocalizations.of(context)!;
+    final router = GoRouter.of(context);
+    final addressesProvider = Provider.of<AddressesProvider>(
+      context,
+      listen: false,
+    );
+    final ordersProvider = Provider.of<OrdersProvider>(context, listen: false);
+
     final cart = Provider.of<CartProvider>(context, listen: false);
     if (cart.items.isEmpty) return;
 
     if (_saveAddress) {
-      await _saveCurrentAddressLocally();
+      await addressesProvider.addAddress(
+        auth.token!,
+        _cityController.text.trim(),
+        _streetController.text.trim(),
+        _phoneController.text.trim(),
+      );
     }
+
+    if (!mounted) return;
 
     setState(() => _isLoading = true);
 
@@ -151,47 +136,37 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     };
 
     try {
-      final success = await Provider.of<OrdersProvider>(
-        context,
-        listen: false,
-      ).addOrder(orderPayload);
+      final success = await ordersProvider.addOrder(orderPayload);
 
-      if (mounted) {
-        setState(() => _isLoading = false);
-        if (success) {
-          cart.clear();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                AppLocalizations.of(context)!.translate('order_success'),
-              ),
-              backgroundColor: AppColors.success,
-            ),
-          );
-          context.go('/orders');
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                AppLocalizations.of(context)!.translate('order_failed'),
-              ),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted) return;
+
+      setState(() => _isLoading = false);
+      if (success) {
+        cart.clear();
+        scaffoldMessenger.showSnackBar(
           SnackBar(
-            content: Text(
-              AppLocalizations.of(context)!.translate('error_occurred'),
-            ),
+            content: Text(localizations.translate('order_success')),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        router.go('/orders');
+      } else {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text(localizations.translate('order_failed')),
             backgroundColor: AppColors.error,
           ),
         );
       }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text(localizations.translate('error_occurred')),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
@@ -344,57 +319,92 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildSectionTitle(context, 'shipping_info'),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _buildSectionTitle(context, 'shipping_info'),
+                                TextButton(
+                                  onPressed: () async {
+                                    // الانتقال لصفحة العناوين وانتظار العودة
+                                    await context.push('/addresses');
+                                    // تحديث قائمة العناوين فور العودة
+                                    _loadSavedData();
+                                  },
+                                  child: Text(
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.translate('saved_addresses'),
+                                    style: const TextStyle(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                             const SizedBox(height: 15),
-                            if (_savedAddresses.isNotEmpty) ...[
-                              SizedBox(
-                                height: 45,
-                                child: ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: _savedAddresses.length,
-                                  itemBuilder: (context, index) {
-                                    final address = _savedAddresses[index];
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 4.0,
-                                      ),
-                                      child: ActionChip(
-                                        label: Text(
-                                          '${address['city']} - ${address['street']}',
-                                          style: const TextStyle(
-                                            color: AppColors.primary,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                        backgroundColor: const Color(
-                                          0xFFFDFBF7,
-                                        ),
-                                        side: BorderSide(
-                                          color: const Color(
-                                            0xFFB89560,
-                                          ).withValues(alpha: 0.5),
-                                        ),
-                                        onPressed: () {
-                                          setState(() {
-                                            _cityController.text =
-                                                address['city'] ?? '';
-                                            _streetController.text =
-                                                address['street'] ?? '';
-                                            if (address['phone'] != null &&
-                                                address['phone']!.isNotEmpty) {
-                                              _phoneController.text =
-                                                  address['phone']!;
-                                            }
-                                          });
+                            Consumer<AddressesProvider>(
+                              builder: (context, provider, child) {
+                                if (provider.addresses.isEmpty) {
+                                  return const SizedBox.shrink();
+                                }
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(
+                                      height: 45,
+                                      child: ListView.builder(
+                                        scrollDirection: Axis.horizontal,
+                                        itemCount: provider.addresses.length,
+                                        itemBuilder: (context, index) {
+                                          final address =
+                                              provider.addresses[index];
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 4.0,
+                                            ),
+                                            child: ActionChip(
+                                              label: Text(
+                                                '${address.city} - ${address.street}',
+                                                style: const TextStyle(
+                                                  color: AppColors.primary,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                              backgroundColor: const Color(
+                                                0xFFFDFBF7,
+                                              ),
+                                              side: BorderSide(
+                                                color: const Color(
+                                                  0xFFB89560,
+                                                ).withValues(alpha: 0.5),
+                                              ),
+                                              onPressed: () {
+                                                setState(() {
+                                                  _cityController.text =
+                                                      address.city;
+                                                  _streetController.text =
+                                                      address.street;
+                                                  if (address
+                                                      .phone
+                                                      .isNotEmpty) {
+                                                    _phoneController.text =
+                                                        address.phone;
+                                                  }
+                                                  _saveAddress = false;
+                                                });
+                                              },
+                                            ),
+                                          );
                                         },
                                       ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              const SizedBox(height: 15),
-                            ],
+                                    ),
+                                    const SizedBox(height: 15),
+                                  ],
+                                );
+                              },
+                            ),
                             Container(
                               padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(

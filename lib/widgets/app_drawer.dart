@@ -185,6 +185,19 @@ class AppDrawer extends StatelessWidget {
                           context.push('/orders');
                         },
                       ),
+                      _drawerTile(
+                        context,
+                        icon: Icons.location_on_outlined,
+                        title: AppLocalizations.of(
+                          context,
+                        )!.translate('saved_addresses'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          context.push(
+                            '/addresses',
+                          ); // المسار الخاص بصفحة العناوين
+                        },
+                      ),
                       _buildDivider(),
                     ],
 
