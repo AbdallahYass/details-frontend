@@ -1066,9 +1066,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                               );
                               String? selectedColor;
                               if (_product!.colors.isNotEmpty) {
-                                selectedColor = _product!
-                                    .colors[_selectedColorIndex]
-                                    .getName(context);
+                                final c = _product!.colors[_selectedColorIndex];
+                                selectedColor = c.hex;
                               }
 
                               for (int i = 0; i < _quantity; i++) {

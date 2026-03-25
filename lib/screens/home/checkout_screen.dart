@@ -113,10 +113,13 @@ class _CheckoutScreenState extends State<CheckoutScreen>
           .map(
             (cp) => {
               'id': cp.productId, // نرسل ID المنتج الأصلي
-              'title': cp.size != null
-                  ? '${cp.title} (${cp.size})'
-                  : cp.title, // دمج المقاس مع الاسم
+              'title': [
+                cp.title,
+                if (cp.size != null) '(${cp.size})',
+                if (cp.color != null) '(${cp.color})',
+              ].join(' '),
               'size': cp.size, // إضافة المقاس كحقل منفصل
+              'color': cp.color, // إرسال اللون للباك اند
               'quantity': cp.quantity,
               'price': cp.price,
               'imageUrl': cp.imageUrl,

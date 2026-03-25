@@ -1,6 +1,9 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:details_app/app_imports.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:details_app/providers/notification_provider.dart';
 import 'package:details_app/screens/home/notifications_screen.dart';
@@ -28,8 +31,6 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
   final _newCategoryController = TextEditingController(); // للكاتيجوري الجديد
   final _sizeInputController = TextEditingController();
   final _sizeQtyController = TextEditingController();
-  final _colorNameArController = TextEditingController();
-  final _colorNameEnController = TextEditingController();
   final _colorHexController = TextEditingController();
   String? _selectedCategory;
   List<dynamic> _categories = [];
@@ -104,8 +105,6 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     _newCategoryController.dispose();
     _sizeInputController.dispose();
     _sizeQtyController.dispose();
-    _colorNameArController.dispose();
-    _colorNameEnController.dispose();
     _colorHexController.dispose();
     super.dispose();
   }
@@ -210,6 +209,67 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         _tempColorImageUrl = imageUrl;
       });
     }
+  }
+
+  // دالة عرض منتقي الألوان الشامل (Full Color Picker)
+  void _showColorPicker() {
+    Color pickerColor = _colorHexController.text.length >= 7
+        ? Color(
+            int.tryParse(_colorHexController.text.replaceFirst('#', '0xFF')) ??
+                0xFF000000,
+          )
+        : const Color(0xFF000000);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFFFDFBF7),
+          title: Text(
+            AppLocalizations.of(context)!.translate('colors'),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: ColorPicker(
+              pickerColor: pickerColor,
+              onColorChanged: (Color color) {
+                pickerColor = color;
+              },
+              pickerAreaHeightPercent: 0.8,
+              enableAlpha: false, // لا نحتاج للشفافية في ألوان المنتجات
+              displayThumbColor: true,
+              paletteType: PaletteType.hsvWithHue, // عجلة الألوان الكاملة
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(AppLocalizations.of(context)!.translate('cancel')),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  // تحويل اللون المختار إلى كود Hex (مثال: #FF5733)
+                  _colorHexController.text =
+                      '#${pickerColor.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+                });
+                Navigator.pop(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
+              child: Text(
+                AppLocalizations.of(context)!.translate('save'),
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _saveProduct() async {
@@ -576,40 +636,39 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                     children: [
                       Expanded(
                         child: TextFormField(
-                          controller: _colorNameArController,
-                          decoration: InputDecoration(
-                            labelText: AppLocalizations.of(
-                              context,
-                            )!.translate('color_name_ar'),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _colorNameEnController,
-                          decoration: InputDecoration(
-                            labelText: AppLocalizations.of(
-                              context,
-                            )!.translate('color_name_en'),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
                           controller: _colorHexController,
                           decoration: InputDecoration(
                             labelText: AppLocalizations.of(
                               context,
                             )!.translate('hex_code'),
                             hintText: '#000000',
-                            prefixIcon: const Icon(Icons.color_lens),
+                            prefixIcon: Container(
+                              margin: const EdgeInsets.all(12),
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                color: _colorHexController.text.length >= 7
+                                    ? Color(
+                                        int.tryParse(
+                                              _colorHexController.text
+                                                  .replaceFirst('#', '0xFF'),
+                                            ) ??
+                                            0x00000000,
+                                      )
+                                    : Colors.transparent,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.grey.shade400),
+                              ),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: const Icon(
+                                Icons.palette,
+                                color: AppColors.primary,
+                              ),
+                              onPressed: _showColorPicker,
+                            ),
                           ),
+                          onChanged: (v) => setState(() {}),
                         ),
                       ),
                       IconButton(
@@ -633,14 +692,10 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                             setState(() {
                               _colors.add(
                                 ProductColor(
-                                  nameAr: _colorNameArController.text.trim(),
-                                  nameEn: _colorNameEnController.text.trim(),
                                   hex: _colorHexController.text.trim(),
                                   imageUrl: _tempColorImageUrl,
                                 ),
                               );
-                              _colorNameArController.clear();
-                              _colorNameEnController.clear();
                               _colorHexController.clear();
                               _tempColorImageUrl = null;
                             });
@@ -670,7 +725,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                                           0xFF000000,
                                     ),
                                   ),
-                            label: Text(c.getName(context)),
+                            label: Text(c.hex),
                             onDeleted: () {
                               setState(() {
                                 _colors.remove(c);
@@ -716,8 +771,6 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                   ),
                   if (!_isNewCategory)
                     DropdownButtonFormField<String>(
-                      // ignore: deprecated_member_use
-                      // التأكد من أن القيمة المختارة موجودة في القائمة لتجنب الكراش
                       initialValue:
                           _selectedCategory != null &&
                               _categories.any(
