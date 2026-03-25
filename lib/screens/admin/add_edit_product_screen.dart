@@ -42,7 +42,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
   bool _isSoldOut = false;
   bool _isFeatured = false;
   List<ProductColor> _colors = [];
-  String? _tempColorImageUrl;
+  final List<String> _tempColorImages = [];
 
   @override
   void initState() {
@@ -206,7 +206,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
 
     if (imageUrl != null) {
       setState(() {
-        _tempColorImageUrl = imageUrl;
+        _tempColorImages.add(imageUrl);
       });
     }
   }
@@ -224,7 +224,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFFFDFBF7),
+          backgroundColor: AppColors.background,
           title: Text(
             AppLocalizations.of(context)!.translate('colors'),
             style: const TextStyle(
@@ -673,8 +673,8 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                       ),
                       IconButton(
                         icon: Icon(
-                          Icons.image,
-                          color: _tempColorImageUrl != null
+                          Icons.add_photo_alternate,
+                          color: _tempColorImages.isNotEmpty
                               ? Colors.green
                               : AppColors.adminEdit,
                         ),
@@ -693,17 +693,67 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                               _colors.add(
                                 ProductColor(
                                   hex: _colorHexController.text.trim(),
-                                  imageUrl: _tempColorImageUrl,
+                                  images: List.from(_tempColorImages),
                                 ),
                               );
                               _colorHexController.clear();
-                              _tempColorImageUrl = null;
+                              _tempColorImages.clear();
                             });
                           }
                         },
                       ),
                     ],
                   ),
+                  if (_tempColorImages.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _tempColorImages.map((img) {
+                          return Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: CachedNetworkImage(
+                                    imageUrl: img,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: -8,
+                                right: -8,
+                                child: GestureDetector(
+                                  onTap: () => setState(
+                                    () => _tempColorImages.remove(img),
+                                  ),
+                                  child: const CircleAvatar(
+                                    radius: 10,
+                                    backgroundColor: AppColors.adminDelete,
+                                    child: Icon(
+                                      Icons.close,
+                                      size: 14,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                    ),
                   if (_colors.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
@@ -711,10 +761,10 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                         spacing: 8,
                         children: _colors.map((c) {
                           return Chip(
-                            avatar: c.imageUrl != null
+                            avatar: c.images.isNotEmpty
                                 ? CircleAvatar(
                                     backgroundImage: CachedNetworkImageProvider(
-                                      c.imageUrl!,
+                                      c.images.first,
                                     ),
                                   )
                                 : CircleAvatar(
@@ -964,8 +1014,10 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                   const SizedBox(height: 10),
                   TextFormField(
                     controller: _descEnController,
-                    decoration: const InputDecoration(
-                      labelText: 'Description (English)',
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(
+                        context,
+                      )!.translate('description_en'),
                     ),
                     maxLines: 3,
                   ),

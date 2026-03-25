@@ -22,7 +22,7 @@ class AppDrawer extends StatelessWidget {
       child: Stack(
         children: [
           // الخلفية الأساسية
-          Positioned.fill(child: Container(color: const Color(0xFFFDFBF7))),
+          Positioned.fill(child: Container(color: AppColors.background)),
           // صورة الخلفية بنمط شفاف
           Positioned.fill(
             child: Opacity(
@@ -46,8 +46,8 @@ class AppDrawer extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      const Color(0xFF452512),
-                      const Color(0xFF452512).withValues(alpha: 0.9),
+                      AppColors.primary,
+                      AppColors.primary.withValues(alpha: 0.9),
                     ],
                   ),
                   borderRadius: const BorderRadius.only(
@@ -63,7 +63,7 @@ class AppDrawer extends StatelessWidget {
                   ],
                   border: Border(
                     bottom: BorderSide(
-                      color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
+                      color: AppColors.secondary.withValues(alpha: 0.5),
                       width: 1,
                     ),
                   ),
@@ -75,29 +75,27 @@ class AppDrawer extends StatelessWidget {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: const Color(0xFFD4AF37),
+                          color: AppColors.secondary,
                           width: 2,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(
-                              0xFFD4AF37,
-                            ).withValues(alpha: 0.3),
+                            color: AppColors.secondary.withValues(alpha: 0.3),
                             blurRadius: 10,
                           ),
                         ],
                       ),
                       child: CircleAvatar(
                         radius: 35,
-                        backgroundColor: const Color(0xFFFDFBF7),
+                        backgroundColor: AppColors.background,
                         child: Text(
                           auth.isAuthenticated
                               ? (auth.user?.name[0].toUpperCase() ?? 'U')
                               : 'G',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: const Color(0xFF452512),
+                            color: AppColors.primary,
                           ),
                         ),
                       ),
@@ -211,12 +209,10 @@ class AppDrawer extends StatelessWidget {
                       trailing: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFD4AF37).withValues(alpha: 0.1),
+                          color: AppColors.secondary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: const Color(
-                              0xFFD4AF37,
-                            ).withValues(alpha: 0.3),
+                            color: AppColors.secondary.withValues(alpha: 0.3),
                           ),
                         ),
                         child: DropdownButton<Locale>(
@@ -224,9 +220,9 @@ class AppDrawer extends StatelessWidget {
                           underline: const SizedBox(),
                           icon: const Icon(
                             Icons.arrow_drop_down,
-                            color: Color(0xFF452512),
+                            color: AppColors.primary,
                           ),
-                          dropdownColor: const Color(0xFFFDFBF7),
+                          dropdownColor: AppColors.background,
                           onChanged: (Locale? newLocale) {
                             if (newLocale != null) {
                               settings.setLocale(newLocale);
@@ -305,7 +301,7 @@ class AppDrawer extends StatelessWidget {
                         title: AppLocalizations.of(
                           context,
                         )!.translate('admin_panel'),
-                        color: const Color(0xFF452512),
+                        color: AppColors.primary,
                         isHighlight: true,
                         onTap: () {
                           Navigator.pop(context);
@@ -334,7 +330,7 @@ class AppDrawer extends StatelessWidget {
                                     context,
                                   )!.translate('logged_out_successfully'),
                                 ),
-                                backgroundColor: const Color(0xFF9E773A),
+                                backgroundColor: AppColors.accent,
                               ),
                             );
                             context.go('/');
@@ -357,7 +353,7 @@ class AppDrawer extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Divider(
-        color: const Color(0xFFD4AF37).withValues(alpha: 0.2),
+        color: AppColors.secondary.withValues(alpha: 0.2),
         thickness: 1,
       ),
     );
@@ -372,17 +368,17 @@ class AppDrawer extends StatelessWidget {
     Color? color,
     bool isHighlight = false,
   }) {
-    final themeColor = color ?? const Color(0xFF452512);
+    final themeColor = color ?? AppColors.primary;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
         color: isHighlight
-            ? const Color(0xFFD4AF37).withValues(alpha: 0.1)
+            ? AppColors.secondary.withValues(alpha: 0.1)
             : Colors.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isHighlight
-              ? const Color(0xFFD4AF37).withValues(alpha: 0.5)
+              ? AppColors.secondary.withValues(alpha: 0.5)
               : Colors.transparent,
         ),
         boxShadow: [

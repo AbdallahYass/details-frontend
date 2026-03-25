@@ -29,8 +29,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   final PageController _pageController = PageController();
   int _selectedColorIndex = 0;
 
-  // اللون البني الداكن الخاص بهوية المتجر
-  final Color _dsBrown = const Color(0xFF452512);
+  // استخدام اللون الرئيسي من ملف الألوان الموحد
+  final Color _dsBrown = AppColors.primary;
 
   @override
   void initState() {
@@ -145,13 +145,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   Widget build(BuildContext context) {
     if (_isLoadingProduct) {
       return const Scaffold(
-        backgroundColor: Color(0xFFFDFBF7),
+        backgroundColor: AppColors.background,
         body: CustomLoadingOverlay(isOverlay: false),
       );
     }
     if (_product == null) {
       return Scaffold(
-        backgroundColor: const Color(0xFFFDFBF7),
+        backgroundColor: AppColors.background,
         body: Center(
           child: Text(
             AppLocalizations.of(context)!.translate('product_not_found'),
@@ -163,7 +163,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDFBF7),
+      backgroundColor: AppColors.background,
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
@@ -326,7 +326,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFFDFBF7).withValues(alpha: 0.7),
+              color: AppColors.background.withValues(alpha: 0.7),
               shape: BoxShape.circle,
               border: Border.all(
                 color: Colors.white.withValues(alpha: 0.5),
@@ -505,7 +505,40 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               final color = _parseColor(colorItem.hex);
               final isSelected = _selectedColorIndex == index;
               return GestureDetector(
-                onTap: () => setState(() => _selectedColorIndex = index),
+                onTap: () {
+                  setState(() => _selectedColorIndex = index);
+
+                  // تغيير الصورة عند اختيار اللون وإضافة جميع صوره للمعرض
+                  if (colorItem.images.isNotEmpty) {
+                    final targetUrl = colorItem.images.first;
+                    bool addedNew = false;
+
+                    // إضافة صور هذا اللون للمعرض إذا لم تكن موجودة مسبقاً
+                    for (var img in colorItem.images) {
+                      if (!_product!.images.contains(img)) {
+                        _product!.images.add(img);
+                        addedNew = true;
+                      }
+                    }
+
+                    if (addedNew) {
+                      setState(() {}); // تحديث واجهة المعرض لعرض الصور الجديدة
+                    }
+
+                    int imgIndex = _product!.images.indexOf(targetUrl);
+                    if (imgIndex != -1) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (_pageController.hasClients) {
+                          _pageController.animateToPage(
+                            imgIndex,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          );
+                        }
+                      });
+                    }
+                  }
+                },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: const EdgeInsets.only(right: 15),
@@ -654,7 +687,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8F5F2),
+              color: AppColors.lightBackground,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: _dsBrown.withValues(alpha: 0.05)),
             ),
@@ -719,7 +752,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       builder: (context, isFav, child) {
         return Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFFDFBF7),
+            color: AppColors.background,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
@@ -891,7 +924,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: isWhite ? const Color(0xFFFDFBF7) : Colors.white,
+          color: isWhite ? AppColors.background : Colors.white,
           shape: BoxShape.circle,
           boxShadow: isWhite
               ? [
@@ -919,7 +952,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           decoration: BoxDecoration(
-            color: const Color(0xFFFDFBF7).withValues(alpha: 0.85),
+            color: AppColors.background.withValues(alpha: 0.85),
             border: Border(
               top: BorderSide(color: _dsBrown.withValues(alpha: 0.1)),
             ),

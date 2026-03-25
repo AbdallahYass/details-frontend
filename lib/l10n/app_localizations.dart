@@ -271,6 +271,15 @@ class AppLocalizations {
       "no_saved_addresses": "No saved addresses yet",
       "address_added_success": "Address added successfully",
       "address_deleted_success": "Address deleted successfully",
+      "description_en": "Description (English)",
+      "account_not_registered":
+          "This account is not registered, please create a new account.",
+      "login_failed": "Login failed",
+      "server_connection_failed": "Failed to connect to the server",
+      "google_login_error": "Error during Google login",
+      "weak_network": "Network is too weak",
+      "fetch_products_failed": "Failed to fetch products",
+      "fetch_trending_failed": "Failed to fetch trending keywords",
     },
     'ar': {
       'app_name': 'متجر ديتيلز',
@@ -529,6 +538,14 @@ class AppLocalizations {
       "no_saved_addresses": "لا توجد عناوين محفوظة بعد",
       "address_added_success": "تم إضافة العنوان بنجاح",
       "address_deleted_success": "تم حذف العنوان بنجاح",
+      "description_en": "الوصف (إنجليزي)",
+      "account_not_registered": "هذا الحساب غير مسجل، يرجى إنشاء حساب جديد.",
+      "login_failed": "فشل تسجيل الدخول",
+      "server_connection_failed": "فشل الاتصال بالسيرفر",
+      "google_login_error": "خطأ أثناء تسجيل الدخول بجوجل",
+      "weak_network": "الشبكة ضعيفة جداً",
+      "fetch_products_failed": "فشل في جلب المنتجات",
+      "fetch_trending_failed": "فشل في جلب الكلمات الشائعة",
     },
   };
 

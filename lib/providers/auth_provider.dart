@@ -94,7 +94,7 @@ class AuthProvider with ChangeNotifier {
         _errorMessage = data['message'];
       }
     } catch (e) {
-      _errorMessage = "فشل الاتصال بالسيرفر";
+      _errorMessage = "server_connection_failed";
     }
 
     _isLoading = false;

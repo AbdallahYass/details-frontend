@@ -68,7 +68,7 @@ class SearchService {
         .get(uri)
         .timeout(
           const Duration(seconds: 10),
-          onTimeout: () => throw TimeoutException('الشبكة ضعيفة جداً'),
+          onTimeout: () => throw TimeoutException('weak_network'),
         );
 
     if (response.statusCode == 200) {
@@ -96,7 +96,7 @@ class SearchService {
 
       return result;
     } else {
-      throw Exception('فشل في جلب المنتجات');
+      throw Exception('fetch_products_failed');
     }
   }
 
@@ -137,7 +137,7 @@ class SearchService {
       final List data = json.decode(response.body);
       return data.map((e) => e.toString()).toList();
     }
-    throw Exception('فشل في جلب الكلمات الشائعة');
+    throw Exception('fetch_trending_failed');
   }
 
   /// تنظيف الكاش يدوياً

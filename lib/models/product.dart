@@ -22,24 +22,35 @@ class ProductSize {
 
 class ProductColor {
   final String hex;
-  final String? imageUrl;
+  final List<String> images;
 
-  ProductColor({required this.hex, this.imageUrl});
+  ProductColor({required this.hex, this.images = const []});
 
   factory ProductColor.fromJson(dynamic json) {
     if (json == null) return ProductColor(hex: '');
     if (json is String) {
       return ProductColor(hex: json);
     }
+
+    List<String> parsedImages = [];
+    // دعم المنتجات القديمة التي كانت تمتلك صورة واحدة
+    if (json['imageUrl'] != null && json['imageUrl'].toString().isNotEmpty) {
+      parsedImages.add(json['imageUrl'].toString());
+    }
+    // جلب قائمة الصور الجديدة
+    if (json['images'] is List) {
+      parsedImages.addAll((json['images'] as List).map((e) => e.toString()));
+    }
+
     return ProductColor(
       hex: json['hex']?.toString() ?? '',
-      imageUrl: json['imageUrl']?.toString(),
+      images: parsedImages.toSet().toList(), // toSet لمنع تكرار الروابط
     );
   }
 
   Map<String, dynamic> toJson() => {
     'hex': hex,
-    if (imageUrl != null) 'imageUrl': imageUrl,
+    if (images.isNotEmpty) 'images': images,
   };
 }
 
