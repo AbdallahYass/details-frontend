@@ -325,55 +325,10 @@ class _CartItemCard extends StatelessWidget {
   }
 }
 
-class _CheckoutSection extends StatefulWidget {
+class _CheckoutSection extends StatelessWidget {
   final CartProvider cart;
 
   const _CheckoutSection({required this.cart});
-
-  @override
-  State<_CheckoutSection> createState() => _CheckoutSectionState();
-}
-
-class _CheckoutSectionState extends State<_CheckoutSection> {
-  final TextEditingController couponController = TextEditingController();
-  bool isLoading = false;
-
-  @override
-  void dispose() {
-    couponController.dispose();
-    super.dispose();
-  }
-
-  Future<void> onApplyCoupon() async {
-    setState(() => isLoading = true);
-    if (couponController.text.isEmpty) {
-      setState(() => isLoading = false);
-      return;
-    }
-
-    FocusScope.of(context).unfocus();
-
-    final success = await widget.cart.applyCoupon(couponController.text);
-
-    if (!mounted) return;
-
-    setState(() => isLoading = false);
-
-    if (success) {
-      couponController.clear();
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          success
-              ? AppLocalizations.of(context)!.translate('coupon_applied')
-              : AppLocalizations.of(context)!.translate('coupon_invalid'),
-        ),
-        backgroundColor: success ? Colors.green : Colors.red,
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -385,50 +340,6 @@ class _CheckoutSectionState extends State<_CheckoutSection> {
         ).copyWith(top: 10, bottom: 120),
         child: Column(
           children: [
-            // Coupon Section
-            Container(
-              margin: const EdgeInsets.only(bottom: 20),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFDFBF7),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFFB89560).withValues(alpha: 0.3),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.local_offer_outlined,
-                    color: Color(0xFF9E773A),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextField(
-                      controller: couponController,
-                      decoration: InputDecoration(
-                        hintText: AppLocalizations.of(
-                          context,
-                        )!.translate('enter_coupon_code'),
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: isLoading ? null : onApplyCoupon,
-                    child: Text(
-                      AppLocalizations.of(context)!.translate('apply'),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isLoading
-                            ? Colors.grey
-                            : const Color(0xFF9E773A),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -440,7 +351,7 @@ class _CheckoutSectionState extends State<_CheckoutSection> {
                   ),
                 ),
                 Text(
-                  '${widget.cart.totalAmount.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                  '${cart.totalAmount.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -454,7 +365,7 @@ class _CheckoutSectionState extends State<_CheckoutSection> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: widget.cart.totalAmount <= 0
+                onPressed: cart.totalAmount <= 0
                     ? null
                     : () {
                         context.push('/checkout');
