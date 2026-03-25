@@ -41,6 +41,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
   bool _isSoldOut = false;
   bool _isFeatured = false;
   List<ProductColor> _colors = [];
+  String? _tempColorImageUrl;
 
   @override
   void initState() {
@@ -195,6 +196,19 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
           ),
         );
       }
+    }
+  }
+
+  // دالة لرفع صورة خاصة باللون المختار
+  Future<void> _pickTempColorImage() async {
+    setState(() => _isImageUploading = true);
+    final String? imageUrl = await CloudinaryService().pickAndUploadImage();
+    setState(() => _isImageUploading = false);
+
+    if (imageUrl != null) {
+      setState(() {
+        _tempColorImageUrl = imageUrl;
+      });
     }
   }
 
@@ -599,6 +613,17 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                         ),
                       ),
                       IconButton(
+                        icon: Icon(
+                          Icons.image,
+                          color: _tempColorImageUrl != null
+                              ? Colors.green
+                              : AppColors.adminEdit,
+                        ),
+                        onPressed: _isImageUploading
+                            ? null
+                            : _pickTempColorImage,
+                      ),
+                      IconButton(
                         icon: const Icon(
                           Icons.add_circle,
                           color: AppColors.adminEdit,
@@ -611,11 +636,13 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                                   nameAr: _colorNameArController.text.trim(),
                                   nameEn: _colorNameEnController.text.trim(),
                                   hex: _colorHexController.text.trim(),
+                                  imageUrl: _tempColorImageUrl,
                                 ),
                               );
                               _colorNameArController.clear();
                               _colorNameEnController.clear();
                               _colorHexController.clear();
+                              _tempColorImageUrl = null;
                             });
                           }
                         },
@@ -629,12 +656,20 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                         spacing: 8,
                         children: _colors.map((c) {
                           return Chip(
-                            avatar: CircleAvatar(
-                              backgroundColor: Color(
-                                int.tryParse(c.hex.replaceFirst('#', '0xFF')) ??
-                                    0xFF000000,
-                              ),
-                            ),
+                            avatar: c.imageUrl != null
+                                ? CircleAvatar(
+                                    backgroundImage: CachedNetworkImageProvider(
+                                      c.imageUrl!,
+                                    ),
+                                  )
+                                : CircleAvatar(
+                                    backgroundColor: Color(
+                                      int.tryParse(
+                                            c.hex.replaceFirst('#', '0xFF'),
+                                          ) ??
+                                          0xFF000000,
+                                    ),
+                                  ),
                             label: Text(c.getName(context)),
                             onDeleted: () {
                               setState(() {
@@ -870,6 +905,14 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                       labelText: AppLocalizations.of(
                         context,
                       )!.translate('description_ar'),
+                    ),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _descEnController,
+                    decoration: const InputDecoration(
+                      labelText: 'Description (English)',
                     ),
                     maxLines: 3,
                   ),
