@@ -12,6 +12,7 @@ import 'package:details_app/screens/login/login_screen.dart';
 import 'package:details_app/screens/login/register_screen.dart';
 import 'package:details_app/screens/home/checkout_screen.dart';
 import 'package:details_app/screens/home/orders_screen.dart';
+import 'package:details_app/screens/home/addresses_screen.dart';
 import 'package:details_app/screens/home/about_screen.dart';
 import 'package:details_app/screens/home/wishlist_screen.dart';
 import 'package:details_app/screens/login/profile_screen.dart';
@@ -99,6 +100,10 @@ final router = GoRouter(
       builder: (context, state) => const CheckoutScreen(),
     ),
     GoRoute(path: '/orders', builder: (context, state) => const OrdersScreen()),
+    GoRoute(
+      path: '/addresses',
+      builder: (context, state) => const AddressesScreen(),
+    ),
     GoRoute(
       path: '/profile',
       builder: (context, state) => const ProfileScreen(),
