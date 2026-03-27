@@ -37,23 +37,91 @@ class _CartScreenState extends State<CartScreen> {
                     padding: const EdgeInsets.only(top: 120, bottom: 20),
                     sliver: cartItems.isEmpty
                         ? SliverFillRemaining(
+                            hasScrollBody: false,
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
-                                  Icons.shopping_cart_outlined,
-                                  size: 80,
-                                  color: Colors.grey.withValues(alpha: 0.5),
+                                Container(
+                                  padding: const EdgeInsets.all(24),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withValues(
+                                      alpha: 0.05,
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(24),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.shopping_bag_outlined,
+                                      size: 64,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
                                 ),
-                                const SizedBox(height: 16),
+                                const SizedBox(height: 24),
                                 Text(
                                   AppLocalizations.of(
                                     context,
                                   )!.translate('cart_empty'),
                                   style: const TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 22,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF452512),
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.translate('app_slogan'),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: AppColors.textSecondary,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 32),
+                                ElevatedButton(
+                                  onPressed: () => context.go('/'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.accent,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 32,
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
+                                    elevation: 8,
+                                    shadowColor: AppColors.accent.withValues(
+                                      alpha: 0.5,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.storefront_outlined,
+                                        color: AppColors.white,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        AppLocalizations.of(
+                                          context,
+                                        )!.translate('start_shopping'),
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.white,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
