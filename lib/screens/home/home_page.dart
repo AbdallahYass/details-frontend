@@ -36,6 +36,10 @@ class _HomePageState extends State<HomePage>
 
       final homeProvider = Provider.of<HomeProvider>(context, listen: false);
       final auth = Provider.of<AuthProvider>(context, listen: false);
+      final notifProvider = Provider.of<NotificationProvider>(
+        context,
+        listen: false,
+      );
 
       // 1. تحميل بيانات الصفحة الرئيسية
       homeProvider.loadAllData();
@@ -46,10 +50,7 @@ class _HomePageState extends State<HomePage>
       }
 
       if (mounted && auth.isAuthenticated) {
-        Provider.of<NotificationProvider>(
-          context,
-          listen: false,
-        ).fetchNotifications(context, authProvider: auth);
+        notifProvider.fetchNotifications(context, authProvider: auth);
       }
     });
   }
