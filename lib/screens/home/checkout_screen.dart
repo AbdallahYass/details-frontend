@@ -33,7 +33,10 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       vsync: this,
       duration: const Duration(seconds: 10),
     )..repeat();
-    _loadSavedData();
+    // تأخير استدعاء البيانات حتى يكتمل بناء الواجهة لتجنب انهيار الشاشة
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadSavedData();
+    });
   }
 
   Future<void> _loadSavedData() async {
@@ -848,6 +851,8 @@ class _CheckoutScreenState extends State<CheckoutScreen>
           ],
         ),
         child: Column(
+          // تحديد الحجم ليكون على قدر العناصر فقط لمنع التمدد اللانهائي
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
