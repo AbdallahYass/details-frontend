@@ -3,6 +3,8 @@ import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import 'package:details_app/providers/addresses_provider.dart';
+import 'package:details_app/providers/notification_provider.dart';
+import 'package:details_app/screens/home/notifications_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -105,6 +107,17 @@ class _CheckoutScreenState extends State<CheckoutScreen>
 
     if (!mounted) return;
 
+    // منع إرسال الطلب إذا كان الدفع بالبطاقة (حتى يتم ربط بوابة الدفع)
+    if (_paymentMethod == 'card') {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text(localizations.translate('payment_soon')),
+          backgroundColor: AppColors.accent,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     // تجهيز البيانات حسب Schema الباك اند
@@ -145,7 +158,6 @@ class _CheckoutScreenState extends State<CheckoutScreen>
 
       setState(() => _isLoading = false);
       if (success) {
-        cart.clear();
         scaffoldMessenger.showSnackBar(
           SnackBar(
             content: Text(localizations.translate('order_success')),
@@ -153,6 +165,8 @@ class _CheckoutScreenState extends State<CheckoutScreen>
           ),
         );
         router.go('/orders');
+        // تأخير تنظيف السلة قليلاً لمنع وميض شاشة "السلة فارغة" قبل الانتقال
+        Future.delayed(const Duration(milliseconds: 500), () => cart.clear());
       } else {
         scaffoldMessenger.showSnackBar(
           SnackBar(
@@ -198,12 +212,52 @@ class _CheckoutScreenState extends State<CheckoutScreen>
             onPressed: () => context.pop(),
           ),
           actions: [
-            IconButton(
-              icon: const Icon(
-                Icons.notifications_outlined,
-                color: AppColors.primary,
-              ),
-              onPressed: () {},
+            Consumer<NotificationProvider>(
+              builder: (context, notifProvider, child) {
+                return Stack(
+                  children: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.notifications_outlined,
+                        color: AppColors.primary,
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const NotificationsScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    if (notifProvider.unreadCount > 0)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: AppColors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            '${notifProvider.unreadCount}',
+                            style: const TextStyle(
+                              color: AppColors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
           ],
         ),
@@ -250,7 +304,13 @@ class _CheckoutScreenState extends State<CheckoutScreen>
         body: Stack(
           children: [
             Positioned.fill(
-              child: Image.asset('assets/images/bg.png', fit: BoxFit.cover),
+              child: Image.asset(
+                'assets/images/bg.png',
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+                cacheWidth: 1080,
+                filterQuality: FilterQuality.none,
+              ),
             ),
             // --- خلفية متحركة ---
             Positioned(
@@ -330,6 +390,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                   onPressed: () async {
                                     // الانتقال لصفحة العناوين وانتظار العودة
                                     await context.push('/addresses');
+                                    if (!mounted) return;
                                     // تحديث قائمة العناوين فور العودة
                                     _loadSavedData();
                                   },
