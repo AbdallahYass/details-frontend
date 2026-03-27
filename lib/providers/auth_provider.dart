@@ -183,6 +183,15 @@ class AuthProvider with ChangeNotifier {
 
     final extractedToken = prefs.getString('token');
 
+    // التحميل الاستباقي من الذاكرة لضمان سرعة استجابة الواجهة وعدم الانتظار
+    _token = extractedToken;
+    if (prefs.containsKey('userData')) {
+      try {
+        _user = User.fromJson(json.decode(prefs.getString('userData')!));
+      } catch (_) {}
+    }
+    notifyListeners();
+
     try {
       // نسأل السيرفر: هل هذا التوكن لا يزال صالحاً وصاحبه موجود؟
       final url = Uri.parse(
@@ -199,8 +208,8 @@ class AuthProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        _token = extractedToken;
         _user = User.fromJson(data['user']);
+        await prefs.setString('userData', json.encode(_user!.toJson()));
         notifyListeners();
       }
       // إذا الحساب محذوف أو التوكن منتهي (401 أو 404)
@@ -208,12 +217,8 @@ class AuthProvider with ChangeNotifier {
         await logout(); // طرد فوري وتنظيف للذاكرة
       }
     } catch (e) {
-      // في حالة عدم وجود إنترنت، نعتمد على الذاكرة مؤقتاً
-      if (prefs.containsKey('userData')) {
-        _token = extractedToken;
-        _user = User.fromJson(json.decode(prefs.getString('userData')!));
-        notifyListeners();
-      }
+      // في حالة عدم وجود إنترنت، لا داعي لفعل شيء لأن البيانات محملة مسبقاً بنجاح
+      debugPrint('Auto Login Validation Error: $e');
     }
   }
 

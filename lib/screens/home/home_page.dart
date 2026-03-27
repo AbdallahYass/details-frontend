@@ -41,15 +41,15 @@ class _HomePageState extends State<HomePage>
       homeProvider.loadAllData();
 
       // 2. التحقق من حالة الحساب والإشعارات
-      if (auth.token != null) {
+      if (auth.token == null) {
         await auth.tryAutoLogin();
+      }
 
-        if (mounted && auth.isAuthenticated) {
-          Provider.of<NotificationProvider>(
-            context,
-            listen: false,
-          ).fetchNotifications(context, authProvider: auth);
-        }
+      if (mounted && auth.isAuthenticated) {
+        Provider.of<NotificationProvider>(
+          context,
+          listen: false,
+        ).fetchNotifications(context, authProvider: auth);
       }
     });
   }
