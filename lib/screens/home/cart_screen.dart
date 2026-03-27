@@ -64,7 +64,7 @@ class _CartScreenState extends State<CartScreen> {
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 24),
+                                const SizedBox(height: 10),
                                 Text(
                                   AppLocalizations.of(
                                     context,
@@ -75,18 +75,7 @@ class _CartScreenState extends State<CartScreen> {
                                     color: AppColors.primary,
                                   ),
                                 ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.translate('app_slogan'),
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    color: AppColors.textSecondary,
-                                    letterSpacing: 1.2,
-                                  ),
-                                ),
-                                const SizedBox(height: 32),
+                                const SizedBox(height: 15),
                                 ElevatedButton(
                                   onPressed: () => context.go('/'),
                                   style: ElevatedButton.styleFrom(
