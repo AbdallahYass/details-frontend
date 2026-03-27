@@ -215,30 +215,30 @@ class AppDrawer extends StatelessWidget {
                             color: AppColors.secondary.withValues(alpha: 0.3),
                           ),
                         ),
-                        child: DropdownButton<Locale>(
-                          value: settings.locale,
+                        child: DropdownButton<String>(
+                          value: settings.locale.languageCode,
                           underline: const SizedBox(),
                           icon: const Icon(
                             Icons.arrow_drop_down,
                             color: AppColors.primary,
                           ),
                           dropdownColor: AppColors.background,
-                          onChanged: (Locale? newLocale) {
-                            if (newLocale != null) {
-                              settings.setLocale(newLocale);
+                          onChanged: (String? newLang) {
+                            if (newLang != null) {
+                              settings.setLocale(Locale(newLang));
                               Navigator.pop(context);
                             }
                           },
                           items: const [
                             DropdownMenuItem(
-                              value: Locale('ar', ''),
+                              value: 'ar',
                               child: Text(
                                 'العربية',
                                 style: TextStyle(fontSize: 14),
                               ),
                             ),
                             DropdownMenuItem(
-                              value: Locale('en', ''),
+                              value: 'en',
                               child: Text(
                                 'English',
                                 style: TextStyle(fontSize: 14),
