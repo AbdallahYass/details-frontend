@@ -195,6 +195,14 @@ class AuthProvider with ChangeNotifier {
     }
     notifyListeners();
 
+    // فصل التحقق من السيرفر في وظيفة خلفية حتى لا يعطل الواجهة
+    _validateTokenBackground(extractedToken!, prefs);
+  }
+
+  Future<void> _validateTokenBackground(
+    String extractedToken,
+    SharedPreferences prefs,
+  ) async {
     try {
       // نسأل السيرفر: هل هذا التوكن لا يزال صالحاً وصاحبه موجود؟
       final url = Uri.parse(
@@ -216,10 +224,10 @@ class AuthProvider with ChangeNotifier {
         _user = User.fromJson(data['user']);
         await prefs.setString('userData', json.encode(_user!.toJson()));
         notifyListeners();
-      }
-      // نقوم بتسجيل الخروج فقط إذا رد السيرفر بـ 401 (توكن منتهي)
-      else if (response.statusCode == 401) {
-        await logout(); // مسح التوكن
+      } else if (response.statusCode == 401 || response.statusCode == 404) {
+        // السيرفر يرفض التوكن ويرجع 401 أو الرابط غير موجود 404!
+        debugPrint('⚠️ السيرفر يرفض التوكن! الحالة: ${response.statusCode}');
+        await logout(); // إرجاع السطر لأن الباك إند الآن يرسل 401 فقط عند انتهاء الجلسة أو حذف الحساب
       }
     } catch (e) {
       // في حالة عدم وجود إنترنت، لا داعي لفعل شيء لأن البيانات محملة مسبقاً بنجاح
