@@ -71,8 +71,12 @@ class _DetailsStoreAppState extends State<DetailsStoreApp> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<AuthProvider>(context, listen: false).tryAutoLogin();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        await Provider.of<AuthProvider>(context, listen: false).tryAutoLogin();
+      } catch (e) {
+        debugPrint('Auto-login error caught safely: $e');
+      }
     });
   }
 
