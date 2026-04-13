@@ -189,6 +189,7 @@ class AuthProvider with ChangeNotifier {
     // التحميل الاستباقي من الذاكرة لضمان سرعة استجابة الواجهة وعدم الانتظار
     _token = extractedToken;
     if (prefs.containsKey('userData')) {
+      debugPrint('✅ تم قراءة التوكن وبيانات المستخدم من الذاكرة بنجاح!');
       try {
         _user = User.fromJson(json.decode(prefs.getString('userData')!));
       } catch (_) {}
@@ -226,8 +227,12 @@ class AuthProvider with ChangeNotifier {
         notifyListeners();
       } else if (response.statusCode == 401 || response.statusCode == 404) {
         // السيرفر يرفض التوكن ويرجع 401 أو الرابط غير موجود 404!
-        debugPrint('⚠️ السيرفر يرفض التوكن! الحالة: ${response.statusCode}');
-        await logout(); // إرجاع السطر لأن الباك إند الآن يرسل 401 فقط عند انتهاء الجلسة أو حذف الحساب
+        debugPrint('🚨 السيرفر يرفض التوكن! الحالة: ${response.statusCode}');
+        debugPrint(
+          '💡 المشكلة من الباك إند: السيرفر يعتبر التوكن المحفوظ غير صالح أو منتهي الصلاحية.',
+        );
+        // قمنا بإيقاف سطر تسجيل الخروج التلقائي مؤقتاً لنكتشف سبب المشكلة
+        // await logout();
       }
     } catch (e) {
       // في حالة عدم وجود إنترنت، لا داعي لفعل شيء لأن البيانات محملة مسبقاً بنجاح
