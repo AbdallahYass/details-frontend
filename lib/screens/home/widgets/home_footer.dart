@@ -1,4 +1,5 @@
 import 'package:details_app/app_imports.dart';
+import 'package:details_app/providers/language_provider.dart';
 
 class HomeFooter extends StatelessWidget {
   const HomeFooter({super.key});
@@ -146,7 +147,10 @@ class HomeFooter extends StatelessWidget {
   Widget _buildLanguageItem(BuildContext context, String label, Locale locale) {
     return GestureDetector(
       onTap: () {
-        Provider.of<SettingsProvider>(context, listen: false).setLocale(locale);
+        Provider.of<LanguageProvider>(
+          context,
+          listen: false,
+        ).changeLanguage(locale);
       },
       child: Container(
         width: double.infinity,

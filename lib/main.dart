@@ -85,7 +85,8 @@ class _DetailsStoreAppState extends State<DetailsStoreApp> {
   @override
   Widget build(BuildContext context) {
     // مراقبة تغييرات الإعدادات (مثل اللغة)
-    final settings = context.watch<SettingsProvider>();
+    // تم التعديل ليقرأ التطبيق اللغة المحفوظة في الذاكرة
+    final languageProvider = context.watch<LanguageProvider>();
 
     return MaterialApp.router(
       routerConfig: router,
@@ -103,7 +104,7 @@ class _DetailsStoreAppState extends State<DetailsStoreApp> {
         Locale('ar', ''), // العربية
         Locale('en', ''), // الإنجليزية
       ],
-      locale: settings.locale,
+      locale: languageProvider.appLocale,
     );
   }
 }
