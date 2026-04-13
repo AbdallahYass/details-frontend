@@ -170,30 +170,33 @@ class HomeFooter extends StatelessWidget {
   }
 
   Widget _buildPolicyItem(BuildContext context, String title) {
-    return GestureDetector(
-      onTap: () {
-        showDialog(
-          context: context,
-          builder: (c) => AlertDialog(
-            title: Text(title),
-            content: Text(title),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(c),
-                child: Text(AppLocalizations.of(context)!.translate('ok')),
-              ),
-            ],
-          ),
-        );
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-        child: Text(
-          title,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.7),
-            fontSize: 13,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          showDialog(
+            context: context,
+            builder: (c) => AlertDialog(
+              title: Text(title),
+              content: Text(title),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(c),
+                  child: Text(AppLocalizations.of(context)!.translate('ok')),
+                ),
+              ],
+            ),
+          );
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+          child: Text(
+            title,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 13,
+            ),
           ),
         ),
       ),
