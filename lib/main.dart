@@ -12,6 +12,7 @@ import 'package:details_app/providers/settings_provider.dart';
 import 'package:details_app/providers/cart_provider.dart';
 import 'package:details_app/providers/orders_provider.dart';
 import 'package:details_app/providers/addresses_provider.dart';
+import 'package:details_app/providers/language_provider.dart';
 import 'package:details_app/constants/app_theme.dart';
 import 'package:details_app/providers/router.dart';
 import 'package:flutter/foundation.dart';
@@ -40,6 +41,7 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => AddressesProvider()),
         ChangeNotifierProvider(create: (_) => HomeProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
