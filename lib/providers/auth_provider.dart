@@ -162,7 +162,10 @@ class AuthProvider with ChangeNotifier {
     _user = null;
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // مسح الذاكرة المحلية
+    await prefs.remove(
+      'token',
+    ); // مسح التوكن فقط لتجنب حذف إعدادات التطبيق الأخرى
+    await prefs.remove('userData'); // مسح بيانات المستخدم فقط
 
     try {
       // أهم سطر لمنع الدخول التلقائي بحساب محذوف
@@ -198,13 +201,15 @@ class AuthProvider with ChangeNotifier {
         'https://api.details-store.com/api/auth/validate-token',
       );
 
-      final response = await http.get(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $extractedToken',
-        },
-      );
+      final response = await http
+          .get(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $extractedToken',
+            },
+          )
+          .timeout(const Duration(seconds: 5)); // تجنب تعليق شاشة البداية
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -212,9 +217,9 @@ class AuthProvider with ChangeNotifier {
         await prefs.setString('userData', json.encode(_user!.toJson()));
         notifyListeners();
       }
-      // إذا الحساب محذوف أو التوكن منتهي (401 أو 404)
-      else if (response.statusCode == 401 || response.statusCode == 404) {
-        await logout(); // طرد فوري وتنظيف للذاكرة
+      // نقوم بتسجيل الخروج فقط إذا رد السيرفر بـ 401 (توكن منتهي)
+      else if (response.statusCode == 401) {
+        await logout(); // مسح التوكن
       }
     } catch (e) {
       // في حالة عدم وجود إنترنت، لا داعي لفعل شيء لأن البيانات محملة مسبقاً بنجاح
