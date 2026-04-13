@@ -146,6 +146,8 @@ class HomeFooter extends StatelessWidget {
 
   Widget _buildLanguageItem(BuildContext context, String label, Locale locale) {
     return GestureDetector(
+      behavior: HitTestBehavior
+          .opaque, // لجعل كامل مساحة الزر قابلة للضغط وليس النص فقط
       onTap: () {
         Provider.of<LanguageProvider>(
           context,

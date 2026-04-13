@@ -105,6 +105,14 @@ class _DetailsStoreAppState extends State<DetailsStoreApp> {
         Locale('en', ''), // الإنجليزية
       ],
       locale: languageProvider.appLocale,
+      localeResolutionCallback: (deviceLocale, supportedLocales) {
+        for (var locale in supportedLocales) {
+          if (locale.languageCode == languageProvider.appLocale.languageCode) {
+            return locale;
+          }
+        }
+        return supportedLocales.first; // الافتراضي
+      },
     );
   }
 }
