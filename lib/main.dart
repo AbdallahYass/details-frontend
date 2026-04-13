@@ -16,6 +16,7 @@ import 'package:details_app/providers/language_provider.dart';
 import 'package:details_app/constants/app_theme.dart';
 import 'package:details_app/providers/router.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,10 +39,14 @@ Future<void> main() async {
 
   setPathUrlStrategy();
 
+  // قراءة اللغة المحفوظة قبل بدء التطبيق لضمان تطبيقها فوراً من أول إطار (Frame)
+  final prefs = await SharedPreferences.getInstance();
+  final String savedLanguage = prefs.getString('language_code') ?? 'ar';
+
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => LanguageProvider()),
+        ChangeNotifierProvider(create: (_) => LanguageProvider(savedLanguage)),
         ChangeNotifierProvider(create: (_) => AddressesProvider()),
         ChangeNotifierProvider(create: (_) => HomeProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),

@@ -145,23 +145,24 @@ class HomeFooter extends StatelessWidget {
   }
 
   Widget _buildLanguageItem(BuildContext context, String label, Locale locale) {
-    return GestureDetector(
-      behavior: HitTestBehavior
-          .opaque, // لجعل كامل مساحة الزر قابلة للضغط وليس النص فقط
-      onTap: () {
-        Provider.of<LanguageProvider>(
-          context,
-          listen: false,
-        ).changeLanguage(locale);
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.7),
-            fontSize: 13,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Provider.of<LanguageProvider>(
+            context,
+            listen: false,
+          ).changeLanguage(locale);
+        },
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 13,
+            ),
           ),
         ),
       ),

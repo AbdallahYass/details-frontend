@@ -2,24 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LanguageProvider with ChangeNotifier {
-  Locale _appLocale = const Locale('ar', ''); // اللغة الافتراضية مع رمز الدولة
+  late Locale _appLocale;
 
   Locale get appLocale => _appLocale;
 
-  LanguageProvider() {
-    _loadSavedLanguage();
-  }
-  //
-  // قراءة اللغة من الذاكرة عند تشغيل التطبيق
-  Future<void> _loadSavedLanguage() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedLanguage = prefs.getString('language_code');
-
-    if (savedLanguage != null) {
-      _appLocale = Locale(savedLanguage, '');
-      notifyListeners();
-    }
-  }
+  // استقبال اللغة المحفوظة كمتغير عند التهيئة
+  LanguageProvider(String initialLanguage)
+    : _appLocale = Locale(initialLanguage, '');
 
   // تغيير اللغة وحفظها في الذاكرة
   Future<void> changeLanguage(Locale newLocale) async {
