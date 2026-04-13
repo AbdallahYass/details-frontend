@@ -9,7 +9,7 @@ class LanguageProvider with ChangeNotifier {
   LanguageProvider() {
     _loadSavedLanguage();
   }
-
+  //
   // قراءة اللغة من الذاكرة عند تشغيل التطبيق
   Future<void> _loadSavedLanguage() async {
     final prefs = await SharedPreferences.getInstance();
