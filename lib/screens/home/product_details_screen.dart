@@ -108,6 +108,17 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     return _product!.quantity;
   }
 
+  // دالة تحسين الصور باستخدام Cloudinary مع دعم أحجام مختلفة
+  String _optimizeImageUrl(String url, {int width = 800}) {
+    if (url.contains('cloudinary.com') && !url.contains('q_auto')) {
+      final parts = url.split('/upload/');
+      if (parts.length == 2) {
+        return '${parts[0]}/upload/q_auto,f_auto,w_$width/${parts[1]}';
+      }
+    }
+    return url;
+  }
+
   Color _parseColor(String hex) {
     try {
       return Color(int.parse(hex.replaceFirst('#', '0xFF')));
@@ -360,7 +371,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   body: Center(
                     child: InteractiveViewer(
                       child: CachedNetworkImage(
-                        imageUrl: _product!.images[index],
+                        imageUrl: _optimizeImageUrl(
+                          _product!.images[index],
+                          width: 1200,
+                        ),
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -372,7 +386,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           child: Hero(
             tag: index == 0 ? _product!.id : '${_product!.id}_$index',
             child: CachedNetworkImage(
-              imageUrl: _product!.images[index],
+              imageUrl: _optimizeImageUrl(_product!.images[index], width: 800),
               fit: BoxFit.cover,
               placeholder: (context, url) => Container(
                 color: AppColors.imagePlaceholder,
@@ -425,7 +439,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: CachedNetworkImage(
-                  imageUrl: _product!.images[index],
+                  imageUrl: _optimizeImageUrl(
+                    _product!.images[index],
+                    width: 200,
+                  ),
                   fit: BoxFit.cover,
                   placeholder: (context, url) => Container(
                     color: AppColors.grey200,
@@ -819,7 +836,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           child: Hero(
                             tag: 'related_${p.id}',
                             child: CachedNetworkImage(
-                              imageUrl: p.imageUrl,
+                              imageUrl: _optimizeImageUrl(
+                                p.imageUrl,
+                                width: 400,
+                              ),
                               fit: BoxFit.cover,
                               placeholder: (context, url) => Container(
                                 color: AppColors.imagePlaceholder,

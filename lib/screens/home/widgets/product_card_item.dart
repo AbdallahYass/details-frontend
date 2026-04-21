@@ -30,29 +30,27 @@ class ProductCardItem extends StatelessWidget {
               ),
             ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(12),
-                        ),
-                        child: GestureDetector(
-                          onTap: () {
-                            // Preload image before navigation
-                            precacheImage(
-                              CachedNetworkImageProvider(product.imageUrl),
-                              context,
-                            );
-                            context.push(
-                              '/product/${product.id}',
-                              extra: product,
-                            );
-                          },
+          child: GestureDetector(
+            onTap: () {
+              // Preload image before navigation
+              precacheImage(
+                CachedNetworkImageProvider(product.imageUrl),
+                context,
+              );
+              context.push('/product/${product.id}', extra: product);
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: ClipRRect(
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(12),
+                          ),
                           child: HeroMode(
                             enabled: heroEnabled,
                             child: Hero(
@@ -62,218 +60,196 @@ class ProductCardItem extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ),
-                    Positioned(
-                      top: 8,
-                      left: 8,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (product.isSoldOut)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.black.withValues(alpha: 0.7),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                AppLocalizations.of(
-                                  context,
-                                )!.translate('sold_out'),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (product.isSoldOut)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
                                 ),
-                              ),
-                            )
-                          else if (isHot)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.red.withValues(alpha: 0.8),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.local_fire_department,
-                                    size: 10,
+                                decoration: BoxDecoration(
+                                  color: AppColors.black.withValues(alpha: 0.7),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.translate('sold_out'),
+                                  style: const TextStyle(
                                     color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    AppLocalizations.of(
-                                      context,
-                                    )!.translate('hot'),
-                                    style: const TextStyle(
+                                ),
+                              )
+                            else if (isHot)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.red.withValues(alpha: 0.8),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.local_fire_department,
+                                      size: 10,
                                       color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          if (!product.isSoldOut &&
-                              product.oldPrice != null &&
-                              product.oldPrice! > product.price)
-                            Container(
-                              margin: EdgeInsets.only(top: isHot ? 4.0 : 0.0),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.success,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                '-${((product.oldPrice! - product.price) / product.oldPrice! * 100).round()}%',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.translate('hot'),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: GestureDetector(
-                        onTap: () async {
-                          final messenger = ScaffoldMessenger.of(context);
-                          final auth = Provider.of<AuthProvider>(
-                            context,
-                            listen: false,
-                          );
-                          if (!auth.isAuthenticated) {
-                            context.push('/login');
-                            return;
-                          }
-                          final wishlistProvider =
-                              Provider.of<WishlistProvider>(
-                                context,
-                                listen: false,
-                              );
-                          bool added = await wishlistProvider.toggleWishlist(
-                            product,
-                          );
-                          if (!context.mounted) return;
-                          messenger.hideCurrentSnackBar();
-                          messenger.showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                added
-                                    ? AppLocalizations.of(
-                                        context,
-                                      )!.translate('added_to_wishlist')
-                                    : AppLocalizations.of(
-                                        context,
-                                      )!.translate('removed_from_wishlist'),
+                            if (!product.isSoldOut &&
+                                product.oldPrice != null &&
+                                product.oldPrice! > product.price)
+                              Container(
+                                margin: EdgeInsets.only(top: isHot ? 4.0 : 0.0),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.success,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  '-${((product.oldPrice! - product.price) / product.oldPrice! * 100).round()}%',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
-                              duration: const Duration(seconds: 1),
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: GestureDetector(
+                          onTap: () async {
+                            final messenger = ScaffoldMessenger.of(context);
+                            final auth = Provider.of<AuthProvider>(
+                              context,
+                              listen: false,
+                            );
+                            if (!auth.isAuthenticated) {
+                              context.push('/login');
+                              return;
+                            }
+                            final wishlistProvider =
+                                Provider.of<WishlistProvider>(
+                                  context,
+                                  listen: false,
+                                );
+                            bool added = await wishlistProvider.toggleWishlist(
+                              product,
+                            );
+                            if (!context.mounted) return;
+                            messenger.hideCurrentSnackBar();
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  added
+                                      ? AppLocalizations.of(
+                                          context,
+                                        )!.translate('added_to_wishlist')
+                                      : AppLocalizations.of(
+                                          context,
+                                        )!.translate('removed_from_wishlist'),
+                                ),
+                                duration: const Duration(seconds: 1),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              shape: BoxShape.circle,
                             ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            isFav ? Icons.favorite : Icons.favorite_border,
-                            size: 16,
-                            color: isFav ? AppColors.red : AppColors.grey,
+                            child: Icon(
+                              isFav ? Icons.favorite : Icons.favorite_border,
+                              size: 16,
+                              color: isFav ? AppColors.red : AppColors.grey,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    Positioned(
-                      bottom: 8,
-                      left: 8,
-                      child: GestureDetector(
-                        onTap: () => context.push(
-                          '/product/${product.id}',
-                          extra: product,
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.visibility_outlined,
-                            size: 16,
-                            color: AppColors.grey,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      product.getName(context),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF452512),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          "${product.price.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}",
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.primary,
-                          ),
+                Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        product.getName(context),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF452512),
                         ),
-                        if (product.oldPrice != null &&
-                            product.oldPrice! > product.price) ...[
-                          const SizedBox(width: 4),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
                           Text(
-                            "${product.oldPrice!.toStringAsFixed(2)}",
+                            "${product.price.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}",
                             style: const TextStyle(
-                              fontSize: 11,
-                              color: AppColors.grey,
-                              decoration: TextDecoration.lineThrough,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primary,
                             ),
                           ),
+                          if (product.oldPrice != null &&
+                              product.oldPrice! > product.price) ...[
+                            const SizedBox(width: 4),
+                            Text(
+                              product.oldPrice!.toStringAsFixed(2),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.grey,
+                                decoration: TextDecoration.lineThrough,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    _buildShareButton(context),
-                  ],
+                      ),
+                      const SizedBox(height: 8),
+                      _buildShareButton(context),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
