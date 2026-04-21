@@ -925,7 +925,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                                 ],
                               ),
                             );
-                          }).toList(),
+                          }),
                         ],
                       ),
                     ),

@@ -59,6 +59,7 @@ class Product {
   final Map<String, dynamic> name;
   final Map<String, dynamic> description;
   final double price;
+  final double? oldPrice;
   final String imageUrl;
   final List<String> images;
   final String brand;
@@ -75,6 +76,7 @@ class Product {
     required this.name,
     required this.description,
     required this.price,
+    this.oldPrice,
     required this.imageUrl,
     required this.images,
     required this.brand,
@@ -99,6 +101,9 @@ class Product {
       price: (json['price'] is num)
           ? (json['price'] as num).toDouble()
           : double.tryParse(json['price']?.toString() ?? '0') ?? 0.0,
+      oldPrice: json['oldPrice'] != null
+          ? double.tryParse(json['oldPrice'].toString())
+          : null,
       imageUrl: json['imageUrl']?.toString() ?? '',
       images: (json['images'] is List)
           ? (json['images'] as List).map((e) => e.toString()).toList()
@@ -131,6 +136,7 @@ class Product {
       'name': name,
       'description': description,
       'price': price,
+      'oldPrice': oldPrice,
       'imageUrl': imageUrl,
       'images': images,
       'brand': brand,

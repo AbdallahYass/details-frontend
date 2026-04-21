@@ -485,7 +485,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 _product!.oldPrice! > _product!.price) ...[
               const SizedBox(width: 10),
               Text(
-                "${_product!.oldPrice!.toStringAsFixed(2)}",
+                _product!.oldPrice!.toStringAsFixed(2),
                 style: const TextStyle(
                   fontSize: 16,
                   color: AppColors.grey,
