@@ -280,6 +280,9 @@ class AppLocalizations {
       "weak_network": "Network is too weak",
       "fetch_products_failed": "Failed to fetch products",
       "fetch_trending_failed": "Failed to fetch trending keywords",
+      "delivery_method": "Delivery Method",
+      "delivery": "Delivery",
+      "pickup": "Store Pickup",
     },
     'ar': {
       'app_name': 'متجر ديتيلز',
@@ -546,6 +549,9 @@ class AppLocalizations {
       "weak_network": "الشبكة ضعيفة جداً",
       "fetch_products_failed": "فشل في جلب المنتجات",
       "fetch_trending_failed": "فشل في جلب الكلمات الشائعة",
+      "delivery_method": "طريقة الاستلام",
+      "delivery": "توصيل",
+      "pickup": "استلام من المحل",
     },
   };
 

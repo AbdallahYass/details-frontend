@@ -16,7 +16,6 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final _cityController = TextEditingController();
   final _streetController = TextEditingController();
   final _phoneController = TextEditingController();
   final _couponController = TextEditingController();
@@ -25,6 +24,63 @@ class _CheckoutScreenState extends State<CheckoutScreen>
   late AnimationController _rotationController;
 
   bool _saveAddress = false;
+  String? _selectedCity;
+  double _deliveryFee = 0.0;
+  bool _isDelivery = true; // true: توصيل, false: استلام من المحل
+
+  // قاموس بأسماء المدن وأسعار التوصيل الخاصة بكل منطقة
+  final Map<String, double> _cityFees = {
+    // الضفة الغربية (15 شيكل)
+    'رام الله': 15.0,
+    'البيرة': 15.0,
+    'بيتونيا': 15.0,
+    'بيرزيت': 15.0,
+    'روابي': 15.0,
+    'قرى رام الله': 15.0,
+    'نابلس': 15.0, 'حوارة': 15.0, 'قرى نابلس': 15.0,
+    'الخليل': 15.0,
+    'حلحول': 15.0,
+    'دورا': 15.0,
+    'يطا': 15.0,
+    'الظاهرية': 15.0,
+    'قرى الخليل': 15.0,
+    'جنين': 15.0, 'يعبد': 15.0, 'قباطية': 15.0, 'قرى جنين': 15.0,
+    'طولكرم': 15.0, 'عنبتا': 15.0, 'قرى طولكرم': 15.0,
+    'قلقيلية': 15.0, 'عزون': 15.0, 'قرى قلقيلية': 15.0,
+    'سلفيت': 15.0, 'بديا': 15.0, 'قرى سلفيت': 15.0,
+    'طوباس': 15.0, 'طمون': 15.0, 'قرى طوباس': 15.0,
+    'أريحا': 15.0, 'العوجا': 15.0, 'قرى أريحا والأغوار': 15.0,
+    'بيت لحم': 15.0, 'بيت جالا': 15.0, 'بيت ساحور': 15.0, 'قرى بيت لحم': 15.0,
+    'ضواحي القدس (الرام، العيزرية، أبو ديس)': 15.0,
+
+    // القدس (20 شيكل)
+    'القدس (داخل الجدار)': 20.0,
+    'القدس': 20.0,
+
+    // الداخل المحتل (30 شيكل)
+    'الناصرة': 30.0, 'حيفا': 30.0, 'يافا': 30.0, 'عكا': 30.0, 'اللد': 30.0,
+    'الرملة': 30.0,
+    'بئر السبع': 30.0,
+    'صفد': 30.0,
+    'طبريا': 30.0,
+    'أم الفحم': 30.0,
+    'رهط': 30.0,
+    'باقة الغربية': 30.0,
+    'الطيبة': 30.0,
+    'الطيرة': 30.0,
+    'شفاعمرو': 30.0,
+    'سخنين': 30.0,
+    'كفر قاسم': 30.0,
+    'قلنسوة': 30.0,
+    'عرابة': 30.0,
+    'المغار': 30.0,
+    'كفر قرع': 30.0,
+    'طمرة': 30.0,
+    'دالية الكرمل': 30.0,
+    'كفر ياسيف': 30.0,
+    'جت': 30.0,
+    'قرى ومدن الداخل المحتل الأخرى': 30.0,
+  };
 
   @override
   void initState() {
@@ -57,7 +113,6 @@ class _CheckoutScreenState extends State<CheckoutScreen>
   @override
   void dispose() {
     _rotationController.dispose();
-    _cityController.dispose();
     _streetController.dispose();
     _phoneController.dispose();
     _couponController.dispose();
@@ -99,10 +154,10 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     final cart = Provider.of<CartProvider>(context, listen: false);
     if (cart.items.isEmpty) return;
 
-    if (_saveAddress) {
+    if (_saveAddress && _isDelivery) {
       await addressesProvider.addAddress(
         auth.token!,
-        _cityController.text.trim(),
+        _selectedCity ?? '',
         _streetController.text.trim(),
         _phoneController.text.trim(),
       );
@@ -145,10 +200,11 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       'subtotal': cart.subtotal,
       'discountAmount': cart.discountAmount,
       'couponCode': cart.couponCode,
-      'amount': cart.totalAmount,
+      'deliveryFee': _deliveryFee, // إضافة سعر التوصيل كحقل منفصل
+      'amount': cart.totalAmount + _deliveryFee, // المجموع النهائي شامل التوصيل
       'shippingAddress': {
-        'city': _cityController.text,
-        'street': _streetController.text,
+        'city': _isDelivery ? (_selectedCity ?? '') : 'استلام من المحل',
+        'street': _isDelivery ? _streetController.text : 'الفرع الرئيسي',
         'phone': _phoneController.text,
       },
       'payment_method': _paymentMethod,
@@ -385,93 +441,137 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            _buildSectionTitle(context, 'delivery_method'),
+                            const SizedBox(height: 15),
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                _buildSectionTitle(context, 'shipping_info'),
-                                TextButton(
-                                  onPressed: () async {
-                                    // الانتقال لصفحة العناوين وانتظار العودة
-                                    await context.push('/addresses');
-                                    if (!mounted) return;
-                                    // تحديث قائمة العناوين فور العودة
-                                    _loadSavedData();
-                                  },
-                                  child: Text(
-                                    AppLocalizations.of(
+                                Expanded(
+                                  child: _buildDeliveryOption(
+                                    value: true,
+                                    label: AppLocalizations.of(
                                       context,
-                                    )!.translate('saved_addresses'),
-                                    style: const TextStyle(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    )!.translate('delivery'),
+                                    icon: Icons.local_shipping_outlined,
+                                  ),
+                                ),
+                                const SizedBox(width: 15),
+                                Expanded(
+                                  child: _buildDeliveryOption(
+                                    value: false,
+                                    label: AppLocalizations.of(
+                                      context,
+                                    )!.translate('pickup'),
+                                    icon: Icons.storefront_outlined,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 15),
-                            Consumer<AddressesProvider>(
-                              builder: (context, provider, child) {
-                                if (provider.addresses.isEmpty) {
-                                  return const SizedBox.shrink();
-                                }
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    SizedBox(
-                                      height: 45,
-                                      child: ListView.builder(
-                                        scrollDirection: Axis.horizontal,
-                                        itemCount: provider.addresses.length,
-                                        itemBuilder: (context, index) {
-                                          final address =
-                                              provider.addresses[index];
-                                          return Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 4.0,
-                                            ),
-                                            child: ActionChip(
-                                              label: Text(
-                                                '${address.city} - ${address.street}',
-                                                style: const TextStyle(
-                                                  color: AppColors.primary,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-                                              backgroundColor: const Color(
-                                                0xFFFDFBF7,
-                                              ),
-                                              side: BorderSide(
-                                                color: const Color(
-                                                  0xFFB89560,
-                                                ).withValues(alpha: 0.5),
-                                              ),
-                                              onPressed: () {
-                                                setState(() {
-                                                  _cityController.text =
-                                                      address.city;
-                                                  _streetController.text =
-                                                      address.street;
-                                                  if (address
-                                                      .phone
-                                                      .isNotEmpty) {
-                                                    _phoneController.text =
-                                                        address.phone;
-                                                  }
-                                                  _saveAddress = false;
-                                                });
-                                              },
-                                            ),
-                                          );
-                                        },
+                            const SizedBox(height: 30),
+                            if (_isDelivery) ...[
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  _buildSectionTitle(context, 'shipping_info'),
+                                  TextButton(
+                                    onPressed: () async {
+                                      // الانتقال لصفحة العناوين وانتظار العودة
+                                      await context.push('/addresses');
+                                      if (!mounted) return;
+                                      // تحديث قائمة العناوين فور العودة
+                                      _loadSavedData();
+                                    },
+                                    child: Text(
+                                      AppLocalizations.of(
+                                        context,
+                                      )!.translate('saved_addresses'),
+                                      style: const TextStyle(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                    const SizedBox(height: 15),
-                                  ],
-                                );
-                              },
-                            ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 15),
+                              Consumer<AddressesProvider>(
+                                builder: (context, provider, child) {
+                                  if (provider.addresses.isEmpty) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      SizedBox(
+                                        height: 45,
+                                        child: ListView.builder(
+                                          scrollDirection: Axis.horizontal,
+                                          itemCount: provider.addresses.length,
+                                          itemBuilder: (context, index) {
+                                            final address =
+                                                provider.addresses[index];
+                                            return Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 4.0,
+                                                  ),
+                                              child: ActionChip(
+                                                label: Text(
+                                                  '${address.city} - ${address.street}',
+                                                  style: const TextStyle(
+                                                    color: AppColors.primary,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                                backgroundColor: const Color(
+                                                  0xFFFDFBF7,
+                                                ),
+                                                side: BorderSide(
+                                                  color: const Color(
+                                                    0xFFB89560,
+                                                  ).withValues(alpha: 0.5),
+                                                ),
+                                                onPressed: () {
+                                                  setState(() {
+                                                    if (_cityFees.containsKey(
+                                                      address.city,
+                                                    )) {
+                                                      _selectedCity =
+                                                          address.city;
+                                                      _deliveryFee =
+                                                          _cityFees[address
+                                                              .city]!;
+                                                    } else {
+                                                      _selectedCity = null;
+                                                      _deliveryFee = 0.0;
+                                                    }
+                                                    _streetController.text =
+                                                        address.street;
+                                                    if (address
+                                                        .phone
+                                                        .isNotEmpty) {
+                                                      _phoneController.text =
+                                                          address.phone;
+                                                    }
+                                                    _saveAddress = false;
+                                                  });
+                                                },
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(height: 15),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ] else ...[
+                              _buildSectionTitle(context, 'shipping_info'),
+                              const SizedBox(height: 15),
+                            ],
                             Container(
                               padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
@@ -487,40 +587,27 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                               ),
                               child: Column(
                                 children: [
-                                  _buildTextField(
-                                    controller: _cityController,
-                                    label: AppLocalizations.of(
-                                      context,
-                                    )!.translate('city'),
-                                    icon: Icons.location_city,
-                                    validator: (value) {
-                                      if (value == null ||
-                                          value.trim().length < 2) {
-                                        return AppLocalizations.of(
-                                          context,
-                                        )!.translate('enter_valid_city');
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                  const SizedBox(height: 15),
-                                  _buildTextField(
-                                    controller: _streetController,
-                                    label: AppLocalizations.of(
-                                      context,
-                                    )!.translate('street'),
-                                    icon: Icons.map,
-                                    validator: (value) {
-                                      if (value == null ||
-                                          value.trim().isEmpty) {
-                                        return AppLocalizations.of(
-                                          context,
-                                        )!.translate('required_field');
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                  const SizedBox(height: 15),
+                                  if (_isDelivery) ...[
+                                    _buildCityDropdown(),
+                                    const SizedBox(height: 15),
+                                    _buildTextField(
+                                      controller: _streetController,
+                                      label: AppLocalizations.of(
+                                        context,
+                                      )!.translate('street'),
+                                      icon: Icons.map,
+                                      validator: (value) {
+                                        if (value == null ||
+                                            value.trim().isEmpty) {
+                                          return AppLocalizations.of(
+                                            context,
+                                          )!.translate('required_field');
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                    const SizedBox(height: 15),
+                                  ],
                                   _buildTextField(
                                     controller: _phoneController,
                                     label: AppLocalizations.of(
@@ -542,36 +629,38 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                       return null;
                                     },
                                   ),
-                                  const SizedBox(height: 15),
-                                  Row(
-                                    children: [
-                                      SizedBox(
-                                        height: 24,
-                                        width: 24,
-                                        child: Checkbox(
-                                          value: _saveAddress,
-                                          onChanged: (val) => setState(
-                                            () => _saveAddress = val ?? false,
-                                          ),
-                                          activeColor: AppColors.primary,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Expanded(
-                                        child: Text(
-                                          AppLocalizations.of(
-                                            context,
-                                          )!.translate(
-                                            'save_address_for_later',
-                                          ),
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.grey,
+                                  if (_isDelivery) ...[
+                                    const SizedBox(height: 15),
+                                    Row(
+                                      children: [
+                                        SizedBox(
+                                          height: 24,
+                                          width: 24,
+                                          child: Checkbox(
+                                            value: _saveAddress,
+                                            onChanged: (val) => setState(
+                                              () => _saveAddress = val ?? false,
+                                            ),
+                                            activeColor: AppColors.primary,
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            AppLocalizations.of(
+                                              context,
+                                            )!.translate(
+                                              'save_address_for_later',
+                                            ),
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -719,11 +808,9 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    AppLocalizations.of(
-                                      context,
-                                    )!.translate('total'),
+                                    '${AppLocalizations.of(context)!.translate('total')} (المنتجات)',
                                     style: const TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                       color: AppColors.textPrimary,
                                     ),
@@ -731,13 +818,57 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                   Text(
                                     '${total.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
                                     style: const TextStyle(
-                                      fontSize: 22,
+                                      fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                       color: AppColors.primary,
                                     ),
                                   ),
                                 ],
                               ),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'رسوم التوصيل',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  '${_deliveryFee.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Divider(height: 25, thickness: 1),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'المجموع النهائي',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  '${(total + _deliveryFee).toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 30),
                             SizedBox(
@@ -790,6 +921,205 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     );
   }
 
+  Widget _buildCityDropdown() {
+    List<DropdownMenuItem<String>> items = [];
+
+    // الضفة الغربية
+    items.add(
+      const DropdownMenuItem(
+        value: 'header_wb',
+        enabled: false,
+        child: Text(
+          '--- الضفة الغربية (15 شيكل) ---',
+          style: TextStyle(
+            color: Colors.grey,
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+          ),
+        ),
+      ),
+    );
+    for (var city in [
+      'رام الله',
+      'البيرة',
+      'بيتونيا',
+      'بيرزيت',
+      'روابي',
+      'قرى رام الله',
+      'نابلس',
+      'حوارة',
+      'قرى نابلس',
+      'الخليل',
+      'حلحول',
+      'دورا',
+      'يطا',
+      'الظاهرية',
+      'قرى الخليل',
+      'جنين',
+      'يعبد',
+      'قباطية',
+      'قرى جنين',
+      'طولكرم',
+      'عنبتا',
+      'قرى طولكرم',
+      'قلقيلية',
+      'عزون',
+      'قرى قلقيلية',
+      'سلفيت',
+      'بديا',
+      'قرى سلفيت',
+      'طوباس',
+      'طمون',
+      'قرى طوباس',
+      'أريحا',
+      'العوجا',
+      'قرى أريحا والأغوار',
+      'بيت لحم',
+      'بيت جالا',
+      'بيت ساحور',
+      'قرى بيت لحم',
+      'ضواحي القدس (الرام، العيزرية، أبو ديس)',
+    ]) {
+      items.add(
+        DropdownMenuItem(
+          value: city,
+          child: Text(
+            city,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+      );
+    }
+
+    // القدس
+    items.add(
+      const DropdownMenuItem(
+        value: 'header_j',
+        enabled: false,
+        child: Text(
+          '--- القدس (20 شيكل) ---',
+          style: TextStyle(
+            color: Colors.grey,
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+          ),
+        ),
+      ),
+    );
+    for (var city in ['القدس (داخل الجدار)', 'القدس']) {
+      items.add(
+        DropdownMenuItem(
+          value: city,
+          child: Text(
+            city,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+      );
+    }
+
+    // الداخل المحتل
+    items.add(
+      const DropdownMenuItem(
+        value: 'header_48',
+        enabled: false,
+        child: Text(
+          '--- الداخل المحتل (30 شيكل) ---',
+          style: TextStyle(
+            color: Colors.grey,
+            fontWeight: FontWeight.bold,
+            fontSize: 13,
+          ),
+        ),
+      ),
+    );
+    for (var city in [
+      'الناصرة',
+      'حيفا',
+      'يافا',
+      'عكا',
+      'اللد',
+      'الرملة',
+      'بئر السبع',
+      'صفد',
+      'طبريا',
+      'أم الفحم',
+      'رهط',
+      'باقة الغربية',
+      'الطيبة',
+      'الطيرة',
+      'شفاعمرو',
+      'سخنين',
+      'كفر قاسم',
+      'قلنسوة',
+      'عرابة',
+      'المغار',
+      'كفر قرع',
+      'طمرة',
+      'دالية الكرمل',
+      'كفر ياسيف',
+      'جت',
+      'قرى ومدن الداخل المحتل الأخرى',
+    ]) {
+      items.add(
+        DropdownMenuItem(
+          value: city,
+          child: Text(
+            city,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+      );
+    }
+
+    return DropdownButtonFormField<String>(
+      initialValue: _selectedCity,
+      icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.primary),
+      decoration: InputDecoration(
+        labelText: AppLocalizations.of(context)!.translate('city'),
+        prefixIcon: const Icon(Icons.location_city, color: AppColors.primary),
+        filled: true,
+        fillColor: AppColors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16,
+          horizontal: 20,
+        ),
+        border: InputBorder.none,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFB89560), width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF9E773A), width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
+      ),
+      items: items,
+      onChanged: (String? newValue) {
+        if (newValue != null && !newValue.startsWith('header_')) {
+          setState(() {
+            _selectedCity = newValue;
+            _deliveryFee = _cityFees[newValue] ?? 0.0;
+          });
+        }
+      },
+      validator: (value) {
+        if (value == null || value.isEmpty || value.startsWith('header_')) {
+          return AppLocalizations.of(context)!.translate('required_field');
+        }
+        return null;
+      },
+    );
+  }
+
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -820,6 +1150,66 @@ class _CheckoutScreenState extends State<CheckoutScreen>
         ),
       ),
       validator: validator,
+    );
+  }
+
+  Widget _buildDeliveryOption({
+    required bool value,
+    required String label,
+    required IconData icon,
+  }) {
+    final isSelected = _isDelivery == value;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _isDelivery = value;
+          if (!_isDelivery) {
+            _deliveryFee = 0.0;
+          } else {
+            _deliveryFee = _cityFees[_selectedCity] ?? 0.0;
+          }
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.transparent,
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            if (!isSelected)
+              BoxShadow(
+                color: AppColors.shadowColor,
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? AppColors.primary : AppColors.grey,
+              size: 30,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
