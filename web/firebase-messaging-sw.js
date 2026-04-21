@@ -16,9 +16,32 @@ const messaging = firebase.messaging();
 
 // استقبال الإشعارات عندما يكون الموقع مغلقاً أو في الخلفية
 messaging.onBackgroundMessage(function(payload) {
-  const notificationTitle = payload.notification.title;
+  console.log('📬 [Background Message Received]: ', payload);
+
+  const notificationTitle = payload.notification?.title || 'إشعار جديد من ديتيلز';
   const notificationOptions = {
-    body: payload.notification.body,
+    body: payload.notification?.body || '',
+    icon: '/icons/Icon-192.png', // أيقونة التطبيق (مهمة جداً لبعض المتصفحات)
+    badge: '/icons/Icon-192.png',
+    dir: 'rtl'
   };
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  
+  // إضافة return هنا ضرورية جداً لإبقاء الملف يعمل حتى يظهر الإشعار!
+  return self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// حدث ذكي: ماذا يحدث عندما يضغط المستخدم على الإشعار في هاتفه؟
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close(); // إخفاء الإشعار بعد الضغط عليه
+  
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+      // إذا كان الموقع مفتوحاً في الخلفية، قم بالانتقال إليه
+      if (clientList.length > 0) {
+        return clientList[0].focus();
+      }
+      // إذا كان الموقع مغلقاً بالكامل، قم بفتحه
+      return clients.openWindow('/');
+    })
+  );
 });
