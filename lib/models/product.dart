@@ -54,6 +54,30 @@ class ProductColor {
   };
 }
 
+// 🌟 الكلاس الجديد لاستقبال مخزون المتغيرات (الكمية لكل لون ومقاس)
+class ProductVariantModel {
+  final String? colorHex;
+  final String? size;
+  final int quantity;
+
+  ProductVariantModel({this.colorHex, this.size, this.quantity = 0});
+
+  factory ProductVariantModel.fromJson(dynamic json) {
+    if (json == null) return ProductVariantModel();
+    return ProductVariantModel(
+      colorHex: json['colorHex']?.toString(),
+      size: json['size']?.toString(),
+      quantity: int.tryParse(json['quantity']?.toString() ?? '0') ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    if (colorHex != null) 'colorHex': colorHex,
+    if (size != null) 'size': size,
+    'quantity': quantity,
+  };
+}
+
 class Product {
   final String id;
   final Map<String, dynamic> name;
@@ -70,6 +94,8 @@ class Product {
   final int quantity;
   final List<ProductSize> sizes;
   final List<ProductColor> colors;
+  final List<ProductVariantModel>
+  variants; // 🌟 إضافة المتغيرات للموديل الرئيسي
 
   Product({
     required this.id,
@@ -87,6 +113,7 @@ class Product {
     this.quantity = 0,
     this.sizes = const [],
     this.colors = const [],
+    this.variants = const [],
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -126,6 +153,11 @@ class Product {
                 .map((e) => ProductColor.fromJson(e))
                 .toList()
           : [],
+      variants: (json['variants'] is List)
+          ? (json['variants'] as List)
+                .map((e) => ProductVariantModel.fromJson(e))
+                .toList()
+          : [],
     );
   }
 
@@ -147,6 +179,9 @@ class Product {
       'quantity': quantity,
       'sizes': sizes.map((s) => s.toJson()).toList(),
       'colors': colors.map((c) => c.toJson()).toList(),
+      'variants': variants
+          .map((v) => v.toJson())
+          .toList(), // 🌟 إرسالها عند التعديل
     };
   }
 

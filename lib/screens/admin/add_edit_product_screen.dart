@@ -43,6 +43,8 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
   final _nameEnController = TextEditingController();
   final _priceController = TextEditingController();
   final _oldPriceController = TextEditingController();
+  final _quantityController =
+      TextEditingController(); // 🌟 حقل الكمية الإجمالية الجديد
   final _descArController = TextEditingController();
   final _descEnController = TextEditingController();
   final _brandController = TextEditingController();
@@ -75,6 +77,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
       _nameEnController.text = p['name'] is Map ? (p['name']['en'] ?? '') : '';
       _priceController.text = p['price'].toString();
       _oldPriceController.text = p['oldPrice']?.toString() ?? '';
+      _quantityController.text = p['quantity']?.toString() ?? '0';
       _descArController.text = p['description'] is Map
           ? (p['description']['ar'] ?? '')
           : '';
@@ -124,6 +127,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     _nameEnController.dispose();
     _priceController.dispose();
     _oldPriceController.dispose();
+    _quantityController.dispose();
     _descArController.dispose();
     _descEnController.dispose();
     _brandController.dispose();
@@ -354,52 +358,98 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     try {
       String finalImageUrl = _imageController.text;
 
-      // Calculate total quantity from variants
-      final totalQuantity = _variants.fold<int>(
-        0,
-        (sum, v) => sum + (int.tryParse(v.quantityController.text) ?? 0),
-      );
+      // حساب الكمية الإجمالية (إما من المتغيرات أو من الحقل العام)
+      int totalQuantity = 0;
+      if (_variants.isNotEmpty) {
+        totalQuantity = _variants.fold<int>(
+          0,
+          (sum, v) => sum + (int.tryParse(v.quantityController.text) ?? 0),
+        );
+      } else {
+        totalQuantity = int.tryParse(_quantityController.text) ?? 0;
+      }
 
       // تجهيز قائمة الصور مع تجنب تكرار الصورة الرئيسية
       final List<String> allImages = [finalImageUrl];
       allImages.addAll(_galleryImages.where((img) => img != finalImageUrl));
 
-      // تحديد قيمة الكاتيجوري (إما ID موجود أو اسم جديد)
-      final categoryValue = _isNewCategory
-          ? _newCategoryController.text
-          : _selectedCategory;
+      // تحديد قيمة الكاتيجوري
+      String? finalCategoryId = _selectedCategory;
 
-      final request = http.Request(method, Uri.parse(url));
-      request.headers.addAll({
-        'Content-Type': 'application/json',
+      if (_isNewCategory) {
+        // إنشاء التصنيف في الباك إند أولاً للحصول على الـ ID الخاص به
+        final catResponse = await http.post(
+          Uri.parse('https://api.details-store.com/api/categories'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ${auth.token}',
+          },
+          body: json.encode({
+            'name': {
+              'ar': _newCategoryController.text.trim(),
+              'en': _newCategoryController.text.trim(), // مبدئياً نفس الاسم
+            },
+            'slug': _newCategoryController.text.trim().toLowerCase().replaceAll(
+              RegExp(r'\s+'),
+              '-',
+            ),
+            'imageUrl':
+                finalImageUrl, // نستخدم صورة المنتج كصورة للقسم الجديد مؤقتاً
+          }),
+        );
+
+        if (catResponse.statusCode == 201 || catResponse.statusCode == 200) {
+          final catData = json.decode(catResponse.body);
+          finalCategoryId = catData['_id'];
+        } else {
+          throw Exception(
+            'فشل إنشاء القسم الجديد، قد يكون الاسم موجوداً مسبقاً.',
+          );
+        }
+      }
+
+      if (finalCategoryId == null || finalCategoryId.isEmpty) {
+        throw Exception('يرجى تحديد قسم للمنتج.');
+      }
+
+      final headers = {
+        'Content-Type': 'application/json; charset=UTF-8',
         'Authorization': 'Bearer ${auth.token}',
-      });
-      request.body = json.encode({
-        'name': {'ar': _nameArController.text, 'en': _nameEnController.text},
+      };
+
+      final bodyStr = json.encode({
+        'name': {
+          'ar': _nameArController.text.trim(),
+          'en': _nameEnController.text.trim(),
+        },
         'price': double.tryParse(_priceController.text) ?? 0.0,
         'oldPrice': _oldPriceController.text.isNotEmpty
             ? double.tryParse(_oldPriceController.text)
             : null,
-        'quantity': totalQuantity, // الكمية الإجمالية المحسوبة
+        'quantity': totalQuantity,
         'description': {
-          'ar': _descArController.text,
-          'en': _descEnController.text,
+          'ar': _descArController.text.trim(),
+          'en': _descEnController.text.trim(),
         },
         'brand': _brandController.text.isNotEmpty
-            ? _brandController.text
+            ? _brandController.text.trim()
             : 'DETAILS',
-        'dimensions': _dimensionsController.text,
+        'dimensions': _dimensionsController.text.trim(),
         'imageUrl': finalImageUrl,
-        'category': categoryValue,
+        'category': finalCategoryId,
         'isSoldOut': _isSoldOut,
         'featured': _isFeatured,
         'images': allImages,
-        'colors': _colors.map((c) => c.toJson()).toList(), // للألوان المعروضة
+        'colors': _colors
+            .map((c) => {'hex': c.hex, 'images': c.images})
+            .toList(), // ضمان صحة الألوان
         'sizes': _availableSizes, // للمقاسات المعروضة
         'variants': _variants.map((v) => v.toJson()).toList(), // المخزون الفعلي
       });
 
-      final response = await request.send();
+      final response = await (method == 'POST'
+          ? http.post(Uri.parse(url), headers: headers, body: bodyStr)
+          : http.put(Uri.parse(url), headers: headers, body: bodyStr));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (mounted) {
@@ -417,8 +467,14 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         await auth.logout();
         throw Exception('انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً.');
       } else {
-        final respBody = await response.stream.bytesToString();
-        throw Exception('خطأ ${response.statusCode}: $respBody');
+        String errorMsg = 'خطأ ${response.statusCode}';
+        try {
+          final respBody = json.decode(response.body);
+          errorMsg = respBody['error'] ?? respBody['message'] ?? errorMsg;
+        } catch (_) {
+          errorMsg = response.body;
+        }
+        throw Exception(errorMsg);
       }
     } catch (e) {
       if (mounted) {
@@ -588,6 +644,17 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                       labelText: AppLocalizations.of(
                         context,
                       )!.translate('old_price'),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _quantityController,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(
+                        context,
+                      )!.translate('quantity'),
+                      hintText: 'الكمية الإجمالية للمنتج',
                     ),
                     keyboardType: TextInputType.number,
                   ),
