@@ -61,10 +61,14 @@ class AuthProvider with ChangeNotifier {
   // دالة مساعدة لجلب توكن الإشعارات
   Future<String?> _getFcmToken() async {
     try {
-      return await FirebaseMessaging.instance.getToken(
-        vapidKey:
-            "BEZk9zT8N6SJW6-yDwdw8Z3AGyxn1N6cImzo9iDMxzd5xBfRQz_4iD2eNN_GE_Hfv8SXXKzI1SkwogZPctDE3f4",
-      );
+      return await FirebaseMessaging.instance
+          .getToken(
+            vapidKey:
+                "BEZk9zT8N6SJW6-yDwdw8Z3AGyxn1N6cImzo9iDMxzd5xBfRQz_4iD2eNN_GE_Hfv8SXXKzI1SkwogZPctDE3f4",
+          )
+          .timeout(
+            const Duration(seconds: 3),
+          ); // ⏱️ إضافة مهلة 3 ثوانٍ لمنع التعليق النهائي
     } catch (e) {
       return null;
     }
