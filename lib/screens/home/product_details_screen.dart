@@ -38,6 +38,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     if (widget.product != null) {
       _product = widget.product;
       _isLoadingProduct = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _precacheImages());
       _fetchRelatedProducts();
     } else if (widget.productId != null) {
       _fetchProductById(widget.productId!);
@@ -48,6 +49,19 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  // دالة ذكية تقوم بتحميل صور الألوان مسبقاً في الخلفية لتجنب أي تأخير
+  void _precacheImages() {
+    if (_product == null || !mounted) return;
+    for (var color in _product!.colors) {
+      for (var img in color.images) {
+        precacheImage(
+          CachedNetworkImageProvider(_optimizeImageUrl(img, width: 800)),
+          context,
+        );
+      }
+    }
   }
 
   Future<void> _fetchProductById(String id) async {
@@ -61,6 +75,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             _product = Product.fromJson(json.decode(res.body));
             _isLoadingProduct = false;
           });
+          _precacheImages();
           _fetchRelatedProducts();
         }
       }
@@ -376,6 +391,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           width: 1200,
                         ),
                         fit: BoxFit.contain,
+                        placeholder: (context, url) => const Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primary,
+                            strokeWidth: 2,
+                          ),
+                        ),
                       ),
                     ),
                   ),

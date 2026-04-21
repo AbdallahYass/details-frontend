@@ -22,10 +22,10 @@ class _AnimatedProductImageState extends State<AnimatedProductImage> {
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        onTapDown: (_) => setState(() => _isHovered = true),
-        onTapUp: (_) => setState(() => _isHovered = false),
-        onTapCancel: () => setState(() => _isHovered = false),
+      child: Listener(
+        onPointerDown: (_) => setState(() => _isHovered = true),
+        onPointerUp: (_) => setState(() => _isHovered = false),
+        onPointerCancel: (_) => setState(() => _isHovered = false),
         // استخدمنا StackFit.expand عشان الصورة تملي الكرت بذكاء بدون Infinity
         child: Stack(
           fit: StackFit.expand,
