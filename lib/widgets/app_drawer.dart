@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:details_app/providers/auth_provider.dart';
-import 'package:details_app/providers/settings_provider.dart';
+import 'package:details_app/providers/language_provider.dart';
 import 'package:details_app/l10n/app_localizations.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/screens/home/contact_us_screen.dart';
@@ -15,7 +15,7 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
-    final settings = Provider.of<SettingsProvider>(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
 
     return Drawer(
       backgroundColor: Colors.transparent,
@@ -216,7 +216,7 @@ class AppDrawer extends StatelessWidget {
                           ),
                         ),
                         child: DropdownButton<String>(
-                          value: settings.locale.languageCode,
+                          value: languageProvider.appLocale.languageCode,
                           underline: const SizedBox(),
                           icon: const Icon(
                             Icons.arrow_drop_down,
@@ -225,7 +225,7 @@ class AppDrawer extends StatelessWidget {
                           dropdownColor: AppColors.background,
                           onChanged: (String? newLang) {
                             if (newLang != null) {
-                              settings.setLocale(Locale(newLang));
+                              languageProvider.changeLanguage(newLang);
                               Navigator.pop(context);
                             }
                           },

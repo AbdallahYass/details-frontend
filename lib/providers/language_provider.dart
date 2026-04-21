@@ -10,14 +10,21 @@ class LanguageProvider with ChangeNotifier {
   LanguageProvider(String initialLanguage)
     : _appLocale = Locale(initialLanguage, '');
 
-  // تغيير اللغة وحفظها في الذاكرة
-  Future<void> changeLanguage(Locale newLocale) async {
-    if (_appLocale.languageCode == newLocale.languageCode) return;
+  // دالة ذكية جداً تقبل النص ('en') أو الكائن (Locale('en')) لضمان عملها بأي شكل برمجته في الفوتر
+  Future<void> changeLanguage(dynamic newLang) async {
+    String langCode = 'ar';
+    if (newLang is String) {
+      langCode = newLang;
+    } else if (newLang is Locale) {
+      langCode = newLang.languageCode;
+    }
 
-    _appLocale = Locale(newLocale.languageCode, '');
+    if (_appLocale.languageCode == langCode) return;
+
+    _appLocale = Locale(langCode, '');
     notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('language_code', newLocale.languageCode);
+    await prefs.setString('language_code', langCode);
   }
 }
