@@ -470,13 +470,31 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           ),
         ),
         const SizedBox(height: 15),
-        Text(
-          "${_product!.price.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}",
-          style: const TextStyle(
-            fontSize: 24,
-            color: AppColors.primary,
-            fontWeight: FontWeight.w900,
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              "${_product!.price.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}",
+              style: const TextStyle(
+                fontSize: 24,
+                color: AppColors.primary,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            if (_product!.oldPrice != null &&
+                _product!.oldPrice! > _product!.price) ...[
+              const SizedBox(width: 10),
+              Text(
+                "${_product!.oldPrice!.toStringAsFixed(2)}",
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: AppColors.grey,
+                  decoration: TextDecoration.lineThrough,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ],
         ),
       ],
     );

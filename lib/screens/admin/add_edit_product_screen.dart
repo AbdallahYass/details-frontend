@@ -8,6 +8,27 @@ import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:details_app/providers/notification_provider.dart';
 import 'package:details_app/screens/home/notifications_screen.dart';
 
+/// Data model for a product variant (a specific combination of color, size, and quantity).
+class ProductVariant {
+  String? colorHex;
+  String? size;
+  final TextEditingController quantityController;
+
+  ProductVariant({this.colorHex, this.size, int quantity = 0})
+    : quantityController = TextEditingController(text: quantity.toString());
+
+  // To prevent memory leaks from TextEditingController
+  void dispose() {
+    quantityController.dispose();
+  }
+
+  Map<String, dynamic> toJson() => {
+    'colorHex': colorHex,
+    'size': size,
+    'quantity': int.tryParse(quantityController.text) ?? 0,
+  };
+}
+
 class AddEditProductScreen extends StatefulWidget {
   final dynamic product; // If null, we are adding
   const AddEditProductScreen({super.key, this.product});
@@ -22,20 +43,19 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
   final _nameEnController = TextEditingController();
   final _priceController = TextEditingController();
   final _oldPriceController = TextEditingController();
-  final _quantityController = TextEditingController();
   final _descArController = TextEditingController();
   final _descEnController = TextEditingController();
   final _brandController = TextEditingController();
   final _dimensionsController = TextEditingController();
   final _imageController = TextEditingController();
   final _newCategoryController = TextEditingController(); // للكاتيجوري الجديد
-  final _sizeInputController = TextEditingController();
-  final _sizeQtyController = TextEditingController();
+  final _sizeInputController = TextEditingController(); // لإضافة المقاسات
   final _colorHexController = TextEditingController();
   String? _selectedCategory;
   List<dynamic> _categories = [];
   List<String> _galleryImages = []; // قائمة الصور الإضافية
-  List<ProductSize> _sizes = [];
+  List<String> _availableSizes = []; // المقاسات المتاحة مثل 'S', 'M'
+  List<ProductVariant> _variants = []; // قائمة المتغيرات (لون+مقاس+كمية)
   bool _isLoading = false;
   bool _isImageUploading = false;
   bool _isNewCategory = false; // تحديد وضع الكاتيجوري
@@ -55,7 +75,6 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
       _nameEnController.text = p['name'] is Map ? (p['name']['en'] ?? '') : '';
       _priceController.text = p['price'].toString();
       _oldPriceController.text = p['oldPrice']?.toString() ?? '';
-      _quantityController.text = p['quantity']?.toString() ?? '';
       _descArController.text = p['description'] is Map
           ? (p['description']['ar'] ?? '')
           : '';
@@ -77,14 +96,23 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         // إزالة الصورة الرئيسية من القائمة إذا كانت موجودة
         _galleryImages.removeWhere((img) => img == p['imageUrl']);
       }
-      if (p['sizes'] != null) {
-        _sizes = (p['sizes'] as List)
-            .map((e) => ProductSize.fromJson(e))
-            .toList();
-      }
       if (p['colors'] != null) {
         _colors = (p['colors'] as List)
             .map((e) => ProductColor.fromJson(e))
+            .toList();
+      }
+      if (p['sizes'] != null && p['sizes'] is List) {
+        _availableSizes = List<String>.from(p['sizes']);
+      }
+      if (p['variants'] != null && p['variants'] is List) {
+        _variants = (p['variants'] as List)
+            .map(
+              (v) => ProductVariant(
+                colorHex: v['colorHex'],
+                size: v['size'],
+                quantity: v['quantity'] ?? 0,
+              ),
+            )
             .toList();
       }
     }
@@ -96,7 +124,6 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     _nameEnController.dispose();
     _priceController.dispose();
     _oldPriceController.dispose();
-    _quantityController.dispose();
     _descArController.dispose();
     _descEnController.dispose();
     _brandController.dispose();
@@ -104,8 +131,11 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     _imageController.dispose();
     _newCategoryController.dispose();
     _sizeInputController.dispose();
-    _sizeQtyController.dispose();
     _colorHexController.dispose();
+    // Dispose all variant controllers to prevent memory leaks
+    for (var variant in _variants) {
+      variant.dispose();
+    }
     super.dispose();
   }
 
@@ -272,6 +302,44 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     );
   }
 
+  void _generateVariants() {
+    // 1. Clear old variants and dispose their controllers
+    for (var variant in _variants) {
+      variant.dispose();
+    }
+
+    setState(() {
+      _variants.clear();
+
+      final hasColors = _colors.isNotEmpty;
+      final hasSizes = _availableSizes.isNotEmpty;
+
+      if (hasColors && hasSizes) {
+        // Case 1: Product has both colors and sizes (e.g., T-shirt)
+        for (var color in _colors) {
+          for (var size in _availableSizes) {
+            _variants.add(ProductVariant(colorHex: color.hex, size: size));
+          }
+        }
+      } else if (hasColors) {
+        // Case 2: Product has colors but no sizes (e.g., Bracelet)
+        for (var color in _colors) {
+          // We use a null size to represent "one size" or "free size"
+          _variants.add(ProductVariant(colorHex: color.hex, size: null));
+        }
+      } else if (hasSizes) {
+        // Case 3: Product has sizes but no colors (e.g., a plain ring)
+        for (var size in _availableSizes) {
+          _variants.add(ProductVariant(size: size, colorHex: null));
+        }
+      } else {
+        // Case 4: Simple product with no variants (e.g., a book)
+        // We create one default variant to hold the quantity.
+        _variants.add(ProductVariant());
+      }
+    });
+  }
+
   Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
@@ -285,6 +353,12 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
 
     try {
       String finalImageUrl = _imageController.text;
+
+      // Calculate total quantity from variants
+      final totalQuantity = _variants.fold<int>(
+        0,
+        (sum, v) => sum + (int.tryParse(v.quantityController.text) ?? 0),
+      );
 
       // تجهيز قائمة الصور مع تجنب تكرار الصورة الرئيسية
       final List<String> allImages = [finalImageUrl];
@@ -306,8 +380,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         'oldPrice': _oldPriceController.text.isNotEmpty
             ? double.tryParse(_oldPriceController.text)
             : null,
-        'quantity': int.tryParse(_quantityController.text) ?? 0,
-        'sizes': _sizes.map((e) => e.toJson()).toList(),
+        'quantity': totalQuantity, // الكمية الإجمالية المحسوبة
         'description': {
           'ar': _descArController.text,
           'en': _descEnController.text,
@@ -321,7 +394,9 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         'isSoldOut': _isSoldOut,
         'featured': _isFeatured,
         'images': allImages,
-        'colors': _colors.map((e) => e.toJson()).toList(),
+        'colors': _colors.map((c) => c.toJson()).toList(), // للألوان المعروضة
+        'sizes': _availableSizes, // للمقاسات المعروضة
+        'variants': _variants.map((v) => v.toJson()).toList(), // المخزون الفعلي
       });
 
       final response = await request.send();
@@ -536,29 +611,6 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _quantityController,
-                    decoration: InputDecoration(
-                      labelText: AppLocalizations.of(
-                        context,
-                      )!.translate('quantity_available'),
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (v) {
-                      if (v == null || v.isEmpty) {
-                        return AppLocalizations.of(
-                          context,
-                        )!.translate('required_field');
-                      }
-                      if (int.tryParse(v) == null) {
-                        return AppLocalizations.of(
-                          context,
-                        )!.translate('enter_valid_number');
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 10),
                   Row(
                     children: [
                       Expanded(
@@ -575,54 +627,36 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      SizedBox(
-                        width: 80,
-                        child: TextFormField(
-                          controller: _sizeQtyController,
-                          decoration: InputDecoration(
-                            labelText: AppLocalizations.of(
-                              context,
-                            )!.translate('quantity'),
-                          ),
-                          keyboardType: TextInputType.number,
-                        ),
-                      ),
                       IconButton(
                         icon: const Icon(
                           Icons.add_circle,
                           color: AppColors.adminEdit,
                         ),
                         onPressed: () {
-                          if (_sizeInputController.text.isNotEmpty) {
-                            final qty =
-                                int.tryParse(_sizeQtyController.text) ?? 0;
+                          final size = _sizeInputController.text.trim();
+                          if (size.isNotEmpty &&
+                              !_availableSizes.contains(size)) {
                             setState(() {
-                              _sizes.add(
-                                ProductSize(
-                                  size: _sizeInputController.text.trim(),
-                                  quantity: qty,
-                                ),
-                              );
+                              _availableSizes.add(size);
                               _sizeInputController.clear();
-                              _sizeQtyController.clear();
                             });
                           }
                         },
                       ),
                     ],
                   ),
-                  if (_sizes.isNotEmpty)
+                  if (_availableSizes.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: Wrap(
                         spacing: 8,
-                        children: _sizes
+                        children: _availableSizes
                             .map(
-                              (s) => Chip(
-                                label: Text('${s.size} (${s.quantity})'),
+                              (size) => Chip(
+                                label: Text(size),
                                 onDeleted: () {
                                   setState(() {
-                                    _sizes.remove(s);
+                                    _availableSizes.remove(size);
                                   });
                                 },
                               ),
@@ -791,6 +825,110 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                       ),
                     ),
                   const SizedBox(height: 10),
+                  // --- Variants Section ---
+                  const Divider(height: 30),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.inventory_2_outlined),
+                    label: const Text('توليد الكميات'),
+                    onPressed: _generateVariants,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.adminDashProducts,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 45),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  if (_variants.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        children: [
+                          // Header
+                          const Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  'اللون',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  'المقاس',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 1,
+                                child: Text(
+                                  'الكمية',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Divider(),
+                          // Rows
+                          ..._variants.map((variant) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 4.0,
+                              ),
+                              child: Row(
+                                children: [
+                                  // Color
+                                  Expanded(
+                                    flex: 2,
+                                    child: variant.colorHex != null
+                                        ? Chip(
+                                            avatar: CircleAvatar(
+                                              backgroundColor: Color(
+                                                int.tryParse(
+                                                      variant.colorHex!
+                                                          .replaceFirst(
+                                                            '#',
+                                                            '0xFF',
+                                                          ),
+                                                    ) ??
+                                                    0xFF000000,
+                                              ),
+                                            ),
+                                            label: Text(variant.colorHex!),
+                                            padding: EdgeInsets.zero,
+                                          )
+                                        : const Text('افتراضي'),
+                                  ),
+                                  // Size
+                                  Expanded(
+                                    flex: 2,
+                                    child: Text(variant.size ?? 'مقاس موحد'),
+                                  ),
+                                  // Quantity
+                                  Expanded(
+                                    flex: 1,
+                                    child: TextFormField(
+                                      controller: variant.quantityController,
+                                      keyboardType: TextInputType.number,
+                                      textAlign: TextAlign.center,
+                                      decoration: const InputDecoration(
+                                        border: OutlineInputBorder(),
+                                        contentPadding: EdgeInsets.all(8),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ],
+                      ),
+                    ),
 
                   // --- قسم اختيار الكاتيجوري ---
                   SizedBox(

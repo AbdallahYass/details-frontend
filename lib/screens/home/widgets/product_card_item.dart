@@ -63,62 +63,89 @@ class ProductCardItem extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (product.isSoldOut)
-                      Positioned(
-                        top: 8,
-                        left: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.black.withValues(alpha: 0.7),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            AppLocalizations.of(context)!.translate('sold_out'),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      )
-                    else if (isHot)
-                      Positioned(
-                        top: 8,
-                        left: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.red.withValues(alpha: 0.8),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.local_fire_department,
-                                size: 10,
-                                color: Colors.white,
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (product.isSoldOut)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
                               ),
-                              const SizedBox(width: 2),
-                              Text(
-                                AppLocalizations.of(context)!.translate('hot'),
+                              decoration: BoxDecoration(
+                                color: AppColors.black.withValues(alpha: 0.7),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                AppLocalizations.of(
+                                  context,
+                                )!.translate('sold_out'),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
+                            )
+                          else if (isHot)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.red.withValues(alpha: 0.8),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.local_fire_department,
+                                    size: 10,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.translate('hot'),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          if (!product.isSoldOut &&
+                              product.oldPrice != null &&
+                              product.oldPrice! > product.price)
+                            Container(
+                              margin: EdgeInsets.only(top: isHot ? 4.0 : 0.0),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.success,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                '-${((product.oldPrice! - product.price) / product.oldPrice! * 100).round()}%',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
+                    ),
                     Positioned(
                       top: 8,
                       right: 8,
@@ -214,14 +241,32 @@ class ProductCardItem extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      "${product.price.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}",
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "${product.price.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        if (product.oldPrice != null &&
+                            product.oldPrice! > product.price) ...[
+                          const SizedBox(width: 4),
+                          Text(
+                            "${product.oldPrice!.toStringAsFixed(2)}",
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppColors.grey,
+                              decoration: TextDecoration.lineThrough,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 8),
                     _buildShareButton(context),
