@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:details_app/providers/auth_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:details_app/l10n/app_localizations.dart';
+import 'package:details_app/screens/admin/send_notification_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -185,7 +186,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   AppLocalizations.of(context)!.translate('products'),
                   Icons.inventory_2_outlined,
                   AppColors.adminDashProducts,
-                  '/admin/products',
+                  () => context.push('/admin/products'),
                   AppLocalizations.of(context)!.translate('manage_inventory'),
                 ),
                 _buildAdminCard(
@@ -193,7 +194,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   AppLocalizations.of(context)!.translate('orders'),
                   Icons.shopping_cart_checkout_outlined,
                   AppColors.adminDashOrders,
-                  '/admin/orders',
+                  () => context.push('/admin/orders'),
                   AppLocalizations.of(context)!.translate('track_orders'),
                 ),
                 _buildAdminCard(
@@ -201,7 +202,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   AppLocalizations.of(context)!.translate('coupons'),
                   Icons.discount_outlined,
                   AppColors.adminDashCoupons,
-                  '/admin/coupons',
+                  () => context.push('/admin/coupons'),
                   AppLocalizations.of(context)!.translate('discount_codes'),
                 ),
                 _buildAdminCard(
@@ -209,7 +210,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   AppLocalizations.of(context)!.translate('banners'),
                   Icons.campaign_outlined,
                   AppColors.adminDashBanners,
-                  '/admin/banners',
+                  () => context.push('/admin/banners'),
                   AppLocalizations.of(context)!.translate('app_banners'),
                 ),
                 _buildAdminCard(
@@ -217,7 +218,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   AppLocalizations.of(context)!.translate('categories'),
                   Icons.category_outlined,
                   AppColors.adminDashCategories,
-                  '/admin/categories',
+                  () => context.push('/admin/categories'),
                   AppLocalizations.of(context)!.translate('store_sections'),
                 ),
                 _buildAdminCard(
@@ -225,8 +226,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   AppLocalizations.of(context)!.translate('users'),
                   Icons.group_outlined,
                   AppColors.adminDashUsers,
-                  '/admin/users',
+                  () => context.push('/admin/users'),
                   AppLocalizations.of(context)!.translate('manage_customers'),
+                ),
+                _buildAdminCard(
+                  context,
+                  'إرسال إشعار',
+                  Icons.notifications_active_outlined,
+                  AppColors.primary,
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const SendNotificationScreen(),
+                    ),
+                  ),
+                  'رسالة منبثقة للجميع',
                 ),
               ],
             ),
@@ -241,7 +255,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     String title,
     IconData icon,
     Color color,
-    String route,
+    VoidCallback onTap,
     String subtitle,
   ) {
     return Material(
@@ -249,7 +263,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       borderRadius: BorderRadius.circular(24),
       elevation: 0,
       child: InkWell(
-        onTap: () => context.push(route),
+        onTap: onTap,
         borderRadius: BorderRadius.circular(24),
         child: Container(
           decoration: BoxDecoration(

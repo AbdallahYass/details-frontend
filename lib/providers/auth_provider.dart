@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:details_app/app_imports.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 // نموذج المستخدم
 class User {
@@ -57,6 +58,18 @@ class AuthProvider with ChangeNotifier {
 
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
+  // دالة مساعدة لجلب توكن الإشعارات
+  Future<String?> _getFcmToken() async {
+    try {
+      return await FirebaseMessaging.instance.getToken(
+        vapidKey:
+            "BEZk9zT8N6SJW6-yDwdw8Z3AGyxn1N6cImzo9iDMxzd5xBfRQz_4iD2eNN_GE_Hfv8SXXKzI1SkwogZPctDE3f4",
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
   // 1. تسجيل الدخول العادي
   Future<bool> login(
     String email,
@@ -68,10 +81,15 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      // جلب توكن الإشعارات قبل الإرسال
+      final fcmToken = await _getFcmToken();
+      final body = {'email': email, 'password': password};
+      if (fcmToken != null) body['fcmToken'] = fcmToken;
+
       final url = Uri.parse('https://api.details-store.com/api/auth/login');
       final response = await http.post(
         url,
-        body: json.encode({'email': email, 'password': password}),
+        body: json.encode(body),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -122,10 +140,15 @@ class AuthProvider with ChangeNotifier {
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
+      // جلب توكن الإشعارات
+      final fcmToken = await _getFcmToken();
+      final body = {'idToken': googleAuth.idToken};
+      if (fcmToken != null) body['fcmToken'] = fcmToken;
+
       final url = Uri.parse('https://api.details-store.com/api/auth/google');
       final response = await http.post(
         url,
-        body: json.encode({'idToken': googleAuth.idToken}),
+        body: json.encode(body),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -246,12 +269,16 @@ class AuthProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
     try {
+      final fcmToken = await _getFcmToken();
+      final body = {'email': email, 'otp': otp};
+      if (fcmToken != null) body['fcmToken'] = fcmToken;
+
       final url = Uri.parse(
         'https://api.details-store.com/api/auth/verify-email',
       );
       final response = await http.post(
         url,
-        body: json.encode({'email': email, 'otp': otp}),
+        body: json.encode(body),
         headers: {'Content-Type': 'application/json'},
       );
       final data = json.decode(response.body);

@@ -17,6 +17,7 @@ import 'package:details_app/constants/app_theme.dart';
 import 'package:details_app/providers/router.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -83,10 +84,58 @@ class _DetailsStoreAppState extends State<DetailsStoreApp> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
         await Provider.of<AuthProvider>(context, listen: false).tryAutoLogin();
+        await _setupFirebaseMessaging();
       } catch (e) {
         debugPrint('Auto-login error caught safely: $e');
       }
     });
+  }
+
+  // دالة إعداد إشعارات فايربيس (طلب الصلاحية وجلب التوكن)
+  Future<void> _setupFirebaseMessaging() async {
+    try {
+      FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+      // 1. طلب الصلاحية من المتصفح (سيظهر للمستخدم نافذة "هل تسمح بالإشعارات؟")
+      NotificationSettings settings = await messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        debugPrint('✅ المستخدم وافق على الإشعارات');
+
+        // 2. جلب التوكن الخاص بهذا المتصفح باستخدام مفتاح VAPID
+        String? token = await messaging.getToken(
+          vapidKey:
+              "BEZk9zT8N6SJW6-yDwdw8Z3AGyxn1N6cImzo9iDMxzd5xBfRQz_4iD2eNN_GE_Hfv8SXXKzI1SkwogZPctDE3f4",
+        );
+
+        debugPrint('🔥 FCM Token: $token');
+        // سيتم لاحقاً إرسال هذا التوكن للباك إند لحفظه مع حساب المستخدم
+      } else {
+        debugPrint('❌ المستخدم رفض صلاحية الإشعارات');
+      }
+
+      // 3. الاستماع للإشعارات بينما الموقع مفتوح أمام المستخدم (Foreground)
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        if (message.notification != null && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '${message.notification!.title}\n${message.notification!.body}',
+                style: const TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Theme.of(context).primaryColor,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      });
+    } catch (e) {
+      debugPrint('خطأ في إعداد الإشعارات: $e');
+    }
   }
 
   @override
