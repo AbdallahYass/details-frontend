@@ -374,8 +374,19 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             child: CachedNetworkImage(
               imageUrl: _product!.images[index],
               fit: BoxFit.cover,
-              placeholder: (context, url) =>
-                  Container(color: AppColors.imagePlaceholder),
+              placeholder: (context, url) => Container(
+                color: AppColors.imagePlaceholder,
+                child: const Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: AppColors.primary,
+                      strokeWidth: 2,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         );
@@ -416,8 +427,19 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 child: CachedNetworkImage(
                   imageUrl: _product!.images[index],
                   fit: BoxFit.cover,
-                  placeholder: (context, url) =>
-                      Container(color: AppColors.grey200),
+                  placeholder: (context, url) => Container(
+                    color: AppColors.grey200,
+                    child: const Center(
+                      child: SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                          strokeWidth: 2,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -799,8 +821,19 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                             child: CachedNetworkImage(
                               imageUrl: p.imageUrl,
                               fit: BoxFit.cover,
-                              placeholder: (context, url) =>
-                                  Container(color: AppColors.imagePlaceholder),
+                              placeholder: (context, url) => Container(
+                                color: AppColors.imagePlaceholder,
+                                child: const Center(
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.primary,
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                ),
+                              ),
                               errorWidget: (context, url, error) =>
                                   const Icon(Icons.error),
                             ),

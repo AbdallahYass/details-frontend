@@ -1047,8 +1047,18 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                         child: CachedNetworkImage(
                           imageUrl: _imageController.text,
                           fit: BoxFit.contain,
-                          placeholder: (context, url) =>
-                              Container(color: AppColors.grey200),
+                          placeholder: (context, url) => Container(
+                            color: AppColors.grey200,
+                            child: const Center(
+                              child: SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
+                          ),
                           errorWidget: (context, url, error) => Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -1117,6 +1127,15 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                                   child: CachedNetworkImage(
                                     imageUrl: _galleryImages[i],
                                     fit: BoxFit.cover,
+                                    placeholder: (context, url) => const Center(
+                                      child: SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),

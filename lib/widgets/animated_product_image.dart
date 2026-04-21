@@ -47,12 +47,38 @@ class _AnimatedProductImageState extends State<AnimatedProductImage> {
     );
   }
 
+  // دالة سحرية لتسريع تحميل صور Cloudinary وتقليل حجمها بنسبة 90%
+  String _optimizeImageUrl(String url) {
+    // نطبق الضغط فقط إذا كانت الصورة من Cloudinary ولم يتم ضغطها مسبقاً
+    if (url.contains('cloudinary.com') && !url.contains('q_auto')) {
+      // إضافة أوامر الضغط: جودة تلقائية، صيغة تلقائية (WebP)، وعرض 400 بكسل (مناسب للبطاقات)
+      final parts = url.split('/upload/');
+      if (parts.length == 2) {
+        return '${parts[0]}/upload/q_auto,f_auto,w_400/${parts[1]}';
+      }
+    }
+    return url;
+  }
+
   Widget _buildImage(String url) {
-    // شلنا SizedBox(double.infinity) اللي كانت سبب الكراش
+    final optimizedUrl = _optimizeImageUrl(url);
+
     return CachedNetworkImage(
-      imageUrl: url,
+      imageUrl: optimizedUrl,
       fit: BoxFit.cover,
-      placeholder: (context, url) => Container(color: Colors.grey[200]),
+      placeholder: (context, url) => Container(
+        color: Colors.grey[200],
+        child: const Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Color(0xFF9E773A),
+            ),
+          ),
+        ),
+      ),
       errorWidget: (context, url, error) =>
           const Icon(Icons.error, color: Colors.grey),
     );
