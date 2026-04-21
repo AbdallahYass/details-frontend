@@ -110,17 +110,34 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     }
   }
 
-  int get _availableQuantity {
+  /// Helper to get the quantity for a specific variant combination.
+  int _getQuantityForVariant({String? color, String? size}) {
     if (_product == null) return 0;
-    if (_product!.sizes.isNotEmpty) {
-      if (_selectedSize == null) return 0;
-      final sizeObj = _product!.sizes.firstWhere(
-        (s) => s.size == _selectedSize,
-        orElse: () => ProductSize(size: '', quantity: 0),
-      );
-      return sizeObj.quantity;
+    try {
+      final variant = _product!.variants.firstWhere((v) {
+        // A variant matches if its color/size matches the selection.
+        // If a product doesn't have colors/sizes, the match is always true for that attribute.
+        bool cMatch = !_product!.colors.isNotEmpty || v.colorHex == color;
+        bool sMatch = !_product!.sizes.isNotEmpty || v.size == size;
+        return cMatch && sMatch;
+      });
+      return variant.quantity;
+    } catch (e) {
+      // Return 0 if no matching variant is found (e.g., size not selected yet)
+      return 0;
     }
-    return _product!.quantity;
+  }
+
+  /// Gets the available quantity for the *currently selected* combination of color and size.
+  int get _availableQuantity {
+    String? selectedColorHex;
+    if (_product != null &&
+        _product!.colors.isNotEmpty &&
+        _selectedColorIndex < _product!.colors.length) {
+      selectedColorHex = _product!.colors[_selectedColorIndex].hex;
+    }
+    // Use the helper to get quantity for the current state
+    return _getQuantityForVariant(color: selectedColorHex, size: _selectedSize);
   }
 
   // دالة تحسين الصور باستخدام Cloudinary مع دعم أحجام مختلفة
@@ -140,6 +157,22 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     } catch (_) {
       return Colors.grey;
     }
+  }
+
+  /// A computed list of images for the main gallery, combining base images and selected color images.
+  List<String> get _galleryImages {
+    if (_product == null) return [];
+    // Start with the base images
+    final allImages = List<String>.from(_product!.images);
+    // Add images from the selected color, avoiding duplicates
+    if (_product!.colors.isNotEmpty &&
+        _selectedColorIndex < _product!.colors.length) {
+      final colorImages = _product!.colors[_selectedColorIndex].images;
+      for (var img in colorImages) {
+        if (!allImages.contains(img)) allImages.add(img);
+      }
+    }
+    return allImages;
   }
 
   void _shareProduct() async {
@@ -369,7 +402,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   Widget _buildImageGallery() {
     return PageView.builder(
       controller: _pageController,
-      itemCount: _product!.images.length,
+      itemCount: _galleryImages.length,
       onPageChanged: (index) => setState(() => _currentImageIndex = index),
       itemBuilder: (context, index) {
         return GestureDetector(
@@ -387,7 +420,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                     child: InteractiveViewer(
                       child: CachedNetworkImage(
                         imageUrl: _optimizeImageUrl(
-                          _product!.images[index],
+                          // Use the computed gallery
+                          _galleryImages[index],
                           width: 1200,
                         ),
                         fit: BoxFit.contain,
@@ -407,7 +441,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           child: Hero(
             tag: index == 0 ? _product!.id : '${_product!.id}_$index',
             child: CachedNetworkImage(
-              imageUrl: _optimizeImageUrl(_product!.images[index], width: 800),
+              imageUrl: _optimizeImageUrl(_galleryImages[index], width: 800),
               fit: BoxFit.cover,
               placeholder: (context, url) => Container(
                 color: AppColors.imagePlaceholder,
@@ -461,7 +495,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 borderRadius: BorderRadius.circular(10),
                 child: CachedNetworkImage(
                   imageUrl: _optimizeImageUrl(
-                    _product!.images[index],
+                    // Use the computed gallery
+                    _galleryImages[index],
                     width: 200,
                   ),
                   fit: BoxFit.cover,
@@ -583,29 +618,15 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               final color = _parseColor(colorItem.hex);
               final isSelected = _selectedColorIndex == index;
               return GestureDetector(
-                onTap: () {
-                  setState(() => _selectedColorIndex = index);
-
-                  // تغيير الصورة عند اختيار اللون وإضافة جميع صوره للمعرض
-                  if (colorItem.images.isNotEmpty) {
-                    final targetUrl = colorItem.images.first;
-                    bool addedNew = false;
-
-                    // إضافة صور هذا اللون للمعرض إذا لم تكن موجودة مسبقاً
-                    for (var img in colorItem.images) {
-                      if (!_product!.images.contains(img)) {
-                        _product!.images.add(img);
-                        addedNew = true;
-                      }
-                    }
-
-                    if (addedNew) {
-                      setState(() {}); // تحديث واجهة المعرض لعرض الصور الجديدة
-                    }
-
-                    int imgIndex = _product!.images.indexOf(targetUrl);
-                    if (imgIndex != -1) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                onTap: () => setState(() {
+                  _selectedColorIndex = index;
+                  // After state is updated, find the new image index and jump to it
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (colorItem.images.isNotEmpty) {
+                      final targetUrl = colorItem.images.first;
+                      // _galleryImages is now updated because of setState
+                      int imgIndex = _galleryImages.indexOf(targetUrl);
+                      if (imgIndex != -1 && _pageController.hasClients) {
                         if (_pageController.hasClients) {
                           _pageController.animateToPage(
                             imgIndex,
@@ -613,10 +634,10 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                             curve: Curves.easeInOut,
                           );
                         }
-                      });
+                      }
                     }
-                  }
-                },
+                  });
+                }),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   margin: const EdgeInsets.only(right: 15),
@@ -693,15 +714,27 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         Wrap(
           spacing: 12,
           runSpacing: 12,
-          children: _product!.sizes.map((s) {
-            final isSelected = _selectedSize == s.size;
-            final isOutOfStock = s.quantity <= 0;
+          children: _product!.sizes.map((size) {
+            final isSelected = _selectedSize == size;
+
+            // Get quantity for this specific size, assuming current color
+            String? selectedColorHex;
+            if (_product!.colors.isNotEmpty &&
+                _selectedColorIndex < _product!.colors.length) {
+              selectedColorHex = _product!.colors[_selectedColorIndex].hex;
+            }
+            final int stockForThisSize = _getQuantityForVariant(
+              color: selectedColorHex,
+              size: size,
+            );
+            final isOutOfStock = stockForThisSize <= 0;
+
             return GestureDetector(
               onTap: isOutOfStock
                   ? null
                   : () {
                       setState(() {
-                        _selectedSize = isSelected ? null : s.size;
+                        _selectedSize = isSelected ? null : size;
                         _quantity = 1; // تصفير الكمية عند تغيير المقاس
                       });
                     },
@@ -722,7 +755,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   ),
                 ),
                 child: Text(
-                  '${s.size} ${isOutOfStock ? '(${AppLocalizations.of(context)!.translate('sold_out_short')})' : ''}',
+                  '$size ${isOutOfStock ? '(${AppLocalizations.of(context)!.translate('sold_out_short')})' : ''}',
                   style: TextStyle(
                     color: isSelected
                         ? Colors.white

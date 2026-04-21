@@ -1,24 +1,4 @@
-import 'package:flutter/material.dart';
-
-class ProductSize {
-  final String size;
-  final int quantity;
-
-  ProductSize({required this.size, required this.quantity});
-
-  factory ProductSize.fromJson(dynamic json) {
-    if (json == null) return ProductSize(size: '', quantity: 0);
-    if (json is String) {
-      return ProductSize(size: json, quantity: 0);
-    }
-    return ProductSize(
-      size: json['size']?.toString() ?? '',
-      quantity: int.tryParse(json['quantity']?.toString() ?? '0') ?? 0,
-    );
-  }
-
-  Map<String, dynamic> toJson() => {'size': size, 'quantity': quantity};
-}
+import '../app_imports.dart';
 
 class ProductColor {
   final String hex;
@@ -92,7 +72,7 @@ class Product {
   final dynamic category; // يمكن أن يكون String ID أو Map
   final int popularity;
   final int quantity;
-  final List<ProductSize> sizes;
+  final List<String> sizes;
   final List<ProductColor> colors;
   final List<ProductVariantModel>
   variants; // 🌟 إضافة المتغيرات للموديل الرئيسي
@@ -145,8 +125,9 @@ class Product {
       quantity: (json['quantity'] is num)
           ? (json['quantity'] as num).toInt()
           : int.tryParse(json['quantity']?.toString() ?? '0') ?? 0,
-      sizes: (json['sizes'] is List)
-          ? (json['sizes'] as List).map((e) => ProductSize.fromJson(e)).toList()
+      sizes:
+          (json['sizes'] is List) // Backend sends List<String>
+          ? List<String>.from(json['sizes'].map((e) => e.toString()))
           : [],
       colors: (json['colors'] is List)
           ? (json['colors'] as List)
@@ -177,7 +158,7 @@ class Product {
       'category': category,
       'popularity': popularity,
       'quantity': quantity,
-      'sizes': sizes.map((s) => s.toJson()).toList(),
+      'sizes': sizes,
       'colors': colors.map((c) => c.toJson()).toList(),
       'variants': variants
           .map((v) => v.toJson())

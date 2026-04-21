@@ -22,11 +22,18 @@ class ProductVariant {
     quantityController.dispose();
   }
 
-  Map<String, dynamic> toJson() => {
-    'colorHex': colorHex,
-    'size': size,
-    'quantity': int.tryParse(quantityController.text) ?? 0,
-  };
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = {
+      'quantity': int.tryParse(quantityController.text) ?? 0,
+    };
+    if (colorHex != null) {
+      data['colorHex'] = colorHex;
+    }
+    if (size != null) {
+      data['size'] = size;
+    }
+    return data;
+  }
 }
 
 class AddEditProductScreen extends StatefulWidget {
@@ -164,22 +171,21 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     }
   }
 
-  // دالة لرفع الصورة الرئيسية
-  Future<void> _pickMainImage() async {
+  /// A generic helper to pick and upload an image, then run a success callback.
+  Future<void> _handleImagePick({
+    required void Function(String imageUrl) onSuccess,
+    String? successMessage,
+  }) async {
     setState(() => _isImageUploading = true);
     final String? imageUrl = await CloudinaryService().pickAndUploadImage();
     setState(() => _isImageUploading = false);
 
     if (imageUrl != null) {
-      setState(() {
-        _imageController.text = imageUrl;
-      });
-      if (mounted) {
+      setState(() => onSuccess(imageUrl));
+      if (mounted && successMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              AppLocalizations.of(context)!.translate('image_uploaded'),
-            ),
+            content: Text(successMessage),
             backgroundColor: AppColors.adminDashCoupons,
           ),
         );
@@ -195,53 +201,6 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
           ),
         );
       }
-    }
-  }
-
-  // دالة لرفع صور المعرض
-  Future<void> _pickGalleryImage() async {
-    setState(() => _isImageUploading = true);
-    final String? imageUrl = await CloudinaryService().pickAndUploadImage();
-    setState(() => _isImageUploading = false);
-
-    if (imageUrl != null) {
-      setState(() {
-        _galleryImages.add(imageUrl);
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context)!.translate('image_added_to_gallery'),
-            ),
-            backgroundColor: AppColors.adminDashCoupons,
-          ),
-        );
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context)!.translate('image_upload_failed'),
-            ),
-            backgroundColor: AppColors.adminDelete,
-          ),
-        );
-      }
-    }
-  }
-
-  // دالة لرفع صورة خاصة باللون المختار
-  Future<void> _pickTempColorImage() async {
-    setState(() => _isImageUploading = true);
-    final String? imageUrl = await CloudinaryService().pickAndUploadImage();
-    setState(() => _isImageUploading = false);
-
-    if (imageUrl != null) {
-      setState(() {
-        _tempColorImages.add(imageUrl);
-      });
     }
   }
 
@@ -786,7 +745,9 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                         ),
                         onPressed: _isImageUploading
                             ? null
-                            : _pickTempColorImage,
+                            : () => _handleImagePick(
+                                onSuccess: (url) => _tempColorImages.add(url),
+                              ),
                       ),
                       IconButton(
                         icon: const Icon(
@@ -1090,7 +1051,12 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                           Icons.image,
                           color: AppColors.adminEdit,
                         ),
-                        onPressed: _pickMainImage,
+                        onPressed: () => _handleImagePick(
+                          onSuccess: (url) => _imageController.text = url,
+                          successMessage: AppLocalizations.of(
+                            context,
+                          )!.translate('image_uploaded'),
+                        ),
                       ),
                     ),
                     validator: (v) => v!.isEmpty
@@ -1164,7 +1130,14 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                         ),
                       ),
                       IconButton(
-                        onPressed: _isImageUploading ? null : _pickGalleryImage,
+                        onPressed: _isImageUploading
+                            ? null
+                            : () => _handleImagePick(
+                                onSuccess: (url) => _galleryImages.add(url),
+                                successMessage: AppLocalizations.of(
+                                  context,
+                                )!.translate('image_added_to_gallery'),
+                              ),
                         icon: const Icon(Icons.add_photo_alternate),
                         color: AppColors.adminEdit,
                       ),
