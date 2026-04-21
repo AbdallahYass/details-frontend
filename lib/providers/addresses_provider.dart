@@ -34,7 +34,7 @@ class AddressesProvider with ChangeNotifier {
 
   final String baseUrl = 'https://api.details-store.com/api';
 
-  Future<void> fetchAddresses(String token) async {
+  Future<void> fetchAddresses(String token, {VoidCallback? onLogout}) async {
     _isLoading = true;
     notifyListeners();
 
@@ -47,6 +47,8 @@ class AddressesProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         final List data = json.decode(response.body);
         _addresses = data.map((json) => Address.fromJson(json)).toList();
+      } else if (response.statusCode == 401) {
+        onLogout?.call();
       }
     } catch (e) {
       debugPrint('Error fetching addresses: $e');
@@ -60,8 +62,9 @@ class AddressesProvider with ChangeNotifier {
     String token,
     String city,
     String street,
-    String phone,
-  ) async {
+    String phone, {
+    VoidCallback? onLogout,
+  }) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/addresses'),
@@ -77,6 +80,8 @@ class AddressesProvider with ChangeNotifier {
         _addresses.insert(0, newAddress); // Add to the beginning of the list
         notifyListeners();
         return true;
+      } else if (response.statusCode == 401) {
+        onLogout?.call();
       }
     } catch (e) {
       debugPrint('Error adding address: $e');
@@ -84,7 +89,11 @@ class AddressesProvider with ChangeNotifier {
     return false;
   }
 
-  Future<bool> deleteAddress(String token, String addressId) async {
+  Future<bool> deleteAddress(
+    String token,
+    String addressId, {
+    VoidCallback? onLogout,
+  }) async {
     try {
       final response = await http.delete(
         Uri.parse('$baseUrl/addresses/$addressId'),
@@ -95,6 +104,8 @@ class AddressesProvider with ChangeNotifier {
         _addresses.removeWhere((addr) => addr.id == addressId);
         notifyListeners();
         return true;
+      } else if (response.statusCode == 401) {
+        onLogout?.call();
       }
     } catch (e) {
       debugPrint('Error deleting address: $e');

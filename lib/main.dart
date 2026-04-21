@@ -53,13 +53,15 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProxyProvider<AuthProvider, WishlistProvider>(
           create: (_) => WishlistProvider(),
-          update: (_, auth, wishlist) => wishlist!..updateToken(auth.token),
+          update: (_, auth, wishlist) =>
+              wishlist!..updateToken(auth.token, onLogout: auth.logout),
         ),
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
         ChangeNotifierProxyProvider<AuthProvider, OrdersProvider>(
           create: (_) => OrdersProvider(),
-          update: (_, auth, orders) => orders!..updateToken(auth.token),
+          update: (_, auth, orders) =>
+              orders!..updateToken(auth.token, onLogout: auth.logout),
         ),
       ],
       child: const DetailsStoreApp(),

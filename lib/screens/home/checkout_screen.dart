@@ -106,7 +106,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       await Provider.of<AddressesProvider>(
         context,
         listen: false,
-      ).fetchAddresses(auth.token!);
+      ).fetchAddresses(auth.token!, onLogout: auth.logout);
     }
   }
 
@@ -160,6 +160,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
         _selectedCity ?? '',
         _streetController.text.trim(),
         _phoneController.text.trim(),
+        onLogout: auth.logout,
       );
     }
 

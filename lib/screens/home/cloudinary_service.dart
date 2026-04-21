@@ -18,7 +18,11 @@ class CloudinaryService {
     try {
       final ImagePicker picker = ImagePicker();
       // اختيار الصورة من المعرض
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 50, // تقليل الجودة لـ 50% لمنع انهيار التطبيق
+        maxWidth: 800, // تصغير أبعاد الصورة لتخفيف الضغط على الذاكرة
+      );
 
       if (image == null) return null;
 

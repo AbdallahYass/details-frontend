@@ -7,11 +7,13 @@ import 'package:details_app/providers/cart_provider.dart';
 class OrdersProvider with ChangeNotifier {
   List<OrderModel> _orders = [];
   String? _token;
+  VoidCallback? _onLogout; // لحفظ دالة تسجيل الخروج
 
   List<OrderModel> get orders => [..._orders];
 
-  void updateToken(String? token) {
+  void updateToken(String? token, {VoidCallback? onLogout}) {
     _token = token;
+    _onLogout = onLogout;
   }
 
   Future<void> fetchOrders() async {
@@ -42,6 +44,8 @@ class OrdersProvider with ChangeNotifier {
           );
         }).toList();
         notifyListeners();
+      } else if (response.statusCode == 401) {
+        _onLogout?.call(); // طرد المستخدم فوراً
       }
     } catch (e) {
       debugPrint('Error fetching orders: $e');
@@ -64,6 +68,9 @@ class OrdersProvider with ChangeNotifier {
       if (response.statusCode == 201) {
         await fetchOrders();
         return true;
+      } else if (response.statusCode == 401) {
+        _onLogout?.call(); // طرد المستخدم فوراً
+        return false;
       }
       return false;
     } catch (e) {

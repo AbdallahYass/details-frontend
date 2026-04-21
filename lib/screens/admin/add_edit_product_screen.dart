@@ -338,17 +338,22 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
             ),
           );
         }
+      } else if (response.statusCode == 401) {
+        await auth.logout();
+        throw Exception('انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً.');
       } else {
-        throw Exception('Failed to save');
+        final respBody = await response.stream.bytesToString();
+        throw Exception('خطأ ${response.statusCode}: $respBody');
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              AppLocalizations.of(context)!.translate('error_occurred'),
+              '${AppLocalizations.of(context)!.translate('error_occurred')}\n$e',
             ),
             backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 4),
           ),
         );
       }

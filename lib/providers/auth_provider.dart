@@ -231,8 +231,7 @@ class AuthProvider with ChangeNotifier {
         debugPrint(
           '💡 المشكلة من الباك إند: السيرفر يعتبر التوكن المحفوظ غير صالح أو منتهي الصلاحية.',
         );
-        // قمنا بإيقاف سطر تسجيل الخروج التلقائي مؤقتاً لنكتشف سبب المشكلة
-        // await logout();
+        await logout(); // تفعيل تسجيل الخروج لحذف الجلسة المنتهية فوراً
       }
     } catch (e) {
       // في حالة عدم وجود إنترنت، لا داعي لفعل شيء لأن البيانات محملة مسبقاً بنجاح
@@ -400,6 +399,9 @@ class AuthProvider with ChangeNotifier {
         _isLoading = false;
         notifyListeners();
         return true;
+      } else if (response.statusCode == 401) {
+        await logout(); // طرد المستخدم عند انتهاء الجلسة
+        _errorMessage = "انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً.";
       } else {
         final data = json.decode(response.body);
         _errorMessage = data['message'];

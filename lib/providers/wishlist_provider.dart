@@ -7,12 +7,14 @@ import 'package:details_app/models/product.dart';
 class WishlistProvider with ChangeNotifier {
   List<Product> _wishlist = [];
   String? _token;
+  VoidCallback? _onLogout;
 
   List<Product> get wishlist => _wishlist;
 
-  void updateToken(String? token) {
+  void updateToken(String? token, {VoidCallback? onLogout}) {
     if (_token == token) return;
     _token = token;
+    _onLogout = onLogout;
     if (_token != null) {
       fetchWishlist();
     } else {
@@ -36,6 +38,8 @@ class WishlistProvider with ChangeNotifier {
         final List<dynamic> data = json.decode(res.body);
         _wishlist = data.map((j) => Product.fromJson(j)).toList();
         notifyListeners();
+      } else if (res.statusCode == 401) {
+        _onLogout?.call();
       }
     } catch (e) {
       debugPrint("Error fetching wishlist: $e");
@@ -65,6 +69,9 @@ class WishlistProvider with ChangeNotifier {
       );
 
       if (res.statusCode != 200) {
+        if (res.statusCode == 401) {
+          _onLogout?.call();
+        }
         // إذا فشل الطلب، نعيد الحالة كما كانت
         await fetchWishlist();
       }
