@@ -175,7 +175,7 @@ class AuthProvider with ChangeNotifier {
         await _googleSignIn.disconnect(); // قطع الارتباط تماماً
       }
     } catch (e) {
-      _errorMessage = "خطأ أثناء تسجيل الدخول بجوجل";
+      _errorMessage = "google_auth_failed";
     }
 
     _isLoading = false;
@@ -432,7 +432,7 @@ class AuthProvider with ChangeNotifier {
         return true;
       } else if (response.statusCode == 401) {
         await logout(); // طرد المستخدم عند انتهاء الجلسة
-        _errorMessage = "انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً.";
+        _errorMessage = "session_expired";
       } else {
         final data = json.decode(response.body);
         _errorMessage = data['message'];

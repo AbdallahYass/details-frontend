@@ -39,6 +39,22 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       _product = widget.product;
       _isLoadingProduct = false;
       WidgetsBinding.instance.addPostFrameCallback((_) => _precacheImages());
+
+      // اختيار أول مقاس متوفر تلقائياً لتسهيل التجربة
+      if (_product!.sizes.isNotEmpty) {
+        final firstAvailable = _product!.sizes.firstWhere(
+          (s) =>
+              _getQuantityForVariant(
+                size: s,
+                color: _product!.colors.isNotEmpty
+                    ? _product!.colors[0].hex
+                    : null,
+              ) >
+              0,
+          orElse: () => '',
+        );
+        if (firstAvailable.isNotEmpty) _selectedSize = firstAvailable;
+      }
       _fetchRelatedProducts();
     } else if (widget.productId != null) {
       _fetchProductById(widget.productId!);
@@ -88,8 +104,11 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   Future<void> _fetchRelatedProducts() async {
     if (_product == null) return;
     try {
+      // تحسين: جلب منتجات من نفس القسم لزيادة المبيعات
       final res = await http.get(
-        Uri.parse('https://api.details-store.com/api/products'),
+        Uri.parse(
+          'https://api.details-store.com/api/products?category=${_product!.categoryId}',
+        ),
       );
       if (res.statusCode == 200) {
         final List<dynamic> data = json.decode(res.body);
@@ -130,13 +149,23 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
 
   /// Gets the available quantity for the *currently selected* combination of color and size.
   int get _availableQuantity {
+    if (_product == null) return 0;
     String? selectedColorHex;
-    if (_product != null &&
-        _product!.colors.isNotEmpty &&
+    if (_product!.colors.isNotEmpty &&
         _selectedColorIndex < _product!.colors.length) {
       selectedColorHex = _product!.colors[_selectedColorIndex].hex;
     }
-    // Use the helper to get quantity for the current state
+
+    // إذا لم يتم اختيار مقاس، نعرض مجموع كميات اللون المختار (UX أفضل)
+    if (_product!.sizes.isNotEmpty && _selectedSize == null) {
+      return _product!.variants
+          .where(
+            (v) =>
+                !_product!.colors.isNotEmpty || v.colorHex == selectedColorHex,
+          )
+          .fold(0, (sum, v) => sum + v.quantity);
+    }
+
     return _getQuantityForVariant(color: selectedColorHex, size: _selectedSize);
   }
 
@@ -425,11 +454,13 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           width: 1200,
                         ),
                         fit: BoxFit.contain,
-                        placeholder: (context, url) => const Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primary,
-                            strokeWidth: 2,
+                        // تحسين: استخدام الصورة الصغيرة كـ placeholder أثناء تحميل الكبيرة
+                        placeholder: (context, url) => CachedNetworkImage(
+                          imageUrl: _optimizeImageUrl(
+                            _galleryImages[index],
+                            width: 400,
                           ),
+                          fit: BoxFit.contain,
                         ),
                       ),
                     ),
@@ -469,7 +500,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        itemCount: _product!.images.length,
+        itemCount: _galleryImages.length,
         itemBuilder: (context, index) {
           final isSelected = _currentImageIndex == index;
           return GestureDetector(
@@ -701,7 +732,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
               ),
             ),
             Text(
-              '${AppLocalizations.of(context)!.translate('available')} $_availableQuantity',
+              '${_selectedSize == null ? AppLocalizations.of(context)!.translate('quantity') : AppLocalizations.of(context)!.translate('available')} $_availableQuantity',
               style: const TextStyle(
                 fontSize: 13,
                 color: AppColors.grey,
@@ -1069,7 +1100,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     final wishlistProvider = Provider.of<WishlistProvider>(context);
     final isFav =
         _product != null && wishlistProvider.isInWishlist(_product!.id);
-    final bool isOutOfStock = _availableQuantity == 0;
+    final bool isActuallyOutOfStock = _availableQuantity == 0;
 
     return ClipRRect(
       child: BackdropFilter(
@@ -1162,7 +1193,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         iconSize: 20,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(minWidth: 38),
-                        onPressed: isOutOfStock
+                        onPressed: isActuallyOutOfStock
                             ? null
                             : () {
                                 if (_quantity > 1) setState(() => _quantity--);
@@ -1173,7 +1204,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: isOutOfStock ? AppColors.grey : _dsBrown,
+                          color: isActuallyOutOfStock
+                              ? AppColors.grey
+                              : _dsBrown,
                         ),
                       ),
                       IconButton(
@@ -1182,7 +1215,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                         iconSize: 20,
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(minWidth: 38),
-                        onPressed: isOutOfStock
+                        onPressed: isActuallyOutOfStock
                             ? null
                             : () {
                                 if (_quantity < _availableQuantity) {
@@ -1200,7 +1233,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                   child: SizedBox(
                     height: 60,
                     child: ElevatedButton(
-                      onPressed: isOutOfStock
+                      onPressed: isActuallyOutOfStock
                           ? null
                           : () {
                               if (_product!.sizes.isNotEmpty &&
@@ -1228,16 +1261,16 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                 selectedColor = c.hex;
                               }
 
-                              for (int i = 0; i < _quantity; i++) {
-                                cart.addItem(
-                                  _product!.id,
-                                  _product!.price.toDouble(),
-                                  _product!.getName(context),
-                                  _product!.imageUrl,
-                                  size: _selectedSize,
-                                  color: selectedColor,
-                                );
-                              }
+                              cart.addItem(
+                                _product!.id,
+                                _product!.price.toDouble(),
+                                _product!.getName(context),
+                                _product!.imageUrl,
+                                size: _selectedSize,
+                                color: selectedColor,
+                                maxQuantity: _availableQuantity,
+                                quantityToAdd: _quantity,
+                              );
 
                               ScaffoldMessenger.of(
                                 context,

@@ -69,8 +69,7 @@ class _MainScreenState extends State<MainScreen> {
                 _navIcon(
                   context,
                   Icons.home_outlined,
-                  // نستخدم nav_shop مؤقتاً أو يمكنك إضافة nav_home في ملفات الترجمة
-                  AppLocalizations.of(context)!.translate('nav_shop'),
+                  AppLocalizations.of(context)!.translate('nav_home'),
                   0,
                 ),
                 _navIcon(

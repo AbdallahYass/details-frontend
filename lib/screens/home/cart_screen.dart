@@ -8,6 +8,8 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
+  bool _isValidating = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -129,14 +131,75 @@ class _CartScreenState extends State<CartScreen> {
                           ),
                   ),
                   if (cartItems.isNotEmpty)
-                    SliverToBoxAdapter(child: _CheckoutSection(cart: cart)),
+                    SliverToBoxAdapter(
+                      child: _CheckoutSection(
+                        cart: cart,
+                        isValidating: _isValidating,
+                        onCheckout: () => _handleCheckout(cart),
+                      ),
+                    ),
                 ],
               ),
+              if (_isValidating)
+                Container(
+                  color: Colors.black26,
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
             ],
           );
         },
       ),
     );
+  }
+
+  Future<void> _handleCheckout(CartProvider cart) async {
+    setState(() => _isValidating = true);
+
+    final adjustedItems = await cart.validateInventoryBeforeCheckout();
+
+    if (!mounted) return;
+    setState(() => _isValidating = false);
+
+    if (adjustedItems.isNotEmpty) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(AppLocalizations.of(context)!.translate('notice')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(AppLocalizations.of(context)!.translate('stock_changed')),
+              const SizedBox(height: 12),
+              ...adjustedItems.map((item) {
+                String label = item;
+                if (item.contains('(out_of_stock)')) {
+                  final title = item.replaceAll(' (out_of_stock)', '');
+                  label =
+                      '$title (${AppLocalizations.of(context)!.translate('out_of_stock')})';
+                } else if (item.contains('(quantity_updated)')) {
+                  final title = item.replaceAll(' (quantity_updated)', '');
+                  label =
+                      '$title (${AppLocalizations.of(context)!.translate('quantity_updated')})';
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text('• $label', style: const TextStyle(fontSize: 14)),
+                );
+              }),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(AppLocalizations.of(context)!.translate('ok')),
+            ),
+          ],
+        ),
+      );
+    } else if (cart.items.isNotEmpty) {
+      context.push('/checkout');
+    }
   }
 }
 
@@ -293,9 +356,47 @@ class _CartItemCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                  Text(
-                    '${AppLocalizations.of(context)!.translate('total')}: ${(cartItem.price * cartItem.quantity).toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
-                    style: const TextStyle(color: Colors.grey, fontSize: 14),
+                  Row(
+                    children: [
+                      Text(
+                        '${AppLocalizations.of(context)!.translate('total')}: ${(cartItem.price * cartItem.quantity).toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const Spacer(),
+                      // خيار إضافة علبة
+                      InkWell(
+                        onTap: () => cart.toggleWithBox(cartItem.id),
+                        child: Row(
+                          children: [
+                            Icon(
+                              cartItem.withBox
+                                  ? Icons.check_box
+                                  : Icons.check_box_outline_blank,
+                              size: 18,
+                              color: AppColors.primary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              AppLocalizations.of(
+                                context,
+                              )!.translate('with_box'),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: cartItem.withBox
+                                    ? AppColors.primary
+                                    : Colors.grey,
+                                fontWeight: cartItem.withBox
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -303,14 +404,25 @@ class _CartItemCard extends StatelessWidget {
             Column(
               children: [
                 InkWell(
-                  onTap: () => cart.addItem(
-                    cartItem.productId,
-                    cartItem.price,
-                    cartItem.title,
-                    cartItem.imageUrl,
-                    size: cartItem.size,
-                    color: cartItem.color,
-                  ),
+                  onTap: () {
+                    final success = cart.updateItemQuantity(
+                      cartItem.id,
+                      cartItem.quantity + 1,
+                    );
+                    if (!success) {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            AppLocalizations.of(
+                              context,
+                            )!.translate('max_quantity_reached'),
+                          ),
+                          duration: const Duration(seconds: 1),
+                        ),
+                      );
+                    }
+                  },
                   child: const Icon(Icons.add_circle, color: AppColors.primary),
                 ),
                 Padding(
@@ -384,8 +496,14 @@ class _CartItemCard extends StatelessWidget {
 
 class _CheckoutSection extends StatelessWidget {
   final CartProvider cart;
+  final bool isValidating;
+  final VoidCallback onCheckout;
 
-  const _CheckoutSection({required this.cart});
+  const _CheckoutSection({
+    required this.cart,
+    required this.isValidating,
+    required this.onCheckout,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -422,11 +540,9 @@ class _CheckoutSection extends StatelessWidget {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: cart.totalAmount <= 0
+                onPressed: cart.totalAmount <= 0 || isValidating
                     ? null
-                    : () {
-                        context.push('/checkout');
-                      },
+                    : onCheckout,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF9E773A),
                   shape: RoundedRectangleBorder(
