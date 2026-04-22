@@ -356,6 +356,20 @@ class _CartItemCard extends StatelessWidget {
                         ],
                       ),
                     ),
+                  // عرض الكمية المتوفرة في المخزون
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      '${AppLocalizations.of(context)!.translate('available')} ${cartItem.maxQuantity}',
+                      style: TextStyle(
+                        color: cartItem.maxQuantity < 5
+                            ? Colors.red
+                            : Colors.green,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
                   Row(
                     children: [
                       Text(

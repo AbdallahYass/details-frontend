@@ -3,6 +3,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:details_app/app_imports.dart';
+import 'package:details_app/providers/home_provider.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:details_app/providers/notification_provider.dart';
 import 'package:details_app/screens/home/notifications_screen.dart';
@@ -26,6 +27,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   String? _selectedSize;
   int _quantity = 1; // متغير الكمية
   bool _isActionLoading = false;
+  bool _withBox = false; // خيار العلبة الجديد
   final PageController _pageController = PageController();
   int _selectedColorIndex = 0;
 
@@ -101,32 +103,21 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     }
   }
 
-  Future<void> _fetchRelatedProducts() async {
+  void _fetchRelatedProducts() {
     if (_product == null) return;
-    try {
-      // تحسين: جلب منتجات من نفس القسم لزيادة المبيعات
-      final res = await http.get(
-        Uri.parse(
-          'https://api.details-store.com/api/products?category=${_product!.categoryId}',
-        ),
-      );
-      if (res.statusCode == 200) {
-        final List<dynamic> data = json.decode(res.body);
-        if (mounted) {
-          setState(() {
-            relatedProducts = data
-                .map((j) => Product.fromJson(j))
-                .where((p) => p.id != _product!.id)
-                .take(5)
-                .toList();
-            isLoadingRelated = false;
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint("Error fetching related: $e");
-      if (mounted) setState(() => isLoadingRelated = false);
-    }
+
+    // جلب المنتجات من HomeProvider بدلاً من HTTP لضمان السرعة والترابط
+    final homeProvider = Provider.of<HomeProvider>(context, listen: false);
+
+    setState(() {
+      relatedProducts = homeProvider.products
+          .where(
+            (p) => p.categoryId == _product!.categoryId && p.id != _product!.id,
+          )
+          .take(6)
+          .toList();
+      isLoadingRelated = false;
+    });
   }
 
   /// Helper to get the quantity for a specific variant combination.
@@ -141,7 +132,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
         return cMatch && sMatch;
       });
       return variant.quantity;
-    } catch (e) {
+    } catch (_) {
+      // إذا لم يكن هناك متغيرات، نعود للكمية الإجمالية للمنتج
+      if (_product!.variants.isEmpty) return _product!.quantity;
       // Return 0 if no matching variant is found (e.g., size not selected yet)
       return 0;
     }
@@ -305,6 +298,8 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           if (_product!.colors.isNotEmpty)
                             _buildColorSelector(),
                           if (_product!.sizes.isNotEmpty) _buildSizeSelector(),
+                          const SizedBox(height: 20),
+                          _buildGiftBoxToggle(), // زر خيار العلبة الجديد
                           const SizedBox(height: 30),
                           _buildDescription(),
                           if (relatedProducts.isNotEmpty)
@@ -713,6 +708,47 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildGiftBoxToggle() {
+    return InkWell(
+      onTap: () => setState(() => _withBox = !_withBox),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _withBox ? _dsBrown.withValues(alpha: 0.05) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _withBox ? _dsBrown : AppColors.grey200,
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              _withBox ? Icons.check_box : Icons.check_box_outline_blank,
+              color: _withBox ? _dsBrown : AppColors.grey,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppLocalizations.of(context)!.translate('with_box'),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _dsBrown,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1270,6 +1306,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                 color: selectedColor,
                                 maxQuantity: _availableQuantity,
                                 quantityToAdd: _quantity,
+                                withBox: _withBox, // تمرير خيار العلبة للسلة
                               );
 
                               ScaffoldMessenger.of(

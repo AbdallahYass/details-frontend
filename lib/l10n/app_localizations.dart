@@ -283,6 +283,7 @@ class AppLocalizations {
       "delivery_method": "Delivery Method",
       "delivery": "Delivery",
       "pickup": "Store Pickup",
+      'with_box': 'Gift Box',
     },
     'ar': {
       'app_name': 'متجر ديتيلز',
@@ -552,6 +553,7 @@ class AppLocalizations {
       "delivery_method": "طريقة الاستلام",
       "delivery": "توصيل",
       "pickup": "استلام من المحل",
+      'with_box': 'تغليف هدايا (بوكس)',
     },
   };
 

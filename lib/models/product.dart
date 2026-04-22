@@ -142,6 +142,14 @@ class Product {
     );
   }
 
+  // 🌟 الحصول على إجمالي الكمية المتوفرة (سواء من الحقل الرئيسي أو من مجموع المتغيرات)
+  int get totalStock {
+    if (variants.isNotEmpty) {
+      return variants.fold(0, (sum, item) => sum + item.quantity);
+    }
+    return quantity;
+  }
+
   // الدالة الجديدة لتحويل المنتج إلى نص وحفظه في الجهاز
   Map<String, dynamic> toJson() {
     return {
