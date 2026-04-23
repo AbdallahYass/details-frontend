@@ -12,8 +12,16 @@ class OrdersProvider with ChangeNotifier {
   List<OrderModel> get orders => [..._orders];
 
   void updateToken(String? token, {VoidCallback? onLogout}) {
+    final bool isNewToken = _token != token;
     _token = token;
     _onLogout = onLogout;
+
+    if (token != null) {
+      if (isNewToken) fetchOrders();
+    } else {
+      _orders = []; // مسح القائمة عند تسجيل الخروج
+      notifyListeners();
+    }
   }
 
   Future<void> fetchOrders() async {
@@ -26,27 +34,48 @@ class OrdersProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        _orders = data.map<OrderModel>((item) {
-          return OrderModel(
-            id: item['_id'],
-            amount: (item['totalAmount'] as num).toDouble(), // تصحيح الاسم
-            products: (item['products'] as List).map((p) {
-              return CartItem(
-                id: p['id'] ?? '',
-                productId: p['productId'] ?? p['id'] ?? '',
-                title: p['title'] ?? '',
-                quantity: p['quantity'] ?? 1,
-                price: (p['price'] as num).toDouble(),
-                imageUrl: p['imageUrl'] ?? '',
-                size: p['size'],
-                color: p['color'],
-                withBox: p['withBox'] ?? false,
-              );
-            }).toList(),
-            dateTime: DateTime.parse(item['createdAt']),
-            status: item['status'],
-          );
-        }).toList();
+        final List<OrderModel> loadedOrders = [];
+
+        for (var item in data) {
+          try {
+            // 🌟 معالجة مرنة للحقول: فحص totalAmount و amount لتجنب الخطأ
+            final double orderAmount =
+                (item['totalAmount'] as num?)?.toDouble() ??
+                (item['amount'] as num?)?.toDouble() ??
+                0.0;
+
+            final List<dynamic> productsData = item['products'] as List? ?? [];
+
+            loadedOrders.add(
+              OrderModel(
+                id: item['_id']?.toString() ?? '',
+                amount: orderAmount,
+                products: productsData.map((p) {
+                  return CartItem(
+                    id: p['id']?.toString() ?? '',
+                    productId:
+                        p['productId']?.toString() ?? p['id']?.toString() ?? '',
+                    title: p['title'] ?? '',
+                    quantity: (p['quantity'] as num?)?.toInt() ?? 1,
+                    price: (p['price'] as num?)?.toDouble() ?? 0.0,
+                    imageUrl: p['imageUrl'] ?? '',
+                    size: p['size'],
+                    color: p['color'],
+                    withBox: p['withBox'] ?? false,
+                  );
+                }).toList(),
+                dateTime: item['createdAt'] != null
+                    ? DateTime.parse(item['createdAt'])
+                    : DateTime.now(),
+                status: item['status']?.toString() ?? '',
+              ),
+            );
+          } catch (e) {
+            debugPrint('Error parsing individual order item: $e');
+          }
+        }
+
+        _orders = loadedOrders;
         notifyListeners();
       } else if (response.statusCode == 401) {
         _onLogout?.call(); // طرد المستخدم فوراً

@@ -42,9 +42,9 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       _isLoadingProduct = false;
       WidgetsBinding.instance.addPostFrameCallback((_) => _precacheImages());
 
-      // اختيار أول مقاس متوفر تلقائياً لتسهيل التجربة
+      // اختيار أول مقاس يحتوي على مخزون فعلي لتسهيل تجربة العميل
       if (_product!.sizes.isNotEmpty) {
-        final firstAvailable = _product!.sizes.firstWhere(
+        final String firstAvailable = _product!.sizes.firstWhere(
           (s) =>
               _getQuantityForVariant(
                 size: s,
