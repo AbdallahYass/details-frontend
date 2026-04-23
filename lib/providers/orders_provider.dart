@@ -33,10 +33,14 @@ class OrdersProvider with ChangeNotifier {
             products: (item['products'] as List).map((p) {
               return CartItem(
                 id: p['id'] ?? '',
+                productId: p['productId'] ?? p['id'] ?? '',
                 title: p['title'] ?? '',
                 quantity: p['quantity'] ?? 1,
                 price: (p['price'] as num).toDouble(),
                 imageUrl: p['imageUrl'] ?? '',
+                size: p['size'],
+                color: p['color'],
+                withBox: p['withBox'] ?? false,
               );
             }).toList(),
             dateTime: DateTime.parse(item['createdAt']),
@@ -76,6 +80,36 @@ class OrdersProvider with ChangeNotifier {
     } catch (e) {
       debugPrint('Error adding order: $e');
       return false;
+    }
+  }
+
+  // دالة لتحديث حالة الطلب (مثل الإلغاء من قبل المستخدم)
+  Future<void> updateOrderStatus(String orderId, String newStatus) async {
+    if (_token == null) return;
+    try {
+      final url = Uri.parse(
+        'https://api.details-store.com/api/orders/$orderId/status',
+      );
+      final response = await http.patch(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_token',
+        },
+        body: json.encode({'status': newStatus}),
+      );
+
+      if (response.statusCode == 200) {
+        // إعادة جلب الطلبات لتحديث القائمة في الواجهة فوراً
+        await fetchOrders();
+      } else if (response.statusCode == 401) {
+        _onLogout?.call();
+      } else {
+        throw Exception('Failed to update status');
+      }
+    } catch (e) {
+      debugPrint('Error updating order status: $e');
+      rethrow; // نمرر الخطأ ليتم معالجته وإظهاره في شاشة الطلبات
     }
   }
 }

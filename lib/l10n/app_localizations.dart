@@ -283,6 +283,11 @@ class AppLocalizations {
       "delivery_method": "Delivery Method",
       "delivery": "Delivery",
       "pickup": "Store Pickup",
+      "ongoing": "Ongoing",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "cancel_order": "Cancel Order",
+      "confirm_cancel_body": "Are you sure you want to cancel this order?",
       'with_box': 'Gift Box',
     },
     'ar': {
@@ -553,6 +558,11 @@ class AppLocalizations {
       "delivery_method": "طريقة الاستلام",
       "delivery": "توصيل",
       "pickup": "استلام من المحل",
+      "ongoing": "قيد التنفيذ",
+      "completed": "مكتملة",
+      "cancelled": "ملغية",
+      "cancel_order": "إلغاء الطلب",
+      "confirm_cancel_body": "هل أنت متأكد من رغبتك في إلغاء هذا الطلب؟",
       'with_box': 'تغليف هدايا (بوكس)',
     },
   };

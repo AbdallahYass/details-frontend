@@ -26,149 +26,257 @@ class _OrdersScreenState extends State<OrdersScreen> {
     if (mounted) setState(() => _isLoading = false);
   }
 
+  Future<void> _cancelOrder(String orderId) async {
+    // حفظ المراجع قبل الفجوة الزمنية (Async Gap) لتجنب أخطاء BuildContext
+    final ordersProvider = Provider.of<OrdersProvider>(context, listen: false);
+    final localizations = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(localizations.translate('confirm_deletion')),
+        content: Text(localizations.translate('confirm_cancel_body')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(localizations.translate('cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              localizations.translate('delete'),
+              style: const TextStyle(color: AppColors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    setState(() => _isLoading = true);
+    try {
+      // استخدام المرجع المحفوظ مسبقاً
+      await ordersProvider.updateOrderStatus(orderId, 'ملغي');
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(localizations.translate('order_status_updated')),
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(localizations.translate('order_status_update_failed')),
+          backgroundColor: AppColors.red,
+        ),
+      );
+    }
+    _fetchOrders();
+  }
+
   @override
   Widget build(BuildContext context) {
     final orders = Provider.of<OrdersProvider>(context).orders;
 
-    return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: 110,
-        title: Image.asset('assets/images/logo2.png', height: 100),
-        centerTitle: true,
-        backgroundColor: AppColors.white,
-        foregroundColor: AppColors.appBarForeground,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: AppColors.transparent,
-        actions: [
-          Consumer<NotificationProvider>(
-            builder: (context, notifProvider, child) {
-              return Stack(
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        appBar: AppBar(
+          toolbarHeight: 140,
+          title: Image.asset('assets/images/logo2.png', height: 80),
+          centerTitle: true,
+          backgroundColor: AppColors.white,
+          foregroundColor: AppColors.appBarForeground,
+          scrolledUnderElevation: 0,
+          surfaceTintColor: AppColors.transparent,
+          bottom: TabBar(
+            labelColor: AppColors.primary,
+            unselectedLabelColor: AppColors.grey,
+            indicatorColor: AppColors.primary,
+            tabs: [
+              Tab(text: AppLocalizations.of(context)!.translate('ongoing')),
+              Tab(text: AppLocalizations.of(context)!.translate('completed')),
+              Tab(text: AppLocalizations.of(context)!.translate('cancelled')),
+            ],
+          ),
+          actions: [
+            Consumer<NotificationProvider>(
+              builder: (context, notifProvider, child) {
+                return Stack(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.notifications_outlined),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const NotificationsScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    if (notifProvider.unreadCount > 0)
+                      Positioned(
+                        right: 8,
+                        top: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: AppColors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            '${notifProvider.unreadCount}',
+                            style: const TextStyle(
+                              color: AppColors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+        body: Stack(
+          children: [
+            TabBarView(
+              children: [
+                _buildOrderList(
+                  orders
+                      .where(
+                        (o) =>
+                            o.status == 'قيد التجهيز' || o.status == 'تم الشحن',
+                      )
+                      .toList(),
+                ),
+                _buildOrderList(
+                  orders.where((o) => o.status == 'تم التوصيل').toList(),
+                ),
+                _buildOrderList(
+                  orders.where((o) => o.status == 'ملغي').toList(),
+                ),
+              ],
+            ),
+            if (_isLoading) const CustomLoadingOverlay(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrderList(List<dynamic> filteredOrders) {
+    if (filteredOrders.isEmpty && !_isLoading) {
+      return Center(
+        child: Text(
+          AppLocalizations.of(context)!.translate('no_orders'),
+          style: const TextStyle(fontSize: 18, color: AppColors.grey),
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _fetchOrders,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: filteredOrders.length,
+        itemBuilder: (ctx, i) {
+          final order = filteredOrders[i];
+          return Card(
+            margin: const EdgeInsets.only(bottom: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: ExpansionTile(
+              title: Text(
+                '${AppLocalizations.of(context)!.translate('order_number')}${order.id.length > 8 ? order.id.substring(0, 8) : order.id}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.notifications_outlined),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const NotificationsScreen(),
-                        ),
-                      );
-                    },
+                  Text(
+                    DateFormat('dd/MM/yyyy HH:mm').format(order.dateTime),
+                    style: const TextStyle(fontSize: 12),
                   ),
-                  if (notifProvider.unreadCount > 0)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: AppColors.red,
-                          shape: BoxShape.circle,
+                  const SizedBox(height: 4),
+                  Text(
+                    '${order.amount.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
                         ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
+                        decoration: BoxDecoration(
+                          color: _getStatusColor(
+                            order.status,
+                          ).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          '${notifProvider.unreadCount}',
-                          style: const TextStyle(
-                            color: AppColors.white,
-                            fontSize: 10,
+                          order.status,
+                          style: TextStyle(
+                            color: _getStatusColor(order.status),
+                            fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
-                          textAlign: TextAlign.center,
                         ),
+                      ),
+                      if (order.status == 'قيد التجهيز')
+                        TextButton.icon(
+                          onPressed: () => _cancelOrder(order.id),
+                          icon: const Icon(
+                            Icons.cancel,
+                            size: 16,
+                            color: AppColors.red,
+                          ),
+                          label: Text(
+                            AppLocalizations.of(
+                              context,
+                            )!.translate('cancel_order'),
+                            style: const TextStyle(
+                              color: AppColors.red,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+              children: order.products
+                  .map(
+                    (item) => ListTile(
+                      title: Text(item.title),
+                      subtitle: Text(
+                        '${item.quantity} x ${item.price} ${AppLocalizations.of(context)!.translate('currency')}',
+                      ),
+                      trailing: Text(
+                        '${(item.quantity * item.price).toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
                       ),
                     ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          orders.isEmpty && !_isLoading
-              ? Center(
-                  child: Text(
-                    AppLocalizations.of(context)!.translate('no_orders'),
-                    style: const TextStyle(fontSize: 18, color: AppColors.grey),
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: orders.length,
-                  itemBuilder: (ctx, i) {
-                    final order = orders[i];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: ExpansionTile(
-                        title: Text(
-                          '${AppLocalizations.of(context)!.translate('order_number')}${order.id.substring(0, 8)}',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              DateFormat(
-                                'dd/MM/yyyy HH:mm',
-                              ).format(order.dateTime),
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${order.amount.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
-                              style: const TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _getStatusColor(
-                                  order.status,
-                                ).withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                order.status,
-                                style: TextStyle(
-                                  color: _getStatusColor(order.status),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        children: order.products
-                            .map(
-                              (item) => ListTile(
-                                title: Text(item.title),
-                                subtitle: Text(
-                                  '${item.quantity} x ${item.price} ${AppLocalizations.of(context)!.translate('currency')}',
-                                ),
-                                trailing: Text(
-                                  '${(item.quantity * item.price).toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    );
-                  },
-                ),
-          if (_isLoading) const CustomLoadingOverlay(),
-        ],
+                  )
+                  .toList(),
+            ),
+          );
+        },
       ),
     );
   }
