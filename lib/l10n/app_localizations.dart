@@ -170,7 +170,7 @@ class AppLocalizations {
       'delete_user_confirmation': 'Are you sure you want to delete this user?',
       'delete': 'Delete',
       'about_title': 'Details Store',
-      'since_date': 'Since 2024',
+      'since_date': 'Since 2021',
       'our_story_title': 'Our Story',
       'our_story_content':
           'We started with a simple idea: to bring high-quality fashion to your doorstep. Details Store is more than just a shop; it\'s a lifestyle.',
@@ -476,7 +476,7 @@ class AppLocalizations {
       'delete_user_confirmation': 'هل أنت متأكد من حذف هذا المستخدم؟',
       'delete': 'حذف',
       'about_title': 'Details Store',
-      'since_date': 'منذ 2024',
+      'since_date': 'منذ 2021',
       'our_story_title': 'قصتنا',
       'our_story_content':
           'بدأنا بفكرة بسيطة: جلب أزياء عالية الجودة إلى عتبة داركم. متجر التفاصيل هو أكثر من مجرد متجر؛ إنه أسلوب حياة.',

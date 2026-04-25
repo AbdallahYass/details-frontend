@@ -409,7 +409,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
       }
 
       final headers = {
-        'Content-Type': 'application/json; charset=UTF-8',
+        'Content-Type': 'application/json',
         'Authorization': 'Bearer ${auth.token}',
       };
 
@@ -445,9 +445,20 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
 
       final bodyStr = json.encode(requestBody);
 
+      // 🔍 تتبع الطلب (Request Tracking)
+      debugPrint('========= 🚀 PRODUCT UPDATE START =========');
+      debugPrint('📍 URL: $url');
+      debugPrint('🛠️ METHOD: $method');
+      debugPrint('📦 BODY: $bodyStr');
+
       final response = await (method == 'POST'
           ? http.post(Uri.parse(url), headers: headers, body: bodyStr)
           : http.put(Uri.parse(url), headers: headers, body: bodyStr));
+
+      // 🔍 تتبع الاستجابة (Response Tracking)
+      debugPrint('📥 STATUS CODE: ${response.statusCode}');
+      debugPrint('📄 RESPONSE BODY: ${response.body}');
+      debugPrint('========= 🏁 PRODUCT UPDATE END =========');
 
       if (!mounted) return;
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -473,15 +484,20 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         await auth.logout();
         throw Exception(loc.translate('session_expired'));
       } else {
-        String errorMsg =
-            '${loc.translate('error_label')} ${response.statusCode}';
+        String errorMessageForUser =
+            '${loc.translate('error_label')} (${response.statusCode})';
+        String backendErrorDetails = '';
         try {
           final respBody = json.decode(response.body);
-          errorMsg = respBody['error'] ?? respBody['message'] ?? errorMsg;
+          backendErrorDetails = respBody['error'] ?? respBody['message'] ?? '';
         } catch (_) {
-          errorMsg = response.body;
+          // إذا كان جسم الاستجابة ليس JSON، نستخدمه كنص خطأ خام
+          backendErrorDetails = response.body;
         }
-        throw Exception(errorMsg);
+        // دمج رسالة الخطأ العامة مع التفاصيل المحددة من الباك إند
+        throw Exception(
+          '$errorMessageForUser\n${backendErrorDetails.isNotEmpty ? backendErrorDetails : loc.translate('error_occurred')}',
+        );
       }
     } catch (e) {
       if (!mounted) return;
