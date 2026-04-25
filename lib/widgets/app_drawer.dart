@@ -227,7 +227,7 @@ class AppDrawer extends StatelessWidget {
                         )!.translate('edit_profile'),
                         onTap: () {
                           Navigator.pop(context);
-                          context.push('/profile');
+                          context.push('/edit-profile');
                         },
                       ),
                       _drawerTile(
@@ -252,53 +252,6 @@ class AppDrawer extends StatelessWidget {
                           context.push(
                             '/addresses',
                           ); // المسار الخاص بصفحة العناوين
-                        },
-                      ),
-                      const SizedBox(height: 15),
-                      _buildSectionHeader(
-                        context,
-                        loc.translate('account_settings'),
-                      ),
-                      _drawerTile(
-                        context,
-                        icon: Icons.notifications_active_outlined,
-                        title: AppLocalizations.of(
-                          context,
-                        )!.translate('receive_promotions'),
-                        trailing: Transform.scale(
-                          scale: 0.8,
-                          child: Switch(
-                            value: auth.user?.receiveNotifications ?? true,
-                            activeThumbColor: AppColors.primary,
-                            onChanged: (bool newValue) async {
-                              await auth.updateProfile(
-                                name: auth.user!.name,
-                                phone: auth.user!.phone,
-                                receiveNotifications: newValue,
-                              );
-                            },
-                          ),
-                        ),
-                        onTap: () async {
-                          final currentVal =
-                              auth.user?.receiveNotifications ?? true;
-                          await auth.updateProfile(
-                            name: auth.user!.name,
-                            phone: auth.user!.phone,
-                            receiveNotifications: !currentVal,
-                          );
-                        },
-                      ),
-                      _drawerTile(
-                        context,
-                        icon: Icons.delete_forever,
-                        title: AppLocalizations.of(
-                          context,
-                        )!.translate('delete_account'),
-                        color: AppColors.red,
-                        onTap: () {
-                          Navigator.pop(context); // إغلاق القائمة أولاً
-                          confirmDeleteAccount();
                         },
                       ),
                     ],
@@ -423,6 +376,53 @@ class AppDrawer extends StatelessWidget {
                     ],
 
                     if (auth.isAuthenticated) ...[
+                      const SizedBox(height: 15),
+                      _buildSectionHeader(
+                        context,
+                        loc.translate('account_settings'),
+                      ),
+                      _drawerTile(
+                        context,
+                        icon: Icons.notifications_active_outlined,
+                        title: AppLocalizations.of(
+                          context,
+                        )!.translate('receive_promotions'),
+                        trailing: Transform.scale(
+                          scale: 0.8,
+                          child: Switch(
+                            value: auth.user?.receiveNotifications ?? true,
+                            activeThumbColor: AppColors.primary,
+                            onChanged: (bool newValue) async {
+                              await auth.updateProfile(
+                                name: auth.user!.name,
+                                phone: auth.user!.phone,
+                                receiveNotifications: newValue,
+                              );
+                            },
+                          ),
+                        ),
+                        onTap: () async {
+                          final currentVal =
+                              auth.user?.receiveNotifications ?? true;
+                          await auth.updateProfile(
+                            name: auth.user!.name,
+                            phone: auth.user!.phone,
+                            receiveNotifications: !currentVal,
+                          );
+                        },
+                      ),
+                      _drawerTile(
+                        context,
+                        icon: Icons.delete_forever,
+                        title: AppLocalizations.of(
+                          context,
+                        )!.translate('delete_account'),
+                        color: AppColors.red,
+                        onTap: () {
+                          Navigator.pop(context); // إغلاق القائمة أولاً
+                          confirmDeleteAccount();
+                        },
+                      ),
                       const SizedBox(height: 15),
                       _buildSectionHeader(
                         context,
