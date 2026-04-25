@@ -310,11 +310,18 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
 
     final loc = AppLocalizations.of(context)!;
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final url = widget.product == null
-        ? 'https://api.details-store.com/api/products'
-        : 'https://api.details-store.com/api/products/${widget.product['_id']}';
 
-    final method = widget.product == null ? 'POST' : 'PUT';
+    // استخراج الـ ID بشكل آمن سواء كان بمفتاح _id أو id
+    final String? productId = widget.product != null
+        ? (widget.product['_id']?.toString() ??
+              widget.product['id']?.toString())
+        : null;
+
+    final url = productId == null
+        ? 'https://api.details-store.com/api/products'
+        : 'https://api.details-store.com/api/products/$productId';
+
+    final method = productId == null ? 'POST' : 'PUT';
 
     try {
       String finalImageUrl = _imageController.text;
@@ -362,7 +369,8 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         if (!mounted) return;
         if (catResponse.statusCode == 201 || catResponse.statusCode == 200) {
           final catData = json.decode(catResponse.body);
-          finalCategoryId = catData['_id'];
+          finalCategoryId =
+              catData['_id'] ?? catData['id']; // استخراج آمن للـ ID
         } else {
           throw Exception(loc.translate('category_creation_failed'));
         }
@@ -377,7 +385,9 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         'Authorization': 'Bearer ${auth.token}',
       };
 
-      final bodyStr = json.encode({
+      final Map<String, dynamic> requestBody = {
+        if (productId != null)
+          'id': productId, // إرسال الـ ID في الـ Body لزيادة التأكيد
         'name': {
           'ar': _nameArController.text.trim(),
           'en': _nameEnController.text.trim(),
@@ -405,7 +415,9 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
             .toList(), // ضمان صحة الألوان
         'sizes': _availableSizes, // للمقاسات المعروضة
         'variants': _variants.map((v) => v.toJson()).toList(), // المخزون الفعلي
-      });
+      };
+
+      final bodyStr = json.encode(requestBody);
 
       final response = await (method == 'POST'
           ? http.post(Uri.parse(url), headers: headers, body: bodyStr)
