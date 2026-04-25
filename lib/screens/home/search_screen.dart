@@ -86,14 +86,7 @@ class _SearchScreenState extends State<SearchScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _trendingTags = [
-            'ساعات',
-            'عطور',
-            'حقائب',
-            'أحذية',
-            'فساتين',
-            'هدايا',
-          ];
+          _trendingTags = []; // يفضل تركها فارغة أو جلبها من ملف الترجمة
           _isLoadingTrending = false;
         });
       }
@@ -236,7 +229,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
         final isTimeout = e is TimeoutException;
         final errorMsg = isTimeout
-            ? 'الشبكة ضعيفة جداً، حاول مجدداً'
+            ? AppLocalizations.of(context)!.translate('weak_network')
             : AppLocalizations.of(context)!.translate('error_occurred');
 
         if (isPagination || isTimeout) {

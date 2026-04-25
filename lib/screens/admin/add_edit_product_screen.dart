@@ -7,11 +7,12 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:details_app/providers/notification_provider.dart';
 import 'package:details_app/screens/home/notifications_screen.dart';
+import 'package:details_app/providers/home_provider.dart';
 
 /// Data model for a product variant (a specific combination of color, size, and quantity).
 class ProductVariant {
-  String? colorHex;
-  String? size;
+  final String? colorHex;
+  final String? size;
   final TextEditingController quantityController;
 
   ProductVariant({this.colorHex, this.size, int quantity = 0})
@@ -307,6 +308,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
 
+    final loc = AppLocalizations.of(context)!;
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final url = widget.product == null
         ? 'https://api.details-store.com/api/products'
@@ -357,18 +359,17 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
           }),
         );
 
+        if (!mounted) return;
         if (catResponse.statusCode == 201 || catResponse.statusCode == 200) {
           final catData = json.decode(catResponse.body);
           finalCategoryId = catData['_id'];
         } else {
-          throw Exception(
-            'فشل إنشاء القسم الجديد، قد يكون الاسم موجوداً مسبقاً.',
-          );
+          throw Exception(loc.translate('category_creation_failed'));
         }
       }
 
       if (finalCategoryId == null || finalCategoryId.isEmpty) {
-        throw Exception('يرجى تحديد قسم للمنتج.');
+        throw Exception(loc.translate('select_category_error'));
       }
 
       final headers = {
@@ -410,23 +411,32 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
           ? http.post(Uri.parse(url), headers: headers, body: bodyStr)
           : http.put(Uri.parse(url), headers: headers, body: bodyStr));
 
+      if (!mounted) return;
       if (response.statusCode == 200 || response.statusCode == 201) {
-        if (mounted) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                AppLocalizations.of(context)!.translate('product_saved'),
-              ),
-              backgroundColor: AppColors.success,
-            ),
-          );
+        try {
+          // تحديث البيانات في الـ Provider لضمان ظهور التعديلات فوراً
+          await Provider.of<HomeProvider>(
+            context,
+            listen: false,
+          ).loadAllData(forceRefresh: true);
+        } catch (e) {
+          debugPrint('🚨 Error refreshing data: $e');
         }
+
+        if (!mounted) return;
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(loc.translate('product_saved')),
+            backgroundColor: AppColors.success,
+          ),
+        );
       } else if (response.statusCode == 401) {
         await auth.logout();
-        throw Exception('انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً.');
+        throw Exception(loc.translate('session_expired'));
       } else {
-        String errorMsg = 'خطأ ${response.statusCode}';
+        String errorMsg =
+            '${loc.translate('error_label')} ${response.statusCode}';
         try {
           final respBody = json.decode(response.body);
           errorMsg = respBody['error'] ?? respBody['message'] ?? errorMsg;
@@ -436,17 +446,14 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         throw Exception(errorMsg);
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${AppLocalizations.of(context)!.translate('error_occurred')}\n$e',
-            ),
-            backgroundColor: AppColors.error,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${loc.translate('error_occurred')}\n$e'),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 4),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -613,7 +620,9 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                       labelText: AppLocalizations.of(
                         context,
                       )!.translate('quantity'),
-                      hintText: 'الكمية الإجمالية للمنتج',
+                      hintText: AppLocalizations.of(
+                        context,
+                      )!.translate('total_quantity_hint'),
                     ),
                     keyboardType: TextInputType.number,
                   ),
@@ -857,7 +866,11 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                   const Divider(height: 30),
                   ElevatedButton.icon(
                     icon: const Icon(Icons.inventory_2_outlined),
-                    label: const Text('توليد الكميات'),
+                    label: Text(
+                      AppLocalizations.of(
+                        context,
+                      )!.translate('generate_quantities'),
+                    ),
                     onPressed: _generateVariants,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.adminDashProducts,
@@ -876,27 +889,39 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                       child: Column(
                         children: [
                           // Header
-                          const Row(
+                          Row(
                             children: [
                               Expanded(
                                 flex: 2,
                                 child: Text(
-                                  'اللون',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.translate('color'),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                               Expanded(
                                 flex: 2,
                                 child: Text(
-                                  'المقاس',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.translate('size'),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                               Expanded(
                                 flex: 1,
                                 child: Text(
-                                  'الكمية',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.translate('quantity'),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ],
@@ -930,12 +955,21 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                                             label: Text(variant.colorHex!),
                                             padding: EdgeInsets.zero,
                                           )
-                                        : const Text('افتراضي'),
+                                        : Text(
+                                            AppLocalizations.of(
+                                              context,
+                                            )!.translate('default_val'),
+                                          ),
                                   ),
                                   // Size
                                   Expanded(
                                     flex: 2,
-                                    child: Text(variant.size ?? 'مقاس موحد'),
+                                    child: Text(
+                                      variant.size ??
+                                          AppLocalizations.of(
+                                            context,
+                                          )!.translate('one_size'),
+                                    ),
                                   ),
                                   // Quantity
                                   Expanded(

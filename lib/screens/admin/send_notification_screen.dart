@@ -3,6 +3,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:details_app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:details_app/providers/auth_provider.dart';
 import 'package:details_app/constants/app_colors.dart';
@@ -53,9 +54,10 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
 
       if (response.statusCode == 200) {
         if (mounted) {
+          final loc = AppLocalizations.of(context)!;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('تم إرسال الإشعار لجميع المستخدمين بنجاح! 🚀'),
+            SnackBar(
+              content: Text(loc.translate('notification_sent_success')),
               backgroundColor: AppColors.success,
             ),
           );
@@ -64,18 +66,22 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
         }
       } else if (response.statusCode == 401 || response.statusCode == 403) {
         throw Exception(
-          'غير مصرح لك بإرسال الإشعارات. يرجى تسجيل الدخول كمسؤول.',
+          AppLocalizations.of(context)!.translate('unauthorized_notification'),
         );
       } else {
         final data = json.decode(response.body);
-        throw Exception(data['message'] ?? 'فشل إرسال الإشعار');
+        throw Exception(
+          data['message'] ??
+              AppLocalizations.of(context)!.translate('error_occurred'),
+        );
       }
     } catch (e) {
       if (mounted) {
+        final loc = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'حدث خطأ: ${e.toString().replaceAll('Exception: ', '')}',
+              '${loc.translate('error_label')}: ${e.toString().replaceAll('Exception: ', '')}',
             ),
             backgroundColor: AppColors.error,
             duration: const Duration(seconds: 4),
@@ -91,6 +97,7 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -98,8 +105,8 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
         foregroundColor: AppColors.primary,
         elevation: 0,
         centerTitle: true,
-        title: const Text(
-          'إرسال إشعار ترويجي',
+        title: Text(
+          loc.translate('send_promo_notification'),
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
       ),
@@ -121,18 +128,18 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
                         color: AppColors.primary.withValues(alpha: 0.3),
                       ),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.campaign,
                           color: AppColors.primary,
                           size: 30,
                         ),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'سيتم إرسال هذا الإشعار كرسالة منبثقة (Push Notification) لجميع المستخدمين المسجلين في التطبيق.',
-                            style: TextStyle(
+                            loc.translate('notification_broadcast_info'),
+                            style: const TextStyle(
                               color: AppColors.primary,
                               height: 1.5,
                             ),
@@ -142,9 +149,9 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
                     ),
                   ),
                   const SizedBox(height: 30),
-                  const Text(
-                    'عنوان الإشعار',
-                    style: TextStyle(
+                  Text(
+                    loc.translate('notification_title'),
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
@@ -154,7 +161,7 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
                   TextFormField(
                     controller: _titleController,
                     decoration: InputDecoration(
-                      hintText: 'مثال: خصم 20% لفترة محدودة! 🔥',
+                      hintText: loc.translate('notification_title_hint'),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -164,12 +171,12 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
                       ),
                     ),
                     validator: (value) => value == null || value.isEmpty
-                        ? 'يرجى إدخال عنوان الإشعار'
+                        ? loc.translate('notification_title_error')
                         : null,
                   ),
                   const SizedBox(height: 20),
-                  const Text(
-                    'نص الإشعار',
+                  Text(
+                    loc.translate('notification_body'),
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -181,14 +188,13 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
                     controller: _messageController,
                     maxLines: 4,
                     decoration: InputDecoration(
-                      hintText:
-                          'مثال: استخدم الكود Jo20 واحصل على خصم فوري على جميع العطور...',
+                      hintText: loc.translate('notification_body_hint'),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     validator: (value) => value == null || value.isEmpty
-                        ? 'يرجى إدخال نص الإشعار'
+                        ? loc.translate('notification_body_error')
                         : null,
                   ),
                   const SizedBox(height: 40),
@@ -206,8 +212,8 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
                         elevation: 2,
                       ),
                       icon: const Icon(Icons.send_rounded),
-                      label: const Text(
-                        'إرسال الإشعار للجميع',
+                      label: Text(
+                        loc.translate('send_to_all'),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,

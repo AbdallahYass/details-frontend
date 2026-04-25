@@ -15,6 +15,21 @@ class AdminOrdersScreen extends StatefulWidget {
 class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   List<dynamic> _orders = [];
   bool _isLoading = true;
+  String _getStatusTranslation(String status, AppLocalizations loc) {
+    switch (status) {
+      case 'قيد التجهيز':
+        return loc.translate('status_processing');
+      case 'تم الشحن':
+        return loc.translate('status_shipped');
+      case 'تم التوصيل':
+        return loc.translate('status_delivered');
+      case 'ملغي':
+        return loc.translate('status_cancelled');
+      default:
+        return status;
+    }
+  }
+
   final List<String> _orderStatuses = [
     'قيد التجهيز',
     'تم الشحن',
@@ -200,15 +215,20 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                       title: Text(
                         '${AppLocalizations.of(context)!.translate('order_number')}${orderId.length > 8 ? orderId.substring(0, 8) : orderId}',
                       ),
-                      subtitle: Text(
-                        '${order['amount']} - ${order['status']}',
-                        style: TextStyle(
-                          color: order['status'] == 'تم التوصيل'
-                              ? AppColors
-                                    .adminDashCoupons // أخضر
-                              : AppColors.adminDashOrders, // برتقالي
-                          fontWeight: FontWeight.bold,
-                        ),
+                      subtitle: Builder(
+                        builder: (context) {
+                          final loc = AppLocalizations.of(context)!;
+                          return Text(
+                            '${order['amount']} - ${_getStatusTranslation(order['status'], loc)}',
+                            style: TextStyle(
+                              color: order['status'] == 'تم التوصيل'
+                                  ? AppColors
+                                        .adminDashCoupons // أخضر
+                                  : AppColors.adminDashOrders, // برتقالي
+                              fontWeight: FontWeight.bold,
+                            ),
+                          );
+                        },
                       ),
                       children: [
                         ListTile(
@@ -225,14 +245,17 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                             value: _orderStatuses.contains(order['status'])
                                 ? order['status']
                                 : null,
-                            items: _orderStatuses
-                                .map(
-                                  (s) => DropdownMenuItem(
-                                    value: s,
-                                    child: Text(s),
+                            items: _orderStatuses.map((s) {
+                              return DropdownMenuItem(
+                                value: s,
+                                child: Text(
+                                  _getStatusTranslation(
+                                    s,
+                                    AppLocalizations.of(context)!,
                                   ),
-                                )
-                                .toList(),
+                                ),
+                              );
+                            }).toList(),
                             onChanged: (val) {
                               if (val != null) _updateStatus(orderId, val);
                             },

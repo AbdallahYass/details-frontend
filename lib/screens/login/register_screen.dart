@@ -158,16 +158,16 @@ class _RegisterScreenState extends State<RegisterScreen>
         await _googleSignIn.disconnect();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("هذا الحساب غير مسجل، يرجى إنشاء حساب جديد."),
-              backgroundColor: Color(0xFF9E773A),
+            SnackBar(
+              content: Text(_translate('account_not_registered')),
+              backgroundColor: const Color(0xFF9E773A),
             ),
           );
         }
       } else {
         // في حال وجود خطأ آخر، لا نحاول عمل decode إذا كان الـ body فارغاً
         await _googleSignIn.disconnect();
-        String message = "فشل تسجيل الدخول";
+        String message = _translate('login_failed_msg');
         try {
           final errorData = json.decode(response.body);
           message = errorData['message'] ?? message;
@@ -177,8 +177,12 @@ class _RegisterScreenState extends State<RegisterScreen>
     } catch (error) {
       debugPrint("❌ Login Error: $error");
       if (mounted) {
+        final errorLabel = _translate('error_label');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("خطأ: $error"), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text("$errorLabel: $error"),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {

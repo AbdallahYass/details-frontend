@@ -204,8 +204,12 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       'deliveryFee': _deliveryFee, // إضافة سعر التوصيل كحقل منفصل
       'amount': cart.totalAmount + _deliveryFee, // المجموع النهائي شامل التوصيل
       'shippingAddress': {
-        'city': _isDelivery ? (_selectedCity ?? '') : 'استلام من المحل',
-        'street': _isDelivery ? _streetController.text : 'الفرع الرئيسي',
+        'city': _isDelivery
+            ? (_selectedCity ?? '')
+            : localizations.translate('pickup_from_store'),
+        'street': _isDelivery
+            ? _streetController.text
+            : localizations.translate('main_branch'),
         'phone': _phoneController.text,
       },
       'payment_method': _paymentMethod,
@@ -809,7 +813,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    '${AppLocalizations.of(context)!.translate('total')} (المنتجات)',
+                                    '${AppLocalizations.of(context)!.translate('total')} (${AppLocalizations.of(context)!.translate('products')})',
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -831,8 +835,10 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  'رسوم التوصيل',
+                                Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.translate('delivery_fee'),
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -853,8 +859,10 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  'المجموع النهائي',
+                                Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  )!.translate('final_total'),
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w900,
@@ -927,12 +935,12 @@ class _CheckoutScreenState extends State<CheckoutScreen>
 
     // الضفة الغربية
     items.add(
-      const DropdownMenuItem(
+      DropdownMenuItem(
         value: 'header_wb',
         enabled: false,
         child: Text(
-          '--- الضفة الغربية (15 شيكل) ---',
-          style: TextStyle(
+          AppLocalizations.of(context)!.translate('west_bank_shipping'),
+          style: const TextStyle(
             color: Colors.grey,
             fontWeight: FontWeight.bold,
             fontSize: 13,
@@ -994,12 +1002,12 @@ class _CheckoutScreenState extends State<CheckoutScreen>
 
     // القدس
     items.add(
-      const DropdownMenuItem(
+      DropdownMenuItem(
         value: 'header_j',
         enabled: false,
         child: Text(
-          '--- القدس (20 شيكل) ---',
-          style: TextStyle(
+          AppLocalizations.of(context)!.translate('jerusalem_shipping'),
+          style: const TextStyle(
             color: Colors.grey,
             fontWeight: FontWeight.bold,
             fontSize: 13,
@@ -1021,12 +1029,12 @@ class _CheckoutScreenState extends State<CheckoutScreen>
 
     // الداخل المحتل
     items.add(
-      const DropdownMenuItem(
+      DropdownMenuItem(
         value: 'header_48',
         enabled: false,
         child: Text(
-          '--- الداخل المحتل (30 شيكل) ---',
-          style: TextStyle(
+          AppLocalizations.of(context)!.translate('inside_shipping'),
+          style: const TextStyle(
             color: Colors.grey,
             fontWeight: FontWeight.bold,
             fontSize: 13,
