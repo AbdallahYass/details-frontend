@@ -80,48 +80,68 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     _imageController.addListener(() => setState(() {}));
     _fetchCategories();
     if (widget.product != null) {
-      final p = widget.product;
-      _nameArController.text = p['name'] is Map ? (p['name']['ar'] ?? '') : '';
-      _nameEnController.text = p['name'] is Map ? (p['name']['en'] ?? '') : '';
-      _priceController.text = p['price'].toString();
-      _oldPriceController.text = p['oldPrice']?.toString() ?? '';
-      _quantityController.text = p['quantity']?.toString() ?? '0';
-      _descArController.text = p['description'] is Map
-          ? (p['description']['ar'] ?? '')
-          : '';
-      _descEnController.text = p['description'] is Map
-          ? (p['description']['en'] ?? '')
-          : '';
-      _brandController.text = p['brand'] ?? 'DETAILS';
-      _dimensionsController.text = p['dimensions'] ?? '';
-      _imageController.text = p['imageUrl'] ?? '';
-      _selectedCategory = p['category'] is Map
-          ? p['category']['_id']
-          : p['category'];
-      _isSoldOut = p['isSoldOut'] ?? false;
-      _isFeatured = p['featured'] ?? false;
+      // دعم التعامل مع المنتج سواء كان Map أو كائن Product
+      final dynamic p = widget.product;
+      final bool isMap = p is Map;
+
+      _nameArController.text = isMap
+          ? (p['name']?['ar']?.toString() ?? '')
+          : (p.name['ar']?.toString() ?? '');
+      _nameEnController.text = isMap
+          ? (p['name']?['en']?.toString() ?? '')
+          : (p.name['en']?.toString() ?? '');
+      _priceController.text = (isMap ? p['price'] : p.price).toString();
+      _oldPriceController.text =
+          (isMap ? p['oldPrice'] : p.oldPrice)?.toString() ?? '';
+      _quantityController.text =
+          (isMap ? p['quantity'] : p.quantity)?.toString() ?? '0';
+
+      _descArController.text = isMap
+          ? (p['description']?['ar']?.toString() ?? '')
+          : (p.description['ar']?.toString() ?? '');
+      _descEnController.text = isMap
+          ? (p['description']?['en']?.toString() ?? '')
+          : (p.description['en']?.toString() ?? '');
+
+      _brandController.text = (isMap ? p['brand'] : p.brand) ?? 'DETAILS';
+      _dimensionsController.text =
+          (isMap ? p['dimensions'] : p.dimensions) ?? '';
+      _imageController.text = (isMap ? p['imageUrl'] : p.imageUrl) ?? '';
+      _selectedCategory = isMap
+          ? (p['category'] is Map ? p['category']['_id'] : p['category'])
+          : p.categoryId;
+      _isSoldOut = (isMap ? p['isSoldOut'] : p.isSoldOut) ?? false;
+      _isFeatured =
+          (isMap ? (p['featured'] ?? p['isFeatured']) : p.featured) ??
+          false; // 🌟 استخدام الحقل الجديد
 
       // تحميل صور المعرض (باستثناء الصورة الرئيسية لتجنب التكرار في العرض)
-      if (p['images'] != null && p['images'] is List) {
-        _galleryImages = List<String>.from(p['images']);
-        // إزالة الصورة الرئيسية من القائمة إذا كانت موجودة
-        _galleryImages.removeWhere((img) => img == p['imageUrl']);
+      final dynamic imagesData = isMap ? p['images'] : p.images;
+      if (imagesData != null && imagesData is List) {
+        _galleryImages = List<String>.from(imagesData);
+        _galleryImages.removeWhere((img) => img == _imageController.text);
       }
-      if (p['colors'] != null) {
-        _colors = (p['colors'] as List)
+
+      final dynamic colorsData = isMap ? p['colors'] : p.colors;
+      if (colorsData != null) {
+        _colors = (colorsData as List)
             .map((e) => ProductColor.fromJson(e))
             .toList();
       }
-      if (p['sizes'] != null && p['sizes'] is List) {
-        _availableSizes = List<String>.from(p['sizes']);
+
+      final dynamic sizesData = isMap ? p['sizes'] : p.sizes;
+      if (sizesData != null && sizesData is List) {
+        _availableSizes = List<String>.from(sizesData);
       }
-      if (p['variants'] != null && p['variants'] is List) {
-        _variants = (p['variants'] as List)
+
+      final dynamic variantsData = isMap ? p['variants'] : p.variants;
+      if (variantsData != null && variantsData is List) {
+        _variants = (variantsData)
             .map(
               (v) => ProductVariant(
-                colorHex: v['colorHex'],
-                size: v['size'],
-                quantity: v['quantity'] ?? 0,
+                colorHex: isMap ? v['colorHex'] : v.colorHex,
+                size: isMap ? v['size'] : v.size,
+                quantity: isMap ? (v['quantity'] ?? 0) : (v.quantity ?? 0),
               ),
             )
             .toList();
@@ -311,17 +331,25 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     final loc = AppLocalizations.of(context)!;
     final auth = Provider.of<AuthProvider>(context, listen: false);
 
-    // استخراج الـ ID بشكل آمن سواء كان بمفتاح _id أو id
-    final String? productId = widget.product != null
-        ? (widget.product['_id']?.toString() ??
-              widget.product['id']?.toString())
-        : null;
+    // استخراج الـ ID بشكل آمن جداً
+    String? productId;
+    if (widget.product != null) {
+      if (widget.product is Map) {
+        productId = (widget.product['_id'] ?? widget.product['id'])?.toString();
+      } else {
+        // التأكد من أن الـ ID ليس نصاً فارغاً
+        final String idStr = widget.product.id.toString();
+        productId = idStr.isNotEmpty ? idStr : null;
+      }
+    }
 
-    final url = productId == null
+    // إذا كان الـ ID نول أو فارغ، نعتبرها عملية إضافة (POST)
+    final bool isUpdating = productId != null && productId.isNotEmpty;
+    final url = !isUpdating
         ? 'https://api.details-store.com/api/products'
         : 'https://api.details-store.com/api/products/$productId';
 
-    final method = productId == null ? 'POST' : 'PUT';
+    final method = !isUpdating ? 'POST' : 'PUT';
 
     try {
       String finalImageUrl = _imageController.text;
@@ -386,8 +414,6 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
       };
 
       final Map<String, dynamic> requestBody = {
-        if (productId != null)
-          'id': productId, // إرسال الـ ID في الـ Body لزيادة التأكيد
         'name': {
           'ar': _nameArController.text.trim(),
           'en': _nameEnController.text.trim(),

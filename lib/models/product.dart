@@ -69,6 +69,7 @@ class Product {
   final String brand;
   final String dimensions;
   final bool isSoldOut;
+  final bool featured; // 🌟 إضافة الحقل المفقود
   final dynamic category; // يمكن أن يكون String ID أو Map
   final int popularity;
   final int quantity;
@@ -88,6 +89,7 @@ class Product {
     required this.brand,
     required this.dimensions,
     required this.isSoldOut,
+    this.featured = false, // 🌟
     required this.category,
     this.popularity = 0,
     this.quantity = 0,
@@ -118,6 +120,9 @@ class Product {
       brand: json['brand']?.toString() ?? '',
       dimensions: json['dimensions']?.toString() ?? '',
       isSoldOut: json['isSoldOut'] == true,
+      featured:
+          json['featured'] == true ||
+          json['isFeatured'] == true, // 🌟 دعم المسميين
       category: json['category'],
       popularity: (json['popularity'] is num)
           ? (json['popularity'] as num).toInt()
@@ -163,6 +168,7 @@ class Product {
       'brand': brand,
       'dimensions': dimensions,
       'isSoldOut': isSoldOut,
+      'featured': featured, // 🌟
       'category': category,
       'popularity': popularity,
       'quantity': quantity,
