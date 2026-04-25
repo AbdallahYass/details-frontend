@@ -227,6 +227,9 @@ class AppLocalizations {
       'resend_code': 'Resend Code',
       'edit_profile': 'Edit Profile',
       'update_success': 'Profile updated successfully',
+      'delete_account_confirm_title': 'Confirm Account Deletion',
+      'delete_account_confirm_message':
+          'Are you sure you want to delete your account? This action cannot be undone. All your data will be permanently deleted.',
       'leave_blank_password': 'Leave blank to keep current password',
       'account_management': 'Account Management',
       'my_activity': 'My Activity',
@@ -569,6 +572,9 @@ class AppLocalizations {
       'resend_code': 'إعادة إرسال الرمز',
       'edit_profile': 'تعديل الملف الشخصي',
       'update_success': 'تم تحديث الملف الشخصي بنجاح',
+      'delete_account_confirm_title': 'تأكيد حذف الحساب',
+      'delete_account_confirm_message':
+          'هل أنت متأكد من رغبتك في حذف هذا الحساب؟ لا يمكن التراجع عن هذا الإجراء وسيتم مسح جميع بياناتك نهائياً.',
       'leave_blank_password': 'اتركه فارغاً للإبقاء على كلمة المرور الحالية',
       'account_management': 'إدارة الحساب',
       'my_activity': 'نشاطي',

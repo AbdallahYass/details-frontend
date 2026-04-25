@@ -111,8 +111,10 @@ class _AddEditAddressScreenState extends State<AddEditAddressScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              AppLocalizations.of(context)!.translate('error_occurred'),
+              provider.errorMessage ??
+                  AppLocalizations.of(context)!.translate('error_occurred'),
             ),
+            backgroundColor: AppColors.error,
           ),
         );
       }

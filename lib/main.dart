@@ -47,13 +47,13 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => LanguageProvider(savedLanguage)),
         ChangeNotifierProxyProvider<AuthProvider, AddressesProvider>(
           create: (_) => AddressesProvider(),
           update: (_, auth, addresses) => addresses!..updateAuth(auth),
         ),
         ChangeNotifierProvider(create: (_) => HomeProvider()),
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProxyProvider<AuthProvider, WishlistProvider>(
           create: (_) => WishlistProvider(),
@@ -99,12 +99,18 @@ class _DetailsStoreAppState extends State<DetailsStoreApp> {
     try {
       FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-      // 1. طلب الصلاحية من المتصفح (سيظهر للمستخدم نافذة "هل تسمح بالإشعارات؟")
-      NotificationSettings settings = await messaging.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
+      NotificationSettings settings;
+      if (kIsWeb) {
+        // في الويب، نطلب الصلاحية فقط، والمتصفح سيتجاهلها إذا لم تكن مرتبطة بـ Gesture
+        // لكننا نضعها في try-catch لمنع تعطل التطبيق بالكامل
+        settings = await messaging.getNotificationSettings();
+      } else {
+        settings = await messaging.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+      }
 
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
         debugPrint('✅ المستخدم وافق على الإشعارات');

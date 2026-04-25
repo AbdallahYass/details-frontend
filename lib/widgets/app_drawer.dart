@@ -8,6 +8,7 @@ import 'package:details_app/providers/language_provider.dart';
 import 'package:details_app/l10n/app_localizations.dart';
 import 'package:details_app/constants/app_colors.dart';
 import 'package:details_app/screens/home/contact_us_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -16,6 +17,45 @@ class AppDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
     final languageProvider = Provider.of<LanguageProvider>(context);
+    final loc = AppLocalizations.of(context)!;
+
+    Future<void> confirmDeleteAccount() async {
+      final loc = AppLocalizations.of(context)!;
+      final showConfirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(loc.translate('delete_account_confirm_title')),
+          content: Text(loc.translate('delete_account_confirm_message')),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(loc.translate('cancel')),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: TextButton.styleFrom(foregroundColor: AppColors.red),
+              child: Text(loc.translate('delete')),
+            ),
+          ],
+        ),
+      );
+
+      if (showConfirm == true) {
+        final success = await auth.deleteAccount();
+        if (success && context.mounted) {
+          context.go('/');
+        } else if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                auth.errorMessage ?? loc.translate('error_occurred'),
+              ),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    }
 
     return Drawer(
       backgroundColor: Colors.transparent,
@@ -88,16 +128,27 @@ class AppDrawer extends StatelessWidget {
                       child: CircleAvatar(
                         radius: 35,
                         backgroundColor: AppColors.background,
-                        child: Text(
-                          auth.isAuthenticated
-                              ? (auth.user?.name[0].toUpperCase() ?? 'U')
-                              : 'G',
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
+                        backgroundImage:
+                            (auth.isAuthenticated &&
+                                auth.user?.avatar != null &&
+                                auth.user!.avatar!.isNotEmpty)
+                            ? CachedNetworkImageProvider(auth.user!.avatar!)
+                            : null,
+                        child:
+                            (auth.isAuthenticated &&
+                                auth.user?.avatar != null &&
+                                auth.user!.avatar!.isNotEmpty)
+                            ? null
+                            : Text(
+                                auth.isAuthenticated
+                                    ? (auth.user?.name[0].toUpperCase() ?? 'U')
+                                    : 'G',
+                                style: const TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 15),
@@ -137,6 +188,10 @@ class AppDrawer extends StatelessWidget {
                   ),
                   children: [
                     if (!auth.isAuthenticated) ...[
+                      _buildSectionHeader(
+                        context,
+                        loc.translate('nav_account'),
+                      ),
                       _drawerTile(
                         context,
                         icon: Icons.login,
@@ -159,14 +214,17 @@ class AppDrawer extends StatelessWidget {
                           context.push('/register');
                         },
                       ),
-                      _buildDivider(),
                     ] else ...[
+                      _buildSectionHeader(
+                        context,
+                        loc.translate('my_activity'),
+                      ),
                       _drawerTile(
                         context,
                         icon: Icons.person_outline,
                         title: AppLocalizations.of(
                           context,
-                        )!.translate('profile_title'),
+                        )!.translate('edit_profile'),
                         onTap: () {
                           Navigator.pop(context);
                           context.push('/profile');
@@ -196,10 +254,58 @@ class AppDrawer extends StatelessWidget {
                           ); // المسار الخاص بصفحة العناوين
                         },
                       ),
-                      _buildDivider(),
+                      const SizedBox(height: 15),
+                      _buildSectionHeader(
+                        context,
+                        loc.translate('account_settings'),
+                      ),
+                      _drawerTile(
+                        context,
+                        icon: Icons.notifications_active_outlined,
+                        title: AppLocalizations.of(
+                          context,
+                        )!.translate('receive_promotions'),
+                        trailing: Transform.scale(
+                          scale: 0.8,
+                          child: Switch(
+                            value: auth.user?.receiveNotifications ?? true,
+                            activeThumbColor: AppColors.primary,
+                            onChanged: (bool newValue) async {
+                              await auth.updateProfile(
+                                name: auth.user!.name,
+                                phone: auth.user!.phone,
+                                receiveNotifications: newValue,
+                              );
+                            },
+                          ),
+                        ),
+                        onTap: () async {
+                          final currentVal =
+                              auth.user?.receiveNotifications ?? true;
+                          await auth.updateProfile(
+                            name: auth.user!.name,
+                            phone: auth.user!.phone,
+                            receiveNotifications: !currentVal,
+                          );
+                        },
+                      ),
+                      _drawerTile(
+                        context,
+                        icon: Icons.delete_forever,
+                        title: AppLocalizations.of(
+                          context,
+                        )!.translate('delete_account'),
+                        color: AppColors.red,
+                        onTap: () {
+                          Navigator.pop(context); // إغلاق القائمة أولاً
+                          confirmDeleteAccount();
+                        },
+                      ),
                     ],
 
                     // Settings Section
+                    const SizedBox(height: 15),
+                    _buildSectionHeader(context, loc.translate('language')),
                     _drawerTile(
                       context,
                       icon: Icons.language,
@@ -250,6 +356,8 @@ class AppDrawer extends StatelessWidget {
                     ),
 
                     // Support Section
+                    const SizedBox(height: 15),
+                    _buildSectionHeader(context, loc.translate('contact_us')),
                     _drawerTile(
                       context,
                       icon: FontAwesomeIcons.whatsapp,
@@ -294,7 +402,11 @@ class AppDrawer extends StatelessWidget {
 
                     if (auth.isAuthenticated &&
                         (auth.user?.isAdmin ?? false)) ...[
-                      _buildDivider(),
+                      const SizedBox(height: 15),
+                      _buildSectionHeader(
+                        context,
+                        loc.translate('admin_panel'),
+                      ),
                       _drawerTile(
                         context,
                         icon: Icons.dashboard_customize,
@@ -311,7 +423,11 @@ class AppDrawer extends StatelessWidget {
                     ],
 
                     if (auth.isAuthenticated) ...[
-                      _buildDivider(),
+                      const SizedBox(height: 15),
+                      _buildSectionHeader(
+                        context,
+                        loc.translate('session_management'),
+                      ),
                       _drawerTile(
                         context,
                         icon: Icons.logout,
@@ -349,12 +465,19 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildDivider() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Divider(
-        color: AppColors.secondary.withValues(alpha: 0.2),
-        thickness: 1,
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12.0, left: 4, right: 4),
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+            color: AppColors.primary,
+          ),
+        ),
       ),
     );
   }

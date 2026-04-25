@@ -64,6 +64,7 @@ class AddressesProvider with ChangeNotifier {
     if (_auth == null || !_auth!.isAuthenticated) return false;
 
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
@@ -80,9 +81,13 @@ class AddressesProvider with ChangeNotifier {
       if (response.statusCode == 201) {
         await fetchAddresses();
         return true;
+      } else {
+        final data = json.decode(response.body);
+        _errorMessage = data['message'] ?? 'Failed to add address';
+        return false;
       }
-      return false;
     } catch (e) {
+      _errorMessage = e.toString();
       return false;
     } finally {
       _isLoading = false;

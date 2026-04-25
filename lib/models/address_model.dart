@@ -45,8 +45,7 @@ class AddressModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
+    final Map<String, dynamic> data = {
       'name': name,
       'phone': phone,
       'city': city,
@@ -59,5 +58,9 @@ class AddressModel {
       'latitude': latitude,
       'longitude': longitude,
     };
+    if (id.isNotEmpty) {
+      data['_id'] = id;
+    }
+    return data;
   }
 }

@@ -16,7 +16,6 @@ import 'package:details_app/screens/home/addresses_screen.dart';
 import 'package:details_app/screens/home/add_edit_address_screen.dart';
 import 'package:details_app/screens/home/about_screen.dart';
 import 'package:details_app/screens/home/wishlist_screen.dart';
-import 'package:details_app/screens/login/profile_screen.dart';
 import 'package:details_app/screens/login/edit_profile_screen.dart';
 import 'package:details_app/screens/splash/splash_screen.dart';
 import 'package:details_app/screens/login/reset_password_screen.dart';
@@ -110,10 +109,6 @@ final router = GoRouter(
           builder: (context, state) => const AddEditAddressScreen(),
         ),
       ],
-    ),
-    GoRoute(
-      path: '/profile',
-      builder: (context, state) => const ProfileScreen(),
     ),
     GoRoute(
       path: '/edit-profile',
