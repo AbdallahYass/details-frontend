@@ -15,8 +15,16 @@ class _EditProfileScreenState extends State<EditProfileScreen>
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
-  final _passwordController = TextEditingController();
+  late TextEditingController _emailController;
+  final _newPasswordController =
+      TextEditingController(); // 🌟 كلمة المرور الجديدة
+  final _confirmPasswordController =
+      TextEditingController(); // 🌟 تأكيد كلمة المرور
   bool _isLoading = false;
+  String? _newAvatarUrl;
+  bool _isUploadingImage = false;
+  bool _obscureNewPassword = true; // 🌟 لإخفاء/إظهار كلمة المرور
+  bool _obscureConfirmPassword = true; // 🌟 لإخفاء/إظهار تأكيد كلمة المرور
 
   // Animation Controllers
   late AnimationController _rotationController;
@@ -30,6 +38,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     final user = Provider.of<AuthProvider>(context, listen: false).user!;
     _nameController = TextEditingController(text: user.name);
     _phoneController = TextEditingController(text: user.phone);
+    _emailController = TextEditingController(text: user.email);
 
     // تحريك الخلفية ببطء
     _rotationController = AnimationController(
@@ -67,7 +76,9 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     _entranceController.dispose();
     _nameController.dispose();
     _phoneController.dispose();
-    _passwordController.dispose();
+    _emailController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -79,8 +90,10 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     final success = await auth.updateProfile(
       name: _nameController.text.trim(),
       phone: _phoneController.text.trim(),
-      password: _passwordController.text.isNotEmpty
-          ? _passwordController.text
+      email: _emailController.text.trim(),
+      avatar: _newAvatarUrl,
+      password: _newPasswordController.text.isNotEmpty
+          ? _newPasswordController.text
           : null,
     );
 
@@ -110,8 +123,21 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     }
   }
 
+  Future<void> _pickAvatar() async {
+    setState(() => _isUploadingImage = true);
+    final String? url = await CloudinaryService().pickAndUploadImage();
+    setState(() {
+      _isUploadingImage = false;
+      if (url != null) {
+        _newAvatarUrl = url;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final user = Provider.of<AuthProvider>(context).user!;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -125,7 +151,11 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
+            icon: const Icon(
+              Icons.arrow_back_ios,
+              color: AppColors.primary,
+              size: 20,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
@@ -139,8 +169,16 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         ),
         body: Stack(
           children: [
-            Positioned.fill(
-              child: Image.asset('assets/images/bg.png', fit: BoxFit.cover),
+            // تثبيت الخلفية لتغطي كامل المساحة المتاحة خلف الـ Stack
+            Container(
+              width: double.infinity,
+              height: double.infinity,
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/bg.png'),
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
             // --- خلفية متحركة ---
             Positioned(
@@ -199,17 +237,77 @@ class _EditProfileScreenState extends State<EditProfileScreen>
             ),
 
             SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
+              bottom: false,
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
                     child: Form(
                       key: _formKey,
                       child: Column(
                         children: [
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 10),
+                          // --- تعديل الصورة الشخصية ---
+                          Center(
+                            child: Stack(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: const Color(0xFF9E773A),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: CircleAvatar(
+                                    radius: 55,
+                                    backgroundColor: AppColors.lightGrey,
+                                    backgroundImage: _newAvatarUrl != null
+                                        ? NetworkImage(_newAvatarUrl!)
+                                        : (user.avatar != null &&
+                                                      user.avatar!.isNotEmpty
+                                                  ? NetworkImage(user.avatar!)
+                                                  : null)
+                                              as ImageProvider?,
+                                    child:
+                                        (_newAvatarUrl == null &&
+                                            (user.avatar == null ||
+                                                user.avatar!.isEmpty))
+                                        ? const Icon(
+                                            Icons.person,
+                                            size: 50,
+                                            color: AppColors.primary,
+                                          )
+                                        : _isUploadingImage
+                                        ? const CircularProgressIndicator()
+                                        : null,
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: GestureDetector(
+                                    onTap: _isUploadingImage
+                                        ? null
+                                        : _pickAvatar,
+                                    child: const CircleAvatar(
+                                      radius: 18,
+                                      backgroundColor: Color(0xFF9E773A),
+                                      child: Icon(
+                                        Icons.camera_alt,
+                                        size: 18,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 30),
                           _buildElegantTextField(
                             controller: _nameController,
                             label: AppLocalizations.of(
@@ -220,6 +318,20 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                                 ? AppLocalizations.of(
                                     context,
                                   )!.translate('required_field')
+                                : null,
+                          ),
+                          const SizedBox(height: 20),
+                          _buildElegantTextField(
+                            controller: _emailController,
+                            label: AppLocalizations.of(
+                              context,
+                            )!.translate('email_label'),
+                            icon: Icons.email_outlined,
+                            keyboardType: TextInputType.emailAddress,
+                            validator: (v) => v!.isEmpty || !v.contains('@')
+                                ? AppLocalizations.of(
+                                    context,
+                                  )!.translate('invalid_email')
                                 : null,
                           ),
                           const SizedBox(height: 20),
@@ -238,13 +350,53 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                           ),
                           const SizedBox(height: 20),
                           _buildElegantTextField(
-                            controller: _passwordController,
+                            controller: _newPasswordController,
                             label: AppLocalizations.of(
                               context,
                             )!.translate('new_password_label'),
                             icon: Icons.lock_outline,
-                            obscureText: true,
+                            obscureText: _obscureNewPassword,
                             isPassword: true,
+                            onTogglePassword: () {
+                              setState(() {
+                                _obscureNewPassword = !_obscureNewPassword;
+                              });
+                            },
+                            validator: (value) {
+                              if (value != null &&
+                                  value.isNotEmpty &&
+                                  value.length < 6) {
+                                return AppLocalizations.of(
+                                  context,
+                                )!.translate('short_password');
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          _buildElegantTextField(
+                            controller: _confirmPasswordController,
+                            label: AppLocalizations.of(
+                              context,
+                            )!.translate('confirm_password_label'),
+                            icon: Icons.lock_outline,
+                            obscureText: _obscureConfirmPassword,
+                            isPassword: true,
+                            onTogglePassword: () {
+                              setState(() {
+                                _obscureConfirmPassword =
+                                    !_obscureConfirmPassword;
+                              });
+                            },
+                            validator: (value) {
+                              if (_newPasswordController.text.isNotEmpty &&
+                                  value != _newPasswordController.text) {
+                                return AppLocalizations.of(
+                                  context,
+                                )!.translate('passwords_not_match');
+                              }
+                              return null;
+                            },
                           ),
                           Padding(
                             padding: const EdgeInsets.only(top: 8, left: 10),
@@ -319,6 +471,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     TextInputType keyboardType = TextInputType.text,
     bool obscureText = false,
     bool isPassword = false,
+    VoidCallback? onTogglePassword, // 🌟 إضافة دالة لتبديل الرؤية
     String? Function(String?)? validator,
   }) {
     return Container(

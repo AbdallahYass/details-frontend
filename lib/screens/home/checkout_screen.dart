@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import 'package:details_app/providers/addresses_provider.dart';
 import 'package:details_app/providers/notification_provider.dart';
+import 'package:details_app/models/address_model.dart'; // 🌟 إضافة الاستيراد المفقود
 import 'package:details_app/screens/home/notifications_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -102,11 +103,11 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       _phoneController.text = auth.user!.phone;
     }
 
-    if (auth.token != null) {
+    if (auth.isAuthenticated) {
       await Provider.of<AddressesProvider>(
         context,
         listen: false,
-      ).fetchAddresses(auth.token!, onLogout: auth.logout);
+      ).fetchAddresses();
     }
   }
 
@@ -156,11 +157,14 @@ class _CheckoutScreenState extends State<CheckoutScreen>
 
     if (_saveAddress && _isDelivery) {
       await addressesProvider.addAddress(
-        auth.token!,
-        _selectedCity ?? '',
-        _streetController.text.trim(),
-        _phoneController.text.trim(),
-        onLogout: auth.logout,
+        AddressModel(
+          id: '', // سيتم توليده في الباك إند
+          name: auth.user?.name ?? '',
+          city: _selectedCity ?? '',
+          street: _streetController.text.trim(),
+          phone: _phoneController.text.trim(),
+          isDefault: false,
+        ),
       );
     }
 
@@ -206,10 +210,10 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       'shippingAddress': {
         'city': _isDelivery
             ? (_selectedCity ?? '')
-            : localizations.translate('pickup_from_store'),
+            : localizations.translate('pickup'),
         'street': _isDelivery
             ? _streetController.text
-            : localizations.translate('main_branch'),
+            : localizations.translate('pickup_from_store'),
         'phone': _phoneController.text,
       },
       'payment_method': _paymentMethod,
@@ -939,7 +943,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
         value: 'header_wb',
         enabled: false,
         child: Text(
-          AppLocalizations.of(context)!.translate('west_bank_shipping'),
+          AppLocalizations.of(context)!.translate('west_bank_header'),
           style: const TextStyle(
             color: Colors.grey,
             fontWeight: FontWeight.bold,
@@ -1006,7 +1010,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
         value: 'header_j',
         enabled: false,
         child: Text(
-          AppLocalizations.of(context)!.translate('jerusalem_shipping'),
+          AppLocalizations.of(context)!.translate('jerusalem_header'),
           style: const TextStyle(
             color: Colors.grey,
             fontWeight: FontWeight.bold,
@@ -1033,7 +1037,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
         value: 'header_48',
         enabled: false,
         child: Text(
-          AppLocalizations.of(context)!.translate('inside_shipping'),
+          AppLocalizations.of(context)!.translate('inside_shipping_header'),
           style: const TextStyle(
             color: Colors.grey,
             fontWeight: FontWeight.bold,

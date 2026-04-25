@@ -30,6 +30,15 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
     }
   }
 
+  Color _parseColor(String? hex) {
+    if (hex == null || hex.isEmpty) return Colors.transparent;
+    try {
+      return Color(int.parse(hex.replaceFirst('#', '0xFF')));
+    } catch (_) {
+      return Colors.transparent;
+    }
+  }
+
   final List<String> _orderStatuses = [
     'قيد التجهيز',
     'تم الشحن',
@@ -313,42 +322,169 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                 const SizedBox(height: 5),
                                 ...items.map((item) {
                                   final productName =
-                                      item['title'] ??
+                                      item['title']
+                                          ?.toString()
+                                          .split('(')
+                                          .first
+                                          .trim() ??
                                       AppLocalizations.of(
                                         context,
                                       )!.translate('unknown_product');
 
-                                  final size = item['size'];
-                                  final color = item['color'];
-                                  String details = '';
-                                  if (size != null &&
-                                      size.toString().isNotEmpty) {
-                                    details += ' [$size]';
-                                  }
-                                  if (color != null &&
-                                      color.toString().isNotEmpty) {
-                                    details += ' - $color';
-                                  }
+                                  final size = item['size']?.toString();
+                                  final colorHex = item['color']?.toString();
+                                  final imageUrl = item['imageUrl']?.toString();
+                                  final price = item['price'];
+                                  final qty = item['quantity'];
 
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 4,
+                                  return Container(
+                                    margin: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                    ),
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.grey.shade200,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.02,
+                                          ),
+                                          blurRadius: 5,
+                                        ),
+                                      ],
                                     ),
                                     child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Expanded(
-                                          child: Text(
-                                            '- $productName$details (x${item['quantity']})',
+                                        // صورة المنتج
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          child: CachedNetworkImage(
+                                            imageUrl: imageUrl ?? '',
+                                            width: 60,
+                                            height: 60,
+                                            fit: BoxFit.cover,
+                                            placeholder: (context, url) =>
+                                                Container(
+                                                  color: Colors.grey.shade100,
+                                                ),
+                                            errorWidget:
+                                                (
+                                                  context,
+                                                  url,
+                                                  error,
+                                                ) => const Icon(
+                                                  Icons
+                                                      .image_not_supported_outlined,
+                                                  size: 30,
+                                                ),
                                           ),
                                         ),
-                                        Text(
-                                          '${item['price']} ${AppLocalizations.of(context)!.translate('currency')}',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.adminDashProducts,
+                                        const SizedBox(width: 12),
+                                        // تفاصيل الاسم والمقاس واللون
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                productName,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 14,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              const SizedBox(height: 6),
+                                              Row(
+                                                children: [
+                                                  if (size != null &&
+                                                      size.isNotEmpty) ...[
+                                                    Container(
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            horizontal: 8,
+                                                            vertical: 2,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        color: AppColors.primary
+                                                            .withValues(
+                                                              alpha: 0.05,
+                                                            ),
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              4,
+                                                            ),
+                                                        border: Border.all(
+                                                          color: AppColors
+                                                              .primary
+                                                              .withValues(
+                                                                alpha: 0.1,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                      child: Text(
+                                                        size,
+                                                        style: const TextStyle(
+                                                          fontSize: 11,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color:
+                                                              AppColors.primary,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 10),
+                                                  ],
+                                                  if (colorHex != null &&
+                                                      colorHex.isNotEmpty)
+                                                    Container(
+                                                      width: 18,
+                                                      height: 18,
+                                                      decoration: BoxDecoration(
+                                                        color: _parseColor(
+                                                          colorHex,
+                                                        ),
+                                                        shape: BoxShape.circle,
+                                                        border: Border.all(
+                                                          color: Colors.black12,
+                                                          width: 1,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                            ],
                                           ),
+                                        ),
+                                        // السعر والكمية
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              '$price ${AppLocalizations.of(context)!.translate('currency')}',
+                                              style: const TextStyle(
+                                                color: AppColors.primary,
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            Text(
+                                              'x$qty',
+                                              style: const TextStyle(
+                                                color: Colors.grey,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),

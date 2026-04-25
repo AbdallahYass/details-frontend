@@ -13,6 +13,8 @@ class User {
   final String phone;
   final bool isAdmin;
   final String? avatar;
+  final bool? receiveNotifications; // 🌟 إضافة الحقل الناقص
+  final DateTime? createdAt; // 🌟 إضافة تاريخ إنشاء الحساب
 
   User({
     required this.id,
@@ -21,6 +23,8 @@ class User {
     this.phone = '',
     this.isAdmin = false,
     this.avatar,
+    this.receiveNotifications,
+    this.createdAt,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -31,6 +35,10 @@ class User {
       phone: json['phone'] ?? '',
       isAdmin: json['isAdmin'] ?? false,
       avatar: json['avatar'],
+      receiveNotifications: json['receiveNotifications'],
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : null,
     );
   }
 
@@ -41,6 +49,8 @@ class User {
     'phone': phone,
     'isAdmin': isAdmin,
     'avatar': avatar,
+    'receiveNotifications': receiveNotifications,
+    'createdAt': createdAt?.toIso8601String(),
   };
 }
 
@@ -119,6 +129,35 @@ class AuthProvider with ChangeNotifier {
       _errorMessage = "server_connection_failed";
     }
 
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
+  // 🌟 إضافة الدالة المفقودة لحذف الحساب نهائياً
+  Future<bool> deleteAccount() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      final url = Uri.parse('https://api.details-store.com/api/profile');
+      final response = await http.delete(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_token',
+        },
+      );
+      if (response.statusCode == 200) {
+        await logout(); // تسجيل الخروج وتنظيف البيانات محلياً
+        return true;
+      } else {
+        final data = json.decode(response.body);
+        _errorMessage = data['message'];
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+    }
     _isLoading = false;
     notifyListeners();
     return false;
@@ -404,14 +443,25 @@ class AuthProvider with ChangeNotifier {
   Future<bool> updateProfile({
     required String name,
     required String phone,
+    String? email,
+    String? avatar,
     String? password,
+    bool? receiveNotifications, // 🌟 إضافة حقل جديد
   }) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
     try {
       final url = Uri.parse('https://api.details-store.com/api/profile');
-      final body = <String, dynamic>{'name': name, 'phone': phone};
+      final body = <String, dynamic>{
+        'name': name,
+        'phone': phone,
+        if (email != null) 'email': email,
+        if (receiveNotifications != null)
+          'receiveNotifications':
+              receiveNotifications, // 🌟 إرسال إعدادات الإشعارات
+        if (avatar != null) 'avatar': avatar,
+      };
       if (password != null && password.isNotEmpty) body['password'] = password;
 
       final response = await http.put(

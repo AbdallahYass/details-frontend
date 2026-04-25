@@ -569,7 +569,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                 const Icon(Icons.star_rounded, color: AppColors.gold, size: 20),
                 const SizedBox(width: 4),
                 Text(
-                  "4.8 (120)",
+                  "4.8 (120 ${AppLocalizations.of(context)!.translate('reviews')})",
                   style: TextStyle(
                     color: _dsBrown.withValues(alpha: 0.7),
                     fontSize: 14,

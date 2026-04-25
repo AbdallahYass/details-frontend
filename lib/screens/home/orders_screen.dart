@@ -20,6 +20,15 @@ class _OrdersScreenState extends State<OrdersScreen> {
     Future.delayed(Duration.zero, _fetchOrders);
   }
 
+  Color _parseColor(String? hex) {
+    if (hex == null || hex.isEmpty) return Colors.transparent;
+    try {
+      return Color(int.parse(hex.replaceFirst('#', '0xFF')));
+    } catch (_) {
+      return Colors.transparent;
+    }
+  }
+
   Future<void> _fetchOrders() async {
     setState(() => _isLoading = true);
     await Provider.of<OrdersProvider>(context, listen: false).fetchOrders();
@@ -262,14 +271,93 @@ class _OrdersScreenState extends State<OrdersScreen> {
                 ],
               ),
               children: order.products
-                  .map(
-                    (item) => ListTile(
-                      title: Text(item.title),
-                      subtitle: Text(
-                        '${item.quantity} x ${item.price} ${AppLocalizations.of(context)!.translate('currency')}',
+                  .map<Widget>(
+                    (item) => Container(
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
                       ),
-                      trailing: Text(
-                        '${(item.quantity * item.price).toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                      decoration: BoxDecoration(
+                        color: AppColors.lightGrey.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: CachedNetworkImage(
+                              imageUrl: item.imageUrl ?? '',
+                              width: 50,
+                              height: 50,
+                              fit: BoxFit.cover,
+                              errorWidget: (context, url, error) =>
+                                  const Icon(Icons.image_not_supported),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item.title,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    if (item.size != null)
+                                      Text(
+                                        '${item.size}  ',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    if (item.color != null)
+                                      Container(
+                                        width: 12,
+                                        height: 12,
+                                        decoration: BoxDecoration(
+                                          color: _parseColor(item.color),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Colors.black12,
+                                            width: 0.5,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '${(item.quantity * item.price).toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              Text(
+                                'x${item.quantity}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   )

@@ -1,115 +1,172 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-
-class Address {
-  final String id;
-  final String city;
-  final String street;
-  final String phone;
-
-  Address({
-    required this.id,
-    required this.city,
-    required this.street,
-    required this.phone,
-  });
-
-  factory Address.fromJson(Map<String, dynamic> json) {
-    return Address(
-      id: json['id'] ?? json['_id'] ?? '',
-      city: json['city'] ?? '',
-      street: json['street'] ?? '',
-      phone: json['phone'] ?? '',
-    );
-  }
-}
+import 'package:details_app/models/address_model.dart';
+import 'package:details_app/providers/auth_provider.dart';
 
 class AddressesProvider with ChangeNotifier {
-  List<Address> _addresses = [];
+  List<AddressModel> _addresses = [];
   bool _isLoading = false;
+  String? _errorMessage;
+  AuthProvider? _auth; // لربط الـ Provider بالـ AuthProvider
 
-  List<Address> get addresses => _addresses;
+  List<AddressModel> get addresses => _addresses;
   bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
 
-  final String baseUrl = 'https://api.details-store.com/api';
+  // دالة لتحديث الـ AuthProvider عند تسجيل الدخول/الخروج
+  void updateAuth(AuthProvider? auth) {
+    _auth = auth;
+    if (_auth?.isAuthenticated == false) {
+      _addresses = []; // مسح العناوين عند تسجيل الخروج
+      notifyListeners();
+    }
+  }
 
-  Future<void> fetchAddresses(String token, {VoidCallback? onLogout}) async {
+  Future<void> fetchAddresses() async {
+    if (_auth == null || !_auth!.isAuthenticated) {
+      _addresses = [];
+      notifyListeners();
+      return;
+    }
+
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final url = Uri.parse('https://api.details-store.com/api/addresses');
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${_auth!.token}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        _addresses = data.map((json) => AddressModel.fromJson(json)).toList();
+      } else {
+        _errorMessage =
+            json.decode(response.body)['message'] ??
+            'Failed to fetch addresses';
+      }
+    } catch (e) {
+      _errorMessage = 'Error: $e';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> addAddress(AddressModel address) async {
+    if (_auth == null || !_auth!.isAuthenticated) return false;
+
     _isLoading = true;
     notifyListeners();
 
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/addresses'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-
-      if (response.statusCode == 200) {
-        final List data = json.decode(response.body);
-        _addresses = data.map((json) => Address.fromJson(json)).toList();
-      } else if (response.statusCode == 401) {
-        onLogout?.call();
-      }
-    } catch (e) {
-      debugPrint('Error fetching addresses: $e');
-    }
-
-    _isLoading = false;
-    notifyListeners();
-  }
-
-  Future<bool> addAddress(
-    String token,
-    String city,
-    String street,
-    String phone, {
-    VoidCallback? onLogout,
-  }) async {
-    try {
+      final url = Uri.parse('https://api.details-store.com/api/addresses');
       final response = await http.post(
-        Uri.parse('$baseUrl/addresses'),
+        url,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
+          'Authorization': 'Bearer ${_auth!.token}',
         },
-        body: json.encode({'city': city, 'street': street, 'phone': phone}),
+        body: json.encode(address.toJson()),
       );
 
       if (response.statusCode == 201) {
-        final newAddress = Address.fromJson(json.decode(response.body));
-        _addresses.insert(0, newAddress); // Add to the beginning of the list
-        notifyListeners();
+        await fetchAddresses();
         return true;
-      } else if (response.statusCode == 401) {
-        onLogout?.call();
       }
+      return false;
     } catch (e) {
-      debugPrint('Error adding address: $e');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
-    return false;
   }
 
-  Future<bool> deleteAddress(
-    String token,
-    String addressId, {
-    VoidCallback? onLogout,
-  }) async {
+  Future<bool> updateAddress(AddressModel address) async {
+    if (_auth == null || !_auth!.isAuthenticated) return false;
+
+    _isLoading = true;
+    notifyListeners();
+
     try {
-      final response = await http.delete(
-        Uri.parse('$baseUrl/addresses/$addressId'),
-        headers: {'Authorization': 'Bearer $token'},
+      final url = Uri.parse(
+        'https://api.details-store.com/api/addresses/${address.id}',
+      );
+      final response = await http.put(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${_auth!.token}',
+        },
+        body: json.encode(address.toJson()),
       );
 
       if (response.statusCode == 200) {
-        _addresses.removeWhere((addr) => addr.id == addressId);
-        notifyListeners();
+        await fetchAddresses();
         return true;
-      } else if (response.statusCode == 401) {
-        onLogout?.call();
       }
+      return false;
     } catch (e) {
-      debugPrint('Error deleting address: $e');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
-    return false;
+  }
+
+  Future<bool> deleteAddress(String addressId) async {
+    if (_auth == null || !_auth!.isAuthenticated) return false;
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final url = Uri.parse(
+        'https://api.details-store.com/api/addresses/$addressId',
+      );
+      final response = await http.delete(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${_auth!.token}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        await fetchAddresses();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> setAsDefault(String addressId) async {
+    try {
+      final address = _addresses.firstWhere((a) => a.id == addressId);
+      final updated = AddressModel(
+        id: address.id,
+        name: address.name,
+        phone: address.phone,
+        city: address.city,
+        street: address.street,
+        isDefault: true,
+      );
+      return await updateAddress(updated);
+    } catch (e) {
+      return false;
+    }
   }
 }

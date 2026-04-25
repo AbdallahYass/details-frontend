@@ -7,6 +7,7 @@ import 'package:details_app/l10n/app_localizations.dart';
 import 'package:details_app/widgets/custom_loading_overlay.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -102,8 +103,15 @@ class _ProfileScreenState extends State<ProfileScreen>
         ),
         body: Stack(
           children: [
-            Positioned.fill(
-              child: Image.asset('assets/images/bg.png', fit: BoxFit.cover),
+            Container(
+              width: double.infinity,
+              height: double.infinity,
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/bg.png'),
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
             // --- خلفية متحركة ---
             Positioned(
@@ -187,14 +195,23 @@ class _ProfileScreenState extends State<ProfileScreen>
                                     width: 2,
                                   ),
                                 ),
-                                child: const CircleAvatar(
+                                child: CircleAvatar(
                                   radius: 50,
                                   backgroundColor: AppColors.lightGrey,
-                                  child: Icon(
-                                    Icons.person,
-                                    size: 50,
-                                    color: AppColors.primary,
-                                  ),
+                                  backgroundImage:
+                                      (user.avatar != null &&
+                                          user.avatar!.isNotEmpty)
+                                      ? CachedNetworkImageProvider(user.avatar!)
+                                      : null,
+                                  child:
+                                      (user.avatar == null ||
+                                          user.avatar!.isEmpty)
+                                      ? const Icon(
+                                          Icons.person,
+                                          size: 50,
+                                          color: AppColors.primary,
+                                        )
+                                      : null,
                                 ),
                               ),
                               const SizedBox(height: 20),
@@ -224,7 +241,15 @@ class _ProfileScreenState extends State<ProfileScreen>
                                   ),
                                 ),
                               ],
-                              const SizedBox(height: 40),
+                              const SizedBox(height: 30),
+
+                              // --- قسم نشاطي التجاري ---
+                              _buildSectionHeader(
+                                context,
+                                AppLocalizations.of(
+                                  context,
+                                )!.translate('my_activity'),
+                              ),
                               _buildMenuCard(
                                 icon: Icons.shopping_bag_outlined,
                                 title: AppLocalizations.of(
@@ -233,6 +258,83 @@ class _ProfileScreenState extends State<ProfileScreen>
                                 onTap: () => context.push('/orders'),
                               ),
                               const SizedBox(height: 15),
+                              _buildMenuCard(
+                                icon: Icons.favorite_border,
+                                title: AppLocalizations.of(
+                                  context,
+                                )!.translate('nav_wishlist'),
+                                onTap: () => context.push('/wishlist'),
+                              ),
+                              const SizedBox(height: 15),
+                              _buildMenuCard(
+                                icon: Icons.location_on_outlined,
+                                title: AppLocalizations.of(
+                                  context,
+                                )!.translate('saved_addresses'),
+                                onTap: () => context.push('/addresses'),
+                              ),
+
+                              const SizedBox(height: 25),
+
+                              // --- قسم الإعدادات ---
+                              _buildSectionHeader(
+                                context,
+                                AppLocalizations.of(
+                                  context,
+                                )!.translate('account_settings'),
+                              ),
+                              _buildMenuCard(
+                                icon: Icons.person_outline,
+                                title: AppLocalizations.of(
+                                  context,
+                                )!.translate('edit_profile'),
+                                onTap: () => context.push('/edit-profile'),
+                              ),
+                              const SizedBox(height: 15),
+                              _buildMenuCard(
+                                icon: Icons.info_outline,
+                                title: AppLocalizations.of(
+                                  context,
+                                )!.translate('about_title'),
+                                onTap: () => context.push('/about'),
+                              ),
+                              const SizedBox(height: 25),
+                              // --- إعدادات الإشعارات ---
+                              _buildSectionHeader(
+                                context,
+                                AppLocalizations.of(
+                                  context,
+                                )!.translate('notification_settings'),
+                              ),
+                              _buildNotificationToggle(context, user),
+                              const SizedBox(height: 25),
+
+                              // --- حذف الحساب ---
+                              _buildSectionHeader(
+                                context,
+                                AppLocalizations.of(
+                                  context,
+                                )!.translate('account_management'),
+                              ),
+                              _buildMenuCard(
+                                icon: Icons.delete_forever,
+                                title: AppLocalizations.of(
+                                  context,
+                                )!.translate('delete_account'),
+                                isDestructive: true,
+                                onTap: () => _confirmDeleteAccount(context),
+                              ),
+                              const SizedBox(height: 25),
+
+                              // --- تسجيل الخروج ---
+                              _buildSectionHeader(
+                                context,
+                                AppLocalizations.of(
+                                  context,
+                                )!.translate('session_management'),
+                              ),
+
+                              // --- تسجيل الخروج ---
                               _buildMenuCard(
                                 icon: Icons.logout,
                                 title: AppLocalizations.of(
@@ -257,6 +359,140 @@ class _ProfileScreenState extends State<ProfileScreen>
             if (_isLoading) const CustomLoadingOverlay(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12.0, left: 4, right: 4),
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: AppColors.primary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteAccount(BuildContext context) async {
+    final loc = AppLocalizations.of(context)!;
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+
+    final showConfirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(loc.translate('delete_account_confirm_title')),
+        content: Text(loc.translate('delete_account_confirm_message')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(loc.translate('cancel')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: Text(loc.translate('delete')),
+          ),
+        ],
+      ),
+    );
+
+    if (showConfirm == true && mounted) {
+      setState(() => _isLoading = true);
+
+      final success = await auth.deleteAccount();
+      if (mounted) {
+        setState(() => _isLoading = false);
+        if (success) {
+          router.go('/');
+        } else {
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(
+                auth.errorMessage ?? loc.translate('error_occurred'),
+              ),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  Widget _buildNotificationToggle(BuildContext context, User user) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(
+          color: const Color(0xFFB89560).withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: SwitchListTile(
+        title: Text(
+          AppLocalizations.of(context)!.translate('receive_promotions'),
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        value: user.receiveNotifications ?? true, // افتراضياً true
+        onChanged: (bool newValue) async {
+          setState(() => _isLoading = true);
+          final scaffoldMessenger = ScaffoldMessenger.of(context);
+          final loc = AppLocalizations.of(context)!;
+
+          final success = await authProvider.updateProfile(
+            name: user.name,
+            phone: user.phone,
+            email: user.email,
+            avatar: user.avatar,
+            receiveNotifications: newValue,
+          );
+
+          if (mounted) {
+            setState(() => _isLoading = false);
+            if (success) {
+              scaffoldMessenger.showSnackBar(
+                SnackBar(
+                  content: Text(loc.translate('update_success')),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+            } else {
+              scaffoldMessenger.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    authProvider.errorMessage ??
+                        loc.translate('error_occurred'),
+                  ),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+          }
+        },
+        activeThumbColor: AppColors.primary,
+        inactiveTrackColor: AppColors.lightGrey,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }

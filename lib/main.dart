@@ -48,7 +48,10 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => LanguageProvider(savedLanguage)),
-        ChangeNotifierProvider(create: (_) => AddressesProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, AddressesProvider>(
+          create: (_) => AddressesProvider(),
+          update: (_, auth, addresses) => addresses!..updateAuth(auth),
+        ),
         ChangeNotifierProvider(create: (_) => HomeProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),

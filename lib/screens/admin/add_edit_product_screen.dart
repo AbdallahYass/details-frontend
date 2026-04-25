@@ -691,7 +691,9 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                       labelText: AppLocalizations.of(
                         context,
                       )!.translate('brand'),
-                      hintText: 'DETAILS',
+                      hintText: AppLocalizations.of(
+                        context,
+                      )!.translate('app_name'),
                     ),
                   ),
                   const SizedBox(height: 10),

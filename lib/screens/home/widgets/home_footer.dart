@@ -94,12 +94,16 @@ class HomeFooter extends StatelessWidget {
                   customChildren: [
                     _buildLanguageItem(
                       context,
-                      'العربية',
+                      AppLocalizations.of(context)!.locale.languageCode == 'ar'
+                          ? 'العربية'
+                          : 'Arabic',
                       const Locale('ar', ''),
                     ),
                     _buildLanguageItem(
                       context,
-                      'English',
+                      AppLocalizations.of(context)!.locale.languageCode == 'ar'
+                          ? 'الإنجليزية'
+                          : 'English',
                       const Locale('en', ''),
                     ),
                   ],
