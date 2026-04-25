@@ -231,7 +231,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 _buildAdminCard(
                   context,
-                  'إرسال إشعار',
+                  AppLocalizations.of(context)!.translate('send_notification'),
                   Icons.notifications_active_outlined,
                   AppColors.primary,
                   () => Navigator.push(
@@ -240,7 +240,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       builder: (_) => const SendNotificationScreen(),
                     ),
                   ),
-                  'رسالة منبثقة للجميع',
+                  AppLocalizations.of(context)!.translate('broadcast_msg'),
                 ),
               ],
             ),

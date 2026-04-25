@@ -210,10 +210,10 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       'shippingAddress': {
         'city': _isDelivery
             ? (_selectedCity ?? '')
-            : localizations.translate('pickup'),
+            : localizations.translate('pickup_from_store'),
         'street': _isDelivery
             ? _streetController.text
-            : localizations.translate('pickup_from_store'),
+            : localizations.translate('main_branch'),
         'phone': _phoneController.text,
       },
       'payment_method': _paymentMethod,
@@ -935,6 +935,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
   }
 
   Widget _buildCityDropdown() {
+    final loc = AppLocalizations.of(context)!;
     List<DropdownMenuItem<String>> items = [];
 
     // الضفة الغربية
@@ -943,7 +944,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
         value: 'header_wb',
         enabled: false,
         child: Text(
-          AppLocalizations.of(context)!.translate('west_bank_header'),
+          loc.translate('west_bank_header'),
           style: const TextStyle(
             color: Colors.grey,
             fontWeight: FontWeight.bold,
@@ -997,7 +998,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
         DropdownMenuItem(
           value: city,
           child: Text(
-            city,
+            _getCityTranslation(city, loc),
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
         ),
@@ -1010,7 +1011,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
         value: 'header_j',
         enabled: false,
         child: Text(
-          AppLocalizations.of(context)!.translate('jerusalem_header'),
+          loc.translate('jerusalem_header'),
           style: const TextStyle(
             color: Colors.grey,
             fontWeight: FontWeight.bold,
@@ -1024,7 +1025,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
         DropdownMenuItem(
           value: city,
           child: Text(
-            city,
+            _getCityTranslation(city, loc),
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
         ),
@@ -1037,7 +1038,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
         value: 'header_48',
         enabled: false,
         child: Text(
-          AppLocalizations.of(context)!.translate('inside_shipping_header'),
+          loc.translate('inside_shipping_header'),
           style: const TextStyle(
             color: Colors.grey,
             fontWeight: FontWeight.bold,
@@ -1078,7 +1079,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
         DropdownMenuItem(
           value: city,
           child: Text(
-            city,
+            _getCityTranslation(city, loc),
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
         ),
@@ -1089,7 +1090,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       initialValue: _selectedCity,
       icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.primary),
       decoration: InputDecoration(
-        labelText: AppLocalizations.of(context)!.translate('city'),
+        labelText: loc.translate('city'),
         prefixIcon: const Icon(Icons.location_city, color: AppColors.primary),
         filled: true,
         fillColor: AppColors.white,
@@ -1126,11 +1127,25 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       },
       validator: (value) {
         if (value == null || value.isEmpty || value.startsWith('header_')) {
-          return AppLocalizations.of(context)!.translate('required_field');
+          return loc.translate('required_field');
         }
         return null;
       },
     );
+  }
+
+  String _getCityTranslation(String city, AppLocalizations loc) {
+    final Map<String, String> cityKeys = {
+      'رام الله': 'ramallah',
+      'نابلس': 'nablus',
+      'الخليل': 'hebron',
+      'القدس': 'jerusalem',
+      'حيفا': 'haifa',
+    };
+    if (cityKeys.containsKey(city)) {
+      return loc.translate(cityKeys[city]!);
+    }
+    return city; // Fallback
   }
 
   Widget _buildTextField({

@@ -174,11 +174,11 @@ class _CartScreenState extends State<CartScreen> {
               ...adjustedItems.map((item) {
                 String label = item;
                 if (item.contains('(out_of_stock)')) {
-                  final title = item.replaceAll(' (out_of_stock)', '');
+                  final title = item.split('(').first.trim();
                   label =
                       '$title (${AppLocalizations.of(context)!.translate('out_of_stock')})';
                 } else if (item.contains('(quantity_updated)')) {
-                  final title = item.replaceAll(' (quantity_updated)', '');
+                  final title = item.split('(').first.trim();
                   label =
                       '$title (${AppLocalizations.of(context)!.translate('quantity_updated')})';
                 }

@@ -49,8 +49,7 @@ class AddressesProvider with ChangeNotifier {
         _addresses = data.map((json) => AddressModel.fromJson(json)).toList();
       } else {
         _errorMessage =
-            json.decode(response.body)['message'] ??
-            'Failed to fetch addresses';
+            json.decode(response.body)['message'] ?? 'error_fetch_addresses';
       }
     } catch (e) {
       _errorMessage = 'Error: $e';
@@ -83,7 +82,7 @@ class AddressesProvider with ChangeNotifier {
         return true;
       } else {
         final data = json.decode(response.body);
-        _errorMessage = data['message'] ?? 'Failed to add address';
+        _errorMessage = data['message'] ?? 'error_add_address';
         return false;
       }
     } catch (e) {

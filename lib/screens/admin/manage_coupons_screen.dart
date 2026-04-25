@@ -246,8 +246,8 @@ class _ManageCouponsScreenState extends State<ManageCouponsScreen> {
                   ),
                   subtitle: Text(
                     coupon['discountType'] == 'percentage'
-                        ? '${coupon['value']}% - Used: ${coupon['usedCount']}'
-                        : '${coupon['value']} ${AppLocalizations.of(context)!.translate('currency')} - Used: ${coupon['usedCount']}',
+                        ? '${coupon['value']}% - ${AppLocalizations.of(context)!.translate('used_label')}: ${coupon['usedCount']}'
+                        : '${coupon['value']} ${AppLocalizations.of(context)!.translate('currency')} - ${AppLocalizations.of(context)!.translate('used_label')}: ${coupon['usedCount']}',
                   ),
                   trailing: IconButton(
                     icon: const Icon(

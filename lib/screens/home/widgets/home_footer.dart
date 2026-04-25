@@ -18,9 +18,9 @@ class HomeFooter extends StatelessWidget {
       child: Column(
         children: [
           // Branding
-          const Text(
-            'DETAILS',
-            style: TextStyle(
+          Text(
+            AppLocalizations.of(context)!.translate('details_branding'),
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 26,
               fontWeight: FontWeight.w900,
@@ -28,7 +28,7 @@ class HomeFooter extends StatelessWidget {
             ),
           ),
           Text(
-            'STORE',
+            AppLocalizations.of(context)!.translate('store_branding'),
             style: TextStyle(
               color: AppColors.secondary,
               fontSize: 12,
@@ -94,16 +94,12 @@ class HomeFooter extends StatelessWidget {
                   customChildren: [
                     _buildLanguageItem(
                       context,
-                      AppLocalizations.of(context)!.locale.languageCode == 'ar'
-                          ? 'العربية'
-                          : 'Arabic',
+                      AppLocalizations.of(context)!.translate('lang_ar'),
                       const Locale('ar', ''),
                     ),
                     _buildLanguageItem(
                       context,
-                      AppLocalizations.of(context)!.locale.languageCode == 'ar'
-                          ? 'الإنجليزية'
-                          : 'English',
+                      AppLocalizations.of(context)!.translate('lang_en'),
                       const Locale('en', ''),
                     ),
                   ],
@@ -181,7 +177,9 @@ class HomeFooter extends StatelessWidget {
           showDialog(
             context: context,
             builder: (c) => AlertDialog(
-              title: Text(title),
+              title: Text(
+                '$title - ${AppLocalizations.of(context)!.translate('app_name')}',
+              ),
               content: Text(title),
               actions: [
                 TextButton(

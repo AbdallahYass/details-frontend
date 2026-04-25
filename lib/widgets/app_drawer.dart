@@ -154,10 +154,9 @@ class AppDrawer extends StatelessWidget {
                     const SizedBox(height: 15),
                     Text(
                       auth.isAuthenticated
-                          ? (auth.user?.name ?? 'User')
-                          : AppLocalizations.of(
-                              context,
-                            )!.translate('welcome_guest'),
+                          ? (auth.user?.name ??
+                                loc.translate('default_user_name'))
+                          : loc.translate('welcome_guest'),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -314,7 +313,7 @@ class AppDrawer extends StatelessWidget {
                     _drawerTile(
                       context,
                       icon: FontAwesomeIcons.whatsapp,
-                      title: 'WhatsApp',
+                      title: loc.translate('whatsapp'),
                       onTap: () async {
                         Navigator.pop(context);
                         final Uri url = Uri.parse('https://wa.me/972598723438');

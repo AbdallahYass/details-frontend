@@ -20,6 +20,21 @@ class _OrdersScreenState extends State<OrdersScreen> {
     Future.delayed(Duration.zero, _fetchOrders);
   }
 
+  String _getStatusTranslation(String status, AppLocalizations loc) {
+    switch (status) {
+      case 'قيد التجهيز':
+        return loc.translate('status_processing');
+      case 'تم الشحن':
+        return loc.translate('status_shipped');
+      case 'تم التوصيل':
+        return loc.translate('status_delivered');
+      case 'ملغي':
+        return loc.translate('status_cancelled');
+      default:
+        return status;
+    }
+  }
+
   Color _parseColor(String? hex) {
     if (hex == null || hex.isEmpty) return Colors.transparent;
     try {
@@ -240,7 +255,10 @@ class _OrdersScreenState extends State<OrdersScreen> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          order.status,
+                          _getStatusTranslation(
+                            order.status,
+                            AppLocalizations.of(context)!,
+                          ),
                           style: TextStyle(
                             color: _getStatusColor(order.status),
                             fontSize: 12,
