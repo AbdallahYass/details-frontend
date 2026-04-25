@@ -437,8 +437,8 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         'featured': _isFeatured,
         'images': allImages,
         'colors': _colors
-            .map((c) => {'hex': c.hex, 'images': c.images})
-            .toList(), // ضمان صحة الألوان
+            .map((c) => c.toJson())
+            .toList(), // استخدام toJson الخاص بالموديل
         'sizes': _availableSizes, // للمقاسات المعروضة
         'variants': _variants.map((v) => v.toJson()).toList(), // المخزون الفعلي
       };
