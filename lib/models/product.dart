@@ -158,9 +158,12 @@ class Product {
   // الدالة الجديدة لتحويل المنتج إلى نص وحفظه في الجهاز
   Map<String, dynamic> toJson() {
     return {
-      '_id': id,
+      // لا ترسل الـ ID داخل الـ body عند التعديل، السيرفر يأخذه من الرابط (URL)
+      // '_id': id,
       'name': name,
-      'description': description,
+      'description': description.isNotEmpty
+          ? description
+          : {'ar': '', 'en': ''},
       'price': price,
       'oldPrice': oldPrice,
       'imageUrl': imageUrl,

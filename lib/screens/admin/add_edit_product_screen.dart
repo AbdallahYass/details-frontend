@@ -354,20 +354,31 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     try {
       String finalImageUrl = _imageController.text;
 
-      // حساب الكمية الإجمالية (إما من المتغيرات أو من الحقل العام)
+      // 1. تحديد ما إذا كان المنتج بسيطاً (بدون ألوان أو مقاسات محددة) بشكل أدق
+      final bool isSimpleProduct =
+          (_colors.isEmpty && _availableSizes.isEmpty) || _variants.isEmpty;
+
       int totalQuantity = 0;
-      if (_variants.isNotEmpty) {
+
+      // 2. إذا كان المنتج له متغيرات (ألوان/مقاسات)، نعتمد مجموع قيم الجدول
+      if (!isSimpleProduct) {
         totalQuantity = _variants.fold<int>(
           0,
           (sum, v) => sum + (int.tryParse(v.quantityController.text) ?? 0),
         );
       } else {
+        // 3. إذا كان منتجاً بسيطاً، نعتمد القيمة المكتوبة في بوكس الكمية الرئيسي
         totalQuantity = int.tryParse(_quantityController.text) ?? 0;
       }
 
       // تجهيز قائمة الصور مع تجنب تكرار الصورة الرئيسية
       final List<String> allImages = [finalImageUrl];
       allImages.addAll(_galleryImages.where((img) => img != finalImageUrl));
+
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${auth.token}',
+      };
 
       // تحديد قيمة الكاتيجوري
       String? finalCategoryId = _selectedCategory;
@@ -376,10 +387,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         // إنشاء التصنيف في الباك إند أولاً للحصول على الـ ID الخاص به
         final catResponse = await http.post(
           Uri.parse('https://api.details-store.com/api/categories'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ${auth.token}',
-          },
+          headers: headers,
           body: json.encode({
             'name': {
               'ar': _newCategoryController.text.trim(),
@@ -408,39 +416,35 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
         throw Exception(loc.translate('select_category_error'));
       }
 
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${auth.token}',
-      };
-
       final Map<String, dynamic> requestBody = {
         'name': {
           'ar': _nameArController.text.trim(),
           'en': _nameEnController.text.trim(),
         },
-        'price': double.tryParse(_priceController.text) ?? 0.0,
+        'price': num.tryParse(_priceController.text) ?? 0,
         'oldPrice': _oldPriceController.text.isNotEmpty
-            ? double.tryParse(_oldPriceController.text)
+            ? num.tryParse(_oldPriceController.text)
             : null,
-        'quantity': totalQuantity,
+        'quantity': totalQuantity, // إرسال الكمية المحسوبة بدقة
         'description': {
           'ar': _descArController.text.trim(),
           'en': _descEnController.text.trim(),
         },
-        'brand': _brandController.text.isNotEmpty
-            ? _brandController.text.trim()
-            : 'DETAILS',
+        'brand': _brandController.text.trim().isEmpty
+            ? 'DETAILS'
+            : _brandController.text.trim(),
         'dimensions': _dimensionsController.text.trim(),
         'imageUrl': finalImageUrl,
         'category': finalCategoryId,
         'isSoldOut': _isSoldOut,
         'featured': _isFeatured,
         'images': allImages,
-        'colors': _colors
-            .map((c) => c.toJson())
-            .toList(), // استخدام toJson الخاص بالموديل
-        'sizes': _availableSizes, // للمقاسات المعروضة
-        'variants': _variants.map((v) => v.toJson()).toList(), // المخزون الفعلي
+        'colors': _colors.map((c) => c.toJson()).toList(),
+        'sizes': _availableSizes,
+        // إذا كان المنتج بسيطاً، نرسل [] لإخبار الباك إند ألا يبحث عن كميات في المتغيرات
+        'variants': isSimpleProduct
+            ? []
+            : _variants.map((v) => v.toJson()).toList(),
       };
 
       final bodyStr = json.encode(requestBody);
