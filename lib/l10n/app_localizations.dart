@@ -19,6 +19,8 @@ class AppLocalizations {
       'top_announcement_1': 'Free shipping on orders over 500 NIS',
       'top_announcement_2': '20% discount on new watch collection',
       'top_announcement_3': 'Flexible exchange policy within 14 days',
+      'delivery_regions_info':
+          'Delivery is available to all West Bank, Jerusalem, and Inside areas 🚛',
       'most_popular': 'Most Popular',
       'best_seller_week': 'Best sellers this week',
       'view_all': 'View All',
@@ -379,6 +381,7 @@ class AppLocalizations {
       'inside_shipping': '--- Inside (30 NIS) ---',
       'receive_promotions': 'Receive promotional messages and updates',
       'delete_account': 'Delete Account',
+      'no_notifications': 'No notifications yet',
     },
     'ar': {
       'app_name': 'متجر ديتيلز',
@@ -386,6 +389,8 @@ class AppLocalizations {
       'top_announcement_1': 'توصيل مجاني للطلبات فوق 500 شيكل',
       'top_announcement_2': 'خصم 20% على تشكيلة الساعات الجديدة',
       'top_announcement_3': 'سياسة استبدال مرنة خلال 14 يوماً',
+      'delivery_regions_info':
+          'التوصيل متاح لجميع مناطق الضفة والقدس والداخل 🚛',
       'most_popular': 'الأكثر شيوعاً',
       'best_seller_week': 'الأكثر مبيعاً هذا الأسبوع',
       'view_all': 'عرض الكل',
@@ -736,6 +741,7 @@ class AppLocalizations {
       'inside_shipping': '--- الداخل المحتل (30 شيكل) ---',
       'receive_promotions': 'أرغب في تلقي الرسائل الترويجية والتحديثات',
       'delete_account': 'حذف الحساب',
+      'no_notifications': 'لا توجد إشعارات بعد',
     },
   };
 

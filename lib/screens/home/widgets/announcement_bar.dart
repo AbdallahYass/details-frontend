@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:details_app/l10n/app_localizations.dart';
 
 class AnnouncementBar extends StatelessWidget {
   const AnnouncementBar({super.key});
@@ -32,10 +33,10 @@ class AnnouncementBar extends StatelessWidget {
             size: 20,
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
-              "التوصيل متاح لجميع مناطق الضفة والقدس والداخل 🚛",
-              style: TextStyle(
+              AppLocalizations.of(context)!.translate('delivery_regions_info'),
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
