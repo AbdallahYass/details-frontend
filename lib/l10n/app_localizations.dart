@@ -377,6 +377,8 @@ class AppLocalizations {
       'jerusalem_header': 'Jerusalem',
       'jerusalem_shipping': '--- Jerusalem (20 NIS) ---',
       'inside_shipping': '--- Inside (30 NIS) ---',
+      'receive_promotions': 'Receive promotional messages and updates',
+      'delete_account': 'Delete Account',
     },
     'ar': {
       'app_name': 'متجر ديتيلز',
@@ -732,6 +734,8 @@ class AppLocalizations {
       'jerusalem_header': 'القدس',
       'jerusalem_shipping': '--- القدس (20 شيكل) ---',
       'inside_shipping': '--- الداخل المحتل (30 شيكل) ---',
+      'receive_promotions': 'أرغب في تلقي الرسائل الترويجية والتحديثات',
+      'delete_account': 'حذف الحساب',
     },
   };
 
