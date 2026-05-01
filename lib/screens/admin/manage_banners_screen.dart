@@ -233,9 +233,7 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
                             items: _categories.map<DropdownMenuItem<String>>((
                               c,
                             ) {
-                              final name = c['name'] is Map
-                                  ? c['name']['ar']
-                                  : c['name'];
+                              final name = c['name']?.toString();
                               return DropdownMenuItem(
                                 value: c['_id'],
                                 child: Text(name ?? ''),
@@ -372,14 +370,10 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
                             ),
                             ListTile(
                               title: Text(
-                                banner['title'] is Map
-                                    ? (banner['title']['ar'] ??
-                                          AppLocalizations.of(
-                                            context,
-                                          )!.translate('banner_default_title'))
-                                    : AppLocalizations.of(
-                                        context,
-                                      )!.translate('banner_default_title'),
+                                banner['title']?.toString() ??
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.translate('banner_default_title'),
                               ),
                               subtitle: Text(
                                 '${AppLocalizations.of(context)!.translate('location_label')} ${banner['location'] ?? 'home'}',

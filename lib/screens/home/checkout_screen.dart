@@ -125,20 +125,6 @@ class _CheckoutScreenState extends State<CheckoutScreen>
 
     // 1. التحقق من تسجيل الدخول
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    if (!auth.isAuthenticated) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context)!.translate('please_login'),
-          ),
-          action: SnackBarAction(
-            label: AppLocalizations.of(context)!.translate('login_button'),
-            onPressed: () => context.push('/login'),
-          ),
-        ),
-      );
-      return;
-    }
 
     if (!_formKey.currentState!.validate()) return;
 
@@ -155,7 +141,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     final cart = Provider.of<CartProvider>(context, listen: false);
     if (cart.items.isEmpty) return;
 
-    if (_saveAddress && _isDelivery) {
+    if (_saveAddress && _isDelivery && auth.isAuthenticated) {
       await addressesProvider.addAddress(
         AddressModel(
           id: '', // سيتم توليده في الباك إند
@@ -208,6 +194,8 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       'deliveryFee': _deliveryFee, // إضافة سعر التوصيل كحقل منفصل
       'amount': cart.totalAmount + _deliveryFee, // المجموع النهائي شامل التوصيل
       'shippingAddress': {
+        'name':
+            auth.user?.name ?? 'Guest User', // إرسال الاسم حتى لو كان زائراً
         'city': _isDelivery
             ? (_selectedCity ?? '')
             : localizations.translate('pickup_from_store'),
@@ -217,6 +205,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
         'phone': _phoneController.text,
       },
       'payment_method': _paymentMethod,
+      'isGuest': !auth.isAuthenticated, // إرسال حالة "طلب زائر" للباك إند
     };
 
     try {

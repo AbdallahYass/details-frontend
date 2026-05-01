@@ -3,13 +3,32 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:details_app/models/order_model.dart';
 import 'package:details_app/providers/cart_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class OrdersProvider with ChangeNotifier {
   List<OrderModel> _orders = [];
   String? _token;
   VoidCallback? _onLogout; // لحفظ دالة تسجيل الخروج
+  List<String> _guestOrderIds = [];
 
   List<OrderModel> get orders => [..._orders];
+
+  OrdersProvider() {
+    _loadGuestOrderIds();
+  }
+
+  // تحميل أرقام طلبات الزوار من ذاكرة الهاتف
+  Future<void> _loadGuestOrderIds() async {
+    final prefs = await SharedPreferences.getInstance();
+    _guestOrderIds = prefs.getStringList('guest_order_ids') ?? [];
+  }
+
+  // حفظ رقم طلب جديد للزائر في الذاكرة
+  Future<void> _saveGuestOrderId(String id) async {
+    _guestOrderIds.add(id);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('guest_order_ids', _guestOrderIds);
+  }
 
   void updateToken(String? token, {VoidCallback? onLogout}) {
     final bool isNewToken = _token != token;
@@ -19,17 +38,29 @@ class OrdersProvider with ChangeNotifier {
     if (token != null) {
       if (isNewToken) fetchOrders();
     } else {
-      _orders = []; // مسح القائمة عند تسجيل الخروج
-      notifyListeners();
+      fetchOrders(); // محاولة جلب طلبات الزوار إذا كان مسجل خروج
     }
   }
 
   Future<void> fetchOrders() async {
-    if (_token == null) return;
+    // إذا لم يكن مسجلاً وليس لديه طلبات زوار، لا نفعل شيئاً
+    if (_token == null && _guestOrderIds.isEmpty) {
+      _orders = [];
+      notifyListeners();
+      return;
+    }
+
     try {
+      // تحديد الرابط: إذا كان زائر نرسل أرقام الطلبات في الـ Query
+      final url = _token != null
+          ? Uri.parse('https://api.details-store.com/api/orders')
+          : Uri.parse(
+              'https://api.details-store.com/api/orders/guest?ids=${_guestOrderIds.join(',')}',
+            );
+
       final response = await http.get(
-        Uri.parse('https://api.details-store.com/api/orders'),
-        headers: {'Authorization': 'Bearer $_token'},
+        url,
+        headers: _token != null ? {'Authorization': 'Bearer $_token'} : {},
       );
 
       if (response.statusCode == 200) {
@@ -38,11 +69,9 @@ class OrdersProvider with ChangeNotifier {
 
         for (var item in data) {
           try {
-            // 🌟 معالجة مرنة للحقول: فحص totalAmount و amount لتجنب الخطأ
+            // 🌟 جلب مبلغ الطلب النهائي (المجموع بعد الخصم)
             final double orderAmount =
-                (item['totalAmount'] as num?)?.toDouble() ??
-                (item['amount'] as num?)?.toDouble() ??
-                0.0;
+                (item['amount'] as num?)?.toDouble() ?? 0.0;
 
             final List<dynamic> productsData = item['products'] as List? ?? [];
 
@@ -86,20 +115,26 @@ class OrdersProvider with ChangeNotifier {
   }
 
   Future<bool> addOrder(Map<String, dynamic> orderPayload) async {
-    if (_token == null) return false;
     try {
       final url = Uri.parse('https://api.details-store.com/api/orders');
       final response = await http.post(
         url,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_token',
+          if (_token != null) 'Authorization': 'Bearer $_token',
         },
         body: json.encode(orderPayload),
       );
 
       if (response.statusCode == 201) {
-        await fetchOrders();
+        final responseData = json.decode(response.body);
+
+        // إذا كان الطلب كزائر، نحفظ المعرف في الذاكرة المحلية
+        if (_token == null && responseData['_id'] != null) {
+          await _saveGuestOrderId(responseData['_id']);
+        }
+
+        await fetchOrders(); // تحديث القائمة فوراً
         return true;
       } else if (response.statusCode == 401) {
         _onLogout?.call(); // طرد المستخدم فوراً

@@ -1099,9 +1099,7 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                         )!.translate('select_category'),
                       ),
                       items: _categories.map<DropdownMenuItem<String>>((c) {
-                        final name = c['name'] is Map
-                            ? c['name']['ar']
-                            : c['name'];
+                        final name = c['name']?.toString();
                         return DropdownMenuItem(
                           value: c['_id'],
                           child: Text(
