@@ -64,35 +64,52 @@ class OrdersProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
+        final decoded = json.decode(response.body);
+
+        // Defensive check: Ensure the response is actually a List
+        if (decoded is! List) {
+          debugPrint('Expected List from API but got: ${decoded.runtimeType}');
+          _orders = [];
+          notifyListeners();
+          return;
+        }
+
+        final List<dynamic> data = decoded;
         final List<OrderModel> loadedOrders = [];
 
         for (var item in data) {
+          if (item is! Map<String, dynamic>) continue;
           try {
             // 🌟 جلب مبلغ الطلب النهائي (المجموع بعد الخصم)
             final double orderAmount =
                 (item['amount'] as num?)?.toDouble() ?? 0.0;
-
-            final List<dynamic> productsData = item['products'] as List? ?? [];
+            final List<dynamic> productsData =
+                (item['products'] as List?) ?? [];
 
             loadedOrders.add(
               OrderModel(
                 id: item['_id']?.toString() ?? '',
                 amount: orderAmount,
-                products: productsData.map((p) {
-                  return CartItem(
-                    id: p['id']?.toString() ?? '',
-                    productId:
-                        p['productId']?.toString() ?? p['id']?.toString() ?? '',
-                    title: p['title'] ?? '',
-                    quantity: (p['quantity'] as num?)?.toInt() ?? 1,
-                    price: (p['price'] as num?)?.toDouble() ?? 0.0,
-                    imageUrl: p['imageUrl'] ?? '',
-                    size: p['size'],
-                    color: p['color'],
-                    withBox: p['withBox'] ?? false,
-                  );
-                }).toList(),
+                products: productsData
+                    .map((p) {
+                      if (p is! Map<String, dynamic>) return null;
+                      return CartItem(
+                        id: p['id']?.toString() ?? '',
+                        productId:
+                            p['productId']?.toString() ??
+                            p['id']?.toString() ??
+                            '',
+                        title: p['title'] ?? '',
+                        quantity: (p['quantity'] as num?)?.toInt() ?? 1,
+                        price: (p['price'] as num?)?.toDouble() ?? 0.0,
+                        imageUrl: p['imageUrl'] ?? '',
+                        size: p['size'],
+                        color: p['color'],
+                        withBox: p['withBox'] ?? false,
+                      );
+                    })
+                    .whereType<CartItem>()
+                    .toList(),
                 dateTime: item['createdAt'] != null
                     ? DateTime.parse(item['createdAt'])
                     : DateTime.now(),
