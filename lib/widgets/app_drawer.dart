@@ -193,6 +193,28 @@ class AppDrawer extends StatelessWidget {
                       ),
                       _drawerTile(
                         context,
+                        icon: Icons.shopping_bag_outlined,
+                        title: AppLocalizations.of(
+                          context,
+                        )!.translate('my_orders'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          context.push('/orders');
+                        },
+                      ),
+                      _drawerTile(
+                        context,
+                        icon: Icons.location_on_outlined,
+                        title: AppLocalizations.of(
+                          context,
+                        )!.translate('saved_addresses'),
+                        onTap: () {
+                          Navigator.pop(context);
+                          context.push('/addresses');
+                        },
+                      ),
+                      _drawerTile(
+                        context,
                         icon: Icons.login,
                         title: AppLocalizations.of(
                           context,
@@ -248,9 +270,7 @@ class AppDrawer extends StatelessWidget {
                         )!.translate('saved_addresses'),
                         onTap: () {
                           Navigator.pop(context);
-                          context.push(
-                            '/addresses',
-                          ); // المسار الخاص بصفحة العناوين
+                          context.push('/addresses');
                         },
                       ),
                     ],
