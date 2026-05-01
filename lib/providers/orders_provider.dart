@@ -188,7 +188,7 @@ class OrdersProvider with ChangeNotifier {
         url,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $_token',
+          if (_token != null) 'Authorization': 'Bearer $_token',
         },
         body: json.encode({'status': newStatus}),
       );

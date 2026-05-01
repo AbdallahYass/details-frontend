@@ -235,8 +235,10 @@ class AuthProvider with ChangeNotifier {
 
     try {
       // أهم سطر لمنع الدخول التلقائي بحساب محذوف
-      if (await _googleSignIn.isSignedIn()) {
-        await _googleSignIn.disconnect();
+      final bool isGoogleSigned = await _googleSignIn.isSignedIn();
+      if (isGoogleSigned || _googleSignIn.currentUser != null) {
+        await _googleSignIn.signOut();
+        await _googleSignIn.disconnect().catchError((_) => null);
       }
     } catch (e) {
       debugPrint('Google Disconnect Error: $e');
