@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class OrdersProvider with ChangeNotifier {
   List<OrderModel> _orders = [];
   String? _token;
+  bool _isAdmin = false;
   VoidCallback? _onLogout; // لحفظ دالة تسجيل الخروج
   List<String> _guestOrderIds = [];
 
@@ -30,9 +31,14 @@ class OrdersProvider with ChangeNotifier {
     await prefs.setStringList('guest_order_ids', _guestOrderIds);
   }
 
-  void updateToken(String? token, {VoidCallback? onLogout}) {
-    final bool isNewToken = _token != token;
+  void updateToken(
+    String? token, {
+    bool isAdmin = false,
+    VoidCallback? onLogout,
+  }) {
+    final bool isNewToken = _token != token || _isAdmin != isAdmin;
     _token = token;
+    _isAdmin = isAdmin;
     _onLogout = onLogout;
 
     if (token != null) {
@@ -53,7 +59,9 @@ class OrdersProvider with ChangeNotifier {
     try {
       // تحديد الرابط: إذا كان زائر نرسل أرقام الطلبات في الـ Query
       final url = _token != null
-          ? Uri.parse('https://api.details-store.com/api/orders')
+          ? (_isAdmin
+                ? Uri.parse('https://api.details-store.com/api/admin/orders')
+                : Uri.parse('https://api.details-store.com/api/orders'))
           : Uri.parse(
               'https://api.details-store.com/api/orders/guest?ids=${_guestOrderIds.join(',')}',
             );
@@ -166,11 +174,16 @@ class OrdersProvider with ChangeNotifier {
 
   // دالة لتحديث حالة الطلب (مثل الإلغاء من قبل المستخدم)
   Future<void> updateOrderStatus(String orderId, String newStatus) async {
-    if (_token == null) return;
+    if (_token == null && !_guestOrderIds.contains(orderId)) return;
     try {
-      final url = Uri.parse(
-        'https://api.details-store.com/api/orders/$orderId/status',
-      );
+      final url = _isAdmin
+          ? Uri.parse(
+              'https://api.details-store.com/api/admin/orders/$orderId/status',
+            )
+          : Uri.parse(
+              'https://api.details-store.com/api/orders/$orderId/status',
+            );
+
       final response = await http.patch(
         url,
         headers: {

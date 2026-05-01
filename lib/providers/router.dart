@@ -46,7 +46,26 @@ final router = GoRouter(
       branches: [
         StatefulShellBranch(
           routes: [
-            GoRoute(path: '/', builder: (context, state) => const HomePage()),
+            GoRoute(
+              path: '/',
+              builder: (context, state) => const HomePage(),
+              routes: [
+                GoRoute(
+                  path: 'orders',
+                  builder: (context, state) => const OrdersScreen(),
+                ),
+                GoRoute(
+                  path: 'addresses',
+                  builder: (context, state) => const AddressesScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'add',
+                      builder: (context, state) => const AddEditAddressScreen(),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ],
         ),
         StatefulShellBranch(
@@ -98,17 +117,6 @@ final router = GoRouter(
     GoRoute(
       path: '/checkout',
       builder: (context, state) => const CheckoutScreen(),
-    ),
-    GoRoute(path: '/orders', builder: (context, state) => const OrdersScreen()),
-    GoRoute(
-      path: '/addresses',
-      builder: (context, state) => const AddressesScreen(),
-      routes: [
-        GoRoute(
-          path: 'add',
-          builder: (context, state) => const AddEditAddressScreen(),
-        ),
-      ],
     ),
     GoRoute(
       path: '/edit-profile',
