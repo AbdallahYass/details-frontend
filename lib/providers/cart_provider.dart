@@ -121,14 +121,23 @@ class CartProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       if (!prefs.containsKey('cart_items_data')) return;
 
-      final decoded =
-          json.decode(prefs.getString('cart_items_data')!)
-              as Map<String, dynamic>;
-      final itemsData = decoded['items'] as Map<String, dynamic>;
+      final String? jsonString = prefs.getString('cart_items_data');
+      if (jsonString == null) return;
 
-      _items = itemsData.map(
-        (key, value) => MapEntry(key, CartItem.fromJson(value)),
-      );
+      final decoded = json.decode(jsonString);
+      if (decoded is! Map<String, dynamic>) return;
+
+      final itemsData = decoded['items'];
+      if (itemsData is! Map<String, dynamic>) return;
+
+      final Map<String, CartItem> loadedItems = {};
+      itemsData.forEach((key, value) {
+        if (value is Map<String, dynamic>) {
+          loadedItems[key] = CartItem.fromJson(value);
+        }
+      });
+
+      _items = loadedItems;
       _couponCode = decoded['couponCode'];
       _couponDiscountValue =
           (decoded['couponDiscountValue'] as num?)?.toDouble() ?? 0.0;
@@ -338,7 +347,10 @@ class CartProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final List updates = data['updates'] ?? [];
+        final updatesData = (data is Map<String, dynamic>)
+            ? data['updates']
+            : null;
+        final List updates = (updatesData is List) ? updatesData : [];
 
         for (var update in updates) {
           final String key = update['cartKey'];

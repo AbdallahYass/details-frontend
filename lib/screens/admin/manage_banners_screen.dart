@@ -36,9 +36,10 @@ class _ManageBannersScreenState extends State<ManageBannersScreen> {
         Uri.parse('https://api.details-store.com/api/categories'),
       );
       if (response.statusCode == 200) {
-        if (mounted) {
+        final decoded = json.decode(response.body);
+        if (mounted && decoded is List) {
           setState(() {
-            _categories = json.decode(response.body);
+            _categories = decoded;
           });
         }
       }

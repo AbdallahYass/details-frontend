@@ -123,10 +123,8 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
       }
 
       final dynamic colorsData = isMap ? p['colors'] : p.colors;
-      if (colorsData != null) {
-        _colors = (colorsData as List)
-            .map((e) => ProductColor.fromJson(e))
-            .toList();
+      if (colorsData != null && colorsData is List) {
+        _colors = colorsData.map((e) => ProductColor.fromJson(e)).toList();
       }
 
       final dynamic sizesData = isMap ? p['sizes'] : p.sizes;
