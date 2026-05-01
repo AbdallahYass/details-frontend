@@ -103,12 +103,10 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       _phoneController.text = auth.user!.phone;
     }
 
-    if (auth.isAuthenticated) {
-      await Provider.of<AddressesProvider>(
-        context,
-        listen: false,
-      ).fetchAddresses();
-    }
+    await Provider.of<AddressesProvider>(
+      context,
+      listen: false,
+    ).fetchAddresses();
   }
 
   @override
@@ -141,11 +139,11 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     final cart = Provider.of<CartProvider>(context, listen: false);
     if (cart.items.isEmpty) return;
 
-    if (_saveAddress && _isDelivery && auth.isAuthenticated) {
+    if (_saveAddress && _isDelivery) {
       await addressesProvider.addAddress(
         AddressModel(
           id: '', // سيتم توليده في الباك إند
-          name: auth.user?.name ?? '',
+          name: auth.user?.name ?? localizations.translate('default_user_name'),
           city: _selectedCity ?? '',
           street: _streetController.text.trim(),
           phone: _phoneController.text.trim(),

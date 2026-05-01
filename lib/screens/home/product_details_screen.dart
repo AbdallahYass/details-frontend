@@ -552,33 +552,14 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              _product!.brand.toUpperCase(),
-              style: const TextStyle(
-                color: AppColors.gold,
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 2.0,
-              ),
-            ),
-            Row(
-              children: [
-                const Icon(Icons.star_rounded, color: AppColors.gold, size: 20),
-                const SizedBox(width: 4),
-                Text(
-                  "4.8 (120 ${AppLocalizations.of(context)!.translate('reviews')})",
-                  style: TextStyle(
-                    color: _dsBrown.withValues(alpha: 0.7),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ],
+        Text(
+          _product!.brand.toUpperCase(),
+          style: const TextStyle(
+            color: AppColors.gold,
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 2.0,
+          ),
         ),
         const SizedBox(height: 12),
         Text(
