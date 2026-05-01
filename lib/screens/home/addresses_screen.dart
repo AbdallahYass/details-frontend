@@ -36,6 +36,16 @@ class _AddressesScreenState extends State<AddressesScreen> {
             centerTitle: true,
             backgroundColor: AppColors.appBarBackground,
             foregroundColor: AppColors.appBarForeground,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/');
+                }
+              },
+            ),
             actions: [
               IconButton(
                 icon: const Icon(Icons.add_location_alt_outlined),

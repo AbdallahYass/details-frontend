@@ -114,6 +114,16 @@ class _OrdersScreenState extends State<OrdersScreen> {
           foregroundColor: AppColors.appBarForeground,
           scrolledUnderElevation: 0,
           surfaceTintColor: AppColors.transparent,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/');
+              }
+            },
+          ),
           bottom: TabBar(
             labelColor: AppColors.primary,
             unselectedLabelColor: AppColors.grey,
