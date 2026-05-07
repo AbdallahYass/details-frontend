@@ -20,6 +20,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
   final _streetController = TextEditingController();
   final _phoneController = TextEditingController();
   final _couponController = TextEditingController();
+  final _nameController = TextEditingController(); // حقل الاسم الجديد
   String _paymentMethod = 'cod'; // cash on delivery
   bool _isLoading = false;
   late AnimationController _rotationController;
@@ -31,56 +32,56 @@ class _CheckoutScreenState extends State<CheckoutScreen>
 
   // قاموس بأسماء المدن وأسعار التوصيل الخاصة بكل منطقة
   final Map<String, double> _cityFees = {
-    // الضفة الغربية (15 شيكل)
-    'رام الله': 15.0,
-    'البيرة': 15.0,
-    'بيتونيا': 15.0,
-    'بيرزيت': 15.0,
-    'روابي': 15.0,
-    'قرى رام الله': 15.0,
-    'نابلس': 15.0, 'حوارة': 15.0, 'قرى نابلس': 15.0,
-    'الخليل': 15.0,
-    'حلحول': 15.0,
-    'دورا': 15.0,
-    'يطا': 15.0,
-    'الظاهرية': 15.0,
-    'قرى الخليل': 15.0,
-    'جنين': 15.0, 'يعبد': 15.0, 'قباطية': 15.0, 'قرى جنين': 15.0,
-    'طولكرم': 15.0, 'عنبتا': 15.0, 'قرى طولكرم': 15.0,
-    'قلقيلية': 15.0, 'عزون': 15.0, 'قرى قلقيلية': 15.0,
-    'سلفيت': 15.0, 'بديا': 15.0, 'قرى سلفيت': 15.0,
-    'طوباس': 15.0, 'طمون': 15.0, 'قرى طوباس': 15.0,
-    'أريحا': 15.0, 'العوجا': 15.0, 'قرى أريحا والأغوار': 15.0,
-    'بيت لحم': 15.0, 'بيت جالا': 15.0, 'بيت ساحور': 15.0, 'قرى بيت لحم': 15.0,
-    'ضواحي القدس (الرام، العيزرية، أبو ديس)': 15.0,
+    // الضفة الغربية (20 شيكل)
+    'رام الله': 20.0,
+    'البيرة': 20.0,
+    'بيتونيا': 20.0,
+    'بيرزيت': 20.0,
+    'روابي': 20.0,
+    'قرى رام الله': 20.0,
+    'نابلس': 20.0, 'حوارة': 20.0, 'قرى نابلس': 20.0,
+    'الخليل': 20.0,
+    'حلحول': 20.0,
+    'دورا': 20.0,
+    'يطا': 20.0,
+    'الظاهرية': 20.0,
+    'قرى الخليل': 20.0,
+    'جنين': 20.0, 'يعبد': 20.0, 'قباطية': 20.0, 'قرى جنين': 20.0,
+    'طولكرم': 20.0, 'عنبتا': 20.0, 'قرى طولكرم': 20.0,
+    'قلقيلية': 20.0, 'عزون': 20.0, 'قرى قلقيلية': 20.0,
+    'سلفيت': 20.0, 'بديا': 20.0, 'قرى سلفيت': 20.0,
+    'طوباس': 20.0, 'طمون': 20.0, 'قرى طوباس': 20.0,
+    'أريحا': 20.0, 'العوجا': 20.0, 'قرى أريحا والأغوار': 20.0,
+    'بيت لحم': 20.0, 'بيت جالا': 20.0, 'بيت ساحور': 20.0, 'قرى بيت لحم': 20.0,
+    'ضواحي القدس (الرام، العيزرية، أبو ديس)': 20.0,
 
-    // القدس (20 شيكل)
-    'القدس (داخل الجدار)': 20.0,
-    'القدس': 20.0,
+    // القدس (30 شيكل)
+    'القدس (داخل الجدار)': 30.0,
+    'القدس': 30.0,
 
-    // الداخل المحتل (30 شيكل)
-    'الناصرة': 30.0, 'حيفا': 30.0, 'يافا': 30.0, 'عكا': 30.0, 'اللد': 30.0,
-    'الرملة': 30.0,
-    'بئر السبع': 30.0,
-    'صفد': 30.0,
-    'طبريا': 30.0,
-    'أم الفحم': 30.0,
-    'رهط': 30.0,
-    'باقة الغربية': 30.0,
-    'الطيبة': 30.0,
-    'الطيرة': 30.0,
-    'شفاعمرو': 30.0,
-    'سخنين': 30.0,
-    'كفر قاسم': 30.0,
-    'قلنسوة': 30.0,
-    'عرابة': 30.0,
-    'المغار': 30.0,
-    'كفر قرع': 30.0,
-    'طمرة': 30.0,
-    'دالية الكرمل': 30.0,
-    'كفر ياسيف': 30.0,
-    'جت': 30.0,
-    'قرى ومدن الداخل المحتل الأخرى': 30.0,
+    // الداخل المحتل (70 شيكل)
+    'الناصرة': 70.0, 'حيفا': 70.0, 'يافا': 70.0, 'عكا': 70.0, 'اللد': 70.0,
+    'الرملة': 70.0,
+    'بئر السبع': 70.0,
+    'صفد': 70.0,
+    'طبريا': 70.0,
+    'أم الفحم': 70.0,
+    'رهط': 70.0,
+    'باقة الغربية': 70.0,
+    'الطيبة': 70.0,
+    'الطيرة': 70.0,
+    'شفاعمرو': 70.0,
+    'سخنين': 70.0,
+    'كفر قاسم': 70.0,
+    'قلنسوة': 70.0,
+    'عرابة': 70.0,
+    'المغار': 70.0,
+    'كفر قرع': 70.0,
+    'طمرة': 70.0,
+    'دالية الكرمل': 70.0,
+    'كفر ياسيف': 70.0,
+    'جت': 70.0,
+    'قرى ومدن الداخل المحتل الأخرى': 70.0,
   };
 
   @override
@@ -115,6 +116,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     _streetController.dispose();
     _phoneController.dispose();
     _couponController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
@@ -143,7 +145,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       await addressesProvider.addAddress(
         AddressModel(
           id: '', // سيتم توليده في الباك إند
-          name: auth.user?.name ?? localizations.translate('default_user_name'),
+          name: _nameController.text.trim(),
           city: _selectedCity ?? '',
           street: _streetController.text.trim(),
           phone: _phoneController.text.trim(),
@@ -181,19 +183,23 @@ class _CheckoutScreenState extends State<CheckoutScreen>
               'size': cp.size, // إضافة المقاس كحقل منفصل
               'color': cp.color, // إرسال اللون للباك اند
               'quantity': cp.quantity,
-              'price': cp.price,
+              'price': cp.withBox
+                  ? cp.price + 5.0
+                  : cp.price, // السعر شامل التغليف للصنف
               'imageUrl': cp.imageUrl,
+              'withBox': cp.withBox, // 🌟 إرسال خيار العلبة للباك اند
             },
           )
           .toList(),
-      'subtotal': cart.subtotal,
+      'subtotal': cart.subtotal + cart.giftTotal,
       'discountAmount': cart.discountAmount,
       'couponCode': cart.couponCode,
       'deliveryFee': _deliveryFee, // إضافة سعر التوصيل كحقل منفصل
-      'amount': cart.totalAmount + _deliveryFee, // المجموع النهائي شامل التوصيل
+      'amount':
+          cart.totalAmount +
+          _deliveryFee, // totalAmount أصبح يشمل giftTotal تلقائياً من الـ Provider
       'shippingAddress': {
-        'name':
-            auth.user?.name ?? 'Guest User', // إرسال الاسم حتى لو كان زائراً
+        'name': _nameController.text.trim(), // إرسال الاسم المدخل في الحقل
         'city': _isDelivery
             ? (_selectedCity ?? '')
             : localizations.translate('pickup_from_store'),
@@ -545,6 +551,8 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                                     }
                                                     _streetController.text =
                                                         address.street;
+                                                    _nameController.text =
+                                                        address.name;
                                                     if (address
                                                         .phone
                                                         .isNotEmpty) {
@@ -583,6 +591,23 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                               ),
                               child: Column(
                                 children: [
+                                  _buildTextField(
+                                    controller: _nameController,
+                                    label: AppLocalizations.of(
+                                      context,
+                                    )!.translate('name_label'),
+                                    icon: Icons.person_outline,
+                                    validator: (value) {
+                                      if (value == null ||
+                                          value.trim().isEmpty) {
+                                        return AppLocalizations.of(
+                                          context,
+                                        )!.translate('required_field');
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  const SizedBox(height: 15),
                                   if (_isDelivery) ...[
                                     _buildCityDropdown(),
                                     const SizedBox(height: 15),
@@ -847,6 +872,33 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                               ],
                             ),
                             const Divider(height: 25, thickness: 1),
+                            if (cart.giftTotal > 0) ...[
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.translate('with_box'),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${cart.giftTotal.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                            ],
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [

@@ -382,6 +382,7 @@ class AppLocalizations {
       'receive_promotions': 'Receive promotional messages and updates',
       'delete_account': 'Delete Account',
       'no_notifications': 'No notifications yet',
+      'no_orders_found': 'No orders found yet',
     },
     'ar': {
       'app_name': 'متجر ديتيلز',
@@ -742,6 +743,7 @@ class AppLocalizations {
       'receive_promotions': 'أرغب في تلقي الرسائل الترويجية والتحديثات',
       'delete_account': 'حذف الحساب',
       'no_notifications': 'لا توجد إشعارات بعد',
+      'no_orders_found': 'لا توجد طلبات بعد',
     },
   };
 

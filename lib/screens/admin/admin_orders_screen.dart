@@ -347,6 +347,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
                                           ?.toString();
                                       final price = item['price'];
                                       final qty = item['quantity'];
+                                      final withBox = item['withBox'] == true;
 
                                       return Container(
                                         margin: const EdgeInsets.symmetric(
@@ -373,29 +374,66 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
                                         child: Row(
                                           children: [
                                             // صورة المنتج
-                                            ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                              child: CachedNetworkImage(
-                                                imageUrl: imageUrl ?? '',
-                                                width: 60,
-                                                height: 60,
-                                                fit: BoxFit.cover,
-                                                placeholder: (context, url) =>
-                                                    Container(
-                                                      color:
-                                                          Colors.grey.shade100,
+                                            GestureDetector(
+                                              onTap: () {
+                                                if (imageUrl != null &&
+                                                    imageUrl.isNotEmpty) {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) => Scaffold(
+                                                        backgroundColor:
+                                                            Colors.black,
+                                                        appBar: AppBar(
+                                                          backgroundColor:
+                                                              Colors.black,
+                                                          iconTheme:
+                                                              const IconThemeData(
+                                                                color: Colors
+                                                                    .white,
+                                                              ),
+                                                        ),
+                                                        body: Center(
+                                                          child: InteractiveViewer(
+                                                            child:
+                                                                CachedNetworkImage(
+                                                                  imageUrl:
+                                                                      imageUrl,
+                                                                  fit: BoxFit
+                                                                      .contain,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                      ),
                                                     ),
-                                                errorWidget:
-                                                    (
-                                                      context,
-                                                      url,
-                                                      error,
-                                                    ) => const Icon(
-                                                      Icons
-                                                          .image_not_supported_outlined,
-                                                      size: 30,
-                                                    ),
+                                                  );
+                                                }
+                                              },
+                                              child: ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                child: CachedNetworkImage(
+                                                  imageUrl: imageUrl ?? '',
+                                                  width: 60,
+                                                  height: 60,
+                                                  fit: BoxFit.cover,
+                                                  placeholder: (context, url) =>
+                                                      Container(
+                                                        color: Colors
+                                                            .grey
+                                                            .shade100,
+                                                      ),
+                                                  errorWidget:
+                                                      (
+                                                        context,
+                                                        url,
+                                                        error,
+                                                      ) => const Icon(
+                                                        Icons
+                                                            .image_not_supported_outlined,
+                                                        size: 30,
+                                                      ),
+                                                ),
                                               ),
                                             ),
                                             const SizedBox(width: 12),
@@ -484,6 +522,40 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
                                                         ),
                                                     ],
                                                   ),
+                                                  if (withBox) ...[
+                                                    const SizedBox(height: 6),
+                                                    Row(
+                                                      children: [
+                                                        const Icon(
+                                                          Icons.card_giftcard,
+                                                          size: 14,
+                                                          color: Color(
+                                                            0xFF9E773A,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 4,
+                                                        ),
+                                                        Text(
+                                                          AppLocalizations.of(
+                                                            context,
+                                                          )!.translate(
+                                                            'with_box',
+                                                          ),
+                                                          style:
+                                                              const TextStyle(
+                                                                fontSize: 11,
+                                                                color: Color(
+                                                                  0xFF9E773A,
+                                                                ),
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
                                                 ],
                                               ),
                                             ),

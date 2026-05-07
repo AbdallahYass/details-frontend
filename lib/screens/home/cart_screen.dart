@@ -373,7 +373,7 @@ class _CartItemCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        '${AppLocalizations.of(context)!.translate('total')}: ${(cartItem.price * cartItem.quantity).toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                        '${AppLocalizations.of(context)!.translate('total')}: ${((cartItem.price + (cartItem.withBox ? 5 : 0)) * cartItem.quantity).toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
                         style: const TextStyle(
                           color: Colors.grey,
                           fontSize: 14,
@@ -529,6 +529,42 @@ class _CheckoutSection extends StatelessWidget {
         ).copyWith(top: 10, bottom: 120),
         child: Column(
           children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  AppLocalizations.of(context)!.translate('with_box'),
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+                Text(
+                  '${cart.giftTotal.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF9E773A),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  AppLocalizations.of(context)!.translate('with_box'),
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+                Text(
+                  '${cart.giftTotal.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF9E773A),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

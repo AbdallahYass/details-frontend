@@ -86,6 +86,17 @@ class CartProvider with ChangeNotifier {
     return total;
   }
 
+  // حساب رسوم التغليف الإجمالية (5 شيكل لكل قطعة مختار لها تغليف)
+  double get giftTotal {
+    var total = 0.0;
+    _items.forEach((_, item) {
+      if (item.withBox) {
+        total += (5.0 * item.quantity);
+      }
+    });
+    return total;
+  }
+
   // حساب قيمة الخصم ديناميكياً لضمان دقة النسب المئوية عند تغيير السلة
   double get discountAmount {
     if (_couponType == 'percentage') {
@@ -96,8 +107,9 @@ class CartProvider with ChangeNotifier {
 
   String? get couponCode => _couponCode;
 
-  double get totalAmount =>
-      subtotal - discountAmount > 0 ? subtotal - discountAmount : 0.0;
+  double get totalAmount => (subtotal + giftTotal - discountAmount) > 0
+      ? (subtotal + giftTotal - discountAmount)
+      : 0.0;
 
   // دالة لحفظ البيانات في SharedPreferences
   Future<void> _saveCartToPrefs() async {
