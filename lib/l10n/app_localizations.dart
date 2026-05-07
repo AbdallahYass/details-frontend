@@ -382,6 +382,9 @@ class AppLocalizations {
       'receive_promotions': 'Receive promotional messages and updates',
       'delete_account': 'Delete Account',
       'no_notifications': 'No notifications yet',
+      'original_box_fee': 'Original Box Fee',
+      'with_original_box': 'With Original Box',
+      'allow_original_box': 'Allow Original Box Option',
       'no_orders_found': 'No orders found yet',
     },
     'ar': {
@@ -743,6 +746,9 @@ class AppLocalizations {
       'receive_promotions': 'أرغب في تلقي الرسائل الترويجية والتحديثات',
       'delete_account': 'حذف الحساب',
       'no_notifications': 'لا توجد إشعارات بعد',
+      'original_box_fee': 'رسوم العلب الأصلية',
+      'with_original_box': 'مع العلبة الأصلية',
+      'allow_original_box': 'تفعيل خيار العلبة الأصلية لهذه الفئة',
       'no_orders_found': 'لا توجد طلبات بعد',
     },
   };

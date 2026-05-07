@@ -69,6 +69,8 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
   bool _isLoading = false;
   bool _isImageUploading = false;
   bool _isNewCategory = false; // تحديد وضع الكاتيجوري
+
+  bool _newCategoryAllowBox = false; // 🌟 الخيار الجديد للكاتيجوري
   bool _isSoldOut = false;
   bool _isFeatured = false;
   List<ProductColor> _colors = [];
@@ -397,6 +399,8 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
             ),
             'imageUrl':
                 finalImageUrl, // نستخدم صورة المنتج كصورة للقسم الجديد مؤقتاً
+            'allowOriginalBox':
+                _newCategoryAllowBox, // 🌟 إرسال الخيار للباك إند
           }),
         );
 
@@ -1116,18 +1120,33 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                           : null,
                     )
                   else
-                    TextFormField(
-                      controller: _newCategoryController,
-                      decoration: InputDecoration(
-                        labelText: AppLocalizations.of(
-                          context,
-                        )!.translate('new_category_name'),
-                      ),
-                      validator: (v) => _isNewCategory && v!.isEmpty
-                          ? AppLocalizations.of(
+                    Column(
+                      children: [
+                        TextFormField(
+                          controller: _newCategoryController,
+                          decoration: InputDecoration(
+                            labelText: AppLocalizations.of(
                               context,
-                            )!.translate('required_field')
-                          : null,
+                            )!.translate('new_category_name'),
+                          ),
+                          validator: (v) => _isNewCategory && v!.isEmpty
+                              ? AppLocalizations.of(
+                                  context,
+                                )!.translate('required_field')
+                              : null,
+                        ),
+                        SwitchListTile(
+                          title: Text(
+                            AppLocalizations.of(
+                              context,
+                            )!.translate('allow_original_box'),
+                          ),
+                          value: _newCategoryAllowBox,
+                          activeColor: AppColors.primary,
+                          onChanged: (val) =>
+                              setState(() => _newCategoryAllowBox = val),
+                        ),
+                      ],
                     ),
                   const SizedBox(height: 10),
                   TextFormField(

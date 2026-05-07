@@ -373,7 +373,8 @@ class _CartItemCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        '${AppLocalizations.of(context)!.translate('total')}: ${((cartItem.price + (cartItem.withBox ? 5 : 0)) * cartItem.quantity).toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                        '${AppLocalizations.of(context)!.translate('total')}: ${((cartItem.price + (cartItem.withBox ? 5 : 0) + (cartItem.withOriginalBox ? 10 : 0)) * cartItem.quantity).toStringAsFixed(2)} '
+                        '${AppLocalizations.of(context)!.translate('currency')}',
                         style: const TextStyle(
                           color: Colors.grey,
                           fontSize: 14,
@@ -410,6 +411,31 @@ class _CartItemCard extends StatelessWidget {
                           ],
                         ),
                       ),
+                      if (cartItem.allowOriginalBox) ...[
+                        const SizedBox(width: 12),
+                        InkWell(
+                          onTap: () => cart.toggleOriginalBox(cartItem.id),
+                          child: Row(
+                            children: [
+                              Icon(
+                                cartItem.withOriginalBox
+                                    ? Icons.check_box
+                                    : Icons.check_box_outline_blank,
+                                size: 18,
+                                color: AppColors.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              const Text(
+                                'علبة أصلية (+10)',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ],
@@ -529,44 +555,26 @@ class _CheckoutSection extends StatelessWidget {
         ).copyWith(top: 10, bottom: 120),
         child: Column(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  AppLocalizations.of(context)!.translate('with_box'),
-                  style: const TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-                Text(
-                  '${cart.giftTotal.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF9E773A),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
+            // Subtotal (Products Total)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   AppLocalizations.of(context)!.translate('total'),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
                 ),
                 Text(
                   '${(cart.subtotal - cart.discountAmount).toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
                   style: const TextStyle(
-                    fontSize: 20,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],
             ),
+
+            // Gift Box Total
             if (cart.giftTotal > 0) ...[
               const SizedBox(height: 8),
               Row(
@@ -587,6 +595,49 @@ class _CheckoutSection extends StatelessWidget {
                 ],
               ),
             ],
+
+            // Original Box Total
+            if (cart.originalBoxTotal > 0) ...[
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    AppLocalizations.of(context)!.translate('original_box_fee'),
+                    style: const TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                  Text(
+                    '${cart.originalBoxTotal.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 20), // Separator before final total
+            // Final Total
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  AppLocalizations.of(context)!.translate('final_total'),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '${cart.totalAmount.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,

@@ -42,6 +42,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
     String nameAr,
     String nameEn,
     String imageUrl,
+    bool allowOriginalBox,
   ) async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     try {
@@ -55,6 +56,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
           'name': {'ar': nameAr, 'en': nameEn},
           'slug': nameEn.toLowerCase().replaceAll(' ', '-'),
           'imageUrl': imageUrl,
+          'allowOriginalBox': allowOriginalBox,
         }),
       );
       if (response.statusCode == 201) {
@@ -84,6 +86,165 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
         );
       }
     }
+  }
+
+  Future<void> _updateCategory(
+    String id,
+    String nameAr,
+    String nameEn,
+    String imageUrl,
+    bool allowOriginalBox,
+  ) async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    try {
+      final response = await http.put(
+        Uri.parse('https://api.details-store.com/api/categories/$id'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${auth.token}',
+        },
+        body: json.encode({
+          'name': {'ar': nameAr, 'en': nameEn},
+          'slug': nameEn.toLowerCase().replaceAll(' ', '-'),
+          'imageUrl': imageUrl,
+          'allowOriginalBox': allowOriginalBox,
+        }),
+      );
+      if (response.statusCode == 200) {
+        _fetchCategories();
+        if (mounted) Navigator.pop(context);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)!.translate('update_success'),
+              ),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error updating category: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.translate('error_occurred'),
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showEditDialog(dynamic category) {
+    final nameArController = TextEditingController(
+      text: category['name'] is Map ? category['name']['ar'] : category['name'],
+    );
+    final nameEnController = TextEditingController(
+      text: category['name'] is Map ? category['name']['en'] : '',
+    );
+    final imageController = TextEditingController(text: category['imageUrl']);
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        bool isUploading = false;
+        bool allowBox = category['allowOriginalBox'] == true;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            Future<void> pickImage() async {
+              setState(() => isUploading = true);
+              final url = await CloudinaryService().pickAndUploadImage();
+              setState(() => isUploading = false);
+              if (url != null) {
+                imageController.text = url;
+              }
+            }
+
+            return Stack(
+              children: [
+                AlertDialog(
+                  title: Text(
+                    AppLocalizations.of(context)!.translate('edit_profile'),
+                  ),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: nameArController,
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(
+                            context,
+                          )!.translate('name_ar'),
+                        ),
+                      ),
+                      TextField(
+                        controller: nameEnController,
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(
+                            context,
+                          )!.translate('name_en'),
+                        ),
+                      ),
+                      TextField(
+                        controller: imageController,
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(
+                            context,
+                          )!.translate('image_url'),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.cloud_upload),
+                            onPressed: isUploading ? null : pickImage,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SwitchListTile(
+                        title: Text(
+                          AppLocalizations.of(
+                            context,
+                          )!.translate('allow_original_box'),
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        value: allowBox,
+                        activeThumbColor: AppColors.primary,
+                        onChanged: (val) => setState(() => allowBox = val),
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: isUploading ? null : () => Navigator.pop(ctx),
+                      child: Text(
+                        AppLocalizations.of(context)!.translate('cancel'),
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: isUploading
+                          ? null
+                          : () => _updateCategory(
+                              category['_id'],
+                              nameArController.text,
+                              nameEnController.text,
+                              imageController.text,
+                              allowBox,
+                            ),
+                      child: Text(
+                        AppLocalizations.of(context)!.translate('save'),
+                      ),
+                    ),
+                  ],
+                ),
+                if (isUploading) const CustomLoadingOverlay(isOverlay: true),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _deleteCategory(String id) async {
@@ -134,6 +295,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
       context: context,
       builder: (ctx) {
         bool isUploading = false;
+        bool allowBox = false;
         return StatefulBuilder(
           builder: (context, setState) {
             Future<void> pickImage() async {
@@ -182,6 +344,18 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 10),
+                      SwitchListTile(
+                        title: Text(
+                          AppLocalizations.of(
+                            context,
+                          )!.translate('allow_original_box'),
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        value: allowBox,
+                        activeThumbColor: AppColors.primary,
+                        onChanged: (val) => setState(() => allowBox = val),
+                      ),
                     ],
                   ),
                   actions: [
@@ -198,6 +372,7 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                               nameArController.text,
                               nameEnController.text,
                               imageController.text,
+                              allowBox,
                             ),
                       child: Text(
                         AppLocalizations.of(context)!.translate('add'),
@@ -293,12 +468,24 @@ class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
                     ),
                   ),
                   title: Text(name ?? ''),
-                  trailing: IconButton(
-                    icon: const Icon(
-                      Icons.delete,
-                      color: AppColors.adminDelete,
-                    ),
-                    onPressed: () => _deleteCategory(cat['_id']),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.edit,
+                          color: AppColors.adminEdit,
+                        ),
+                        onPressed: () => _showEditDialog(cat),
+                      ),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.delete,
+                          color: AppColors.adminDelete,
+                        ),
+                        onPressed: () => _deleteCategory(cat['_id']),
+                      ),
+                    ],
                   ),
                 ),
               );

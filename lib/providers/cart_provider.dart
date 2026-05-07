@@ -14,6 +14,8 @@ class CartItem {
   final String? color; // اللون المختار
   final int maxQuantity; // 🌟 الحد الأقصى المتوفر في المخزون لهذا الموديل
   final bool withBox; // خيار إضافة علبة للمنتج
+  final bool withOriginalBox; // 🌟 خيار إضافة العلبة الأصلية
+  final bool allowOriginalBox; // 🌟 هل التصنيف الخاص بالمنتج يدعم العلبة؟
 
   CartItem({
     required this.id,
@@ -26,6 +28,8 @@ class CartItem {
     this.color,
     this.maxQuantity = 999,
     this.withBox = false,
+    this.withOriginalBox = false,
+    this.allowOriginalBox = false,
   }) : productId = productId ?? id;
 
   // تحويل الكائن إلى Map ليتم حفظه كـ JSON
@@ -40,6 +44,8 @@ class CartItem {
     'color': color,
     'maxQuantity': maxQuantity,
     'withBox': withBox,
+    'withOriginalBox': withOriginalBox,
+    'allowOriginalBox': allowOriginalBox,
   };
 
   // إنشاء كائن من Map (عند التحميل من JSON)
@@ -54,6 +60,8 @@ class CartItem {
     color: json['color'],
     maxQuantity: json['maxQuantity'] ?? 999,
     withBox: json['withBox'] ?? false,
+    withOriginalBox: json['withOriginalBox'] ?? false,
+    allowOriginalBox: json['allowOriginalBox'] ?? false,
   );
 }
 
@@ -97,6 +105,17 @@ class CartProvider with ChangeNotifier {
     return total;
   }
 
+  // 🌟 حساب رسوم العلب الأصلية الإجمالية (10 شيكل لكل قطعة)
+  double get originalBoxTotal {
+    var total = 0.0;
+    _items.forEach((_, item) {
+      if (item.withOriginalBox) {
+        total += (10.0 * item.quantity);
+      }
+    });
+    return total;
+  }
+
   // حساب قيمة الخصم ديناميكياً لضمان دقة النسب المئوية عند تغيير السلة
   double get discountAmount {
     if (_couponType == 'percentage') {
@@ -107,9 +126,10 @@ class CartProvider with ChangeNotifier {
 
   String? get couponCode => _couponCode;
 
-  double get totalAmount => (subtotal + giftTotal - discountAmount) > 0
-      ? (subtotal + giftTotal - discountAmount)
-      : 0.0;
+  double get totalAmount {
+    final total = subtotal + giftTotal + originalBoxTotal - discountAmount;
+    return total > 0 ? total : 0.0;
+  }
 
   // دالة لحفظ البيانات في SharedPreferences
   Future<void> _saveCartToPrefs() async {
@@ -172,12 +192,15 @@ class CartProvider with ChangeNotifier {
     required int maxQuantity,
     int quantityToAdd = 1,
     bool withBox = false,
+    bool withOriginalBox = false,
+    bool allowOriginalBox = false,
   }) {
     // المفتاح في السلة يكون دمجاً بين الآيدي والمقاس واللون وخيار العلبة
     String cartKey = productId;
     if (size != null) cartKey += '_$size';
     if (color != null) cartKey += '_$color';
     if (withBox) cartKey += '_box';
+    if (withOriginalBox) cartKey += '_orig_box';
 
     if (_items.containsKey(cartKey)) {
       // التحقق من عدم تجاوز الكمية المتوفرة
@@ -199,6 +222,8 @@ class CartProvider with ChangeNotifier {
           color: existingCartItem.color,
           maxQuantity: maxQuantity,
           withBox: existingCartItem.withBox,
+          withOriginalBox: existingCartItem.withOriginalBox,
+          allowOriginalBox: existingCartItem.allowOriginalBox,
         ),
       );
     } else {
@@ -218,6 +243,8 @@ class CartProvider with ChangeNotifier {
           color: color,
           maxQuantity: maxQuantity,
           withBox: withBox,
+          withOriginalBox: withOriginalBox,
+          allowOriginalBox: allowOriginalBox,
         ),
       );
     }
@@ -241,6 +268,29 @@ class CartProvider with ChangeNotifier {
       maxQuantity: existingItem.maxQuantity,
       quantityToAdd: existingItem.quantity,
       withBox: !existingItem.withBox,
+      withOriginalBox: existingItem.withOriginalBox,
+      allowOriginalBox: existingItem.allowOriginalBox,
+    );
+  }
+
+  // 🌟 دالة لتبديل خيار العلبة الأصلية
+  void toggleOriginalBox(String cartKey) {
+    final existingItem = _items[cartKey];
+    if (existingItem == null || !existingItem.allowOriginalBox) return;
+
+    removeItem(cartKey);
+    addItem(
+      existingItem.productId,
+      existingItem.price,
+      existingItem.title,
+      existingItem.imageUrl,
+      size: existingItem.size,
+      color: existingItem.color,
+      maxQuantity: existingItem.maxQuantity,
+      quantityToAdd: existingItem.quantity,
+      withBox: existingItem.withBox,
+      withOriginalBox: !existingItem.withOriginalBox,
+      allowOriginalBox: existingItem.allowOriginalBox,
     );
   }
 
@@ -271,6 +321,8 @@ class CartProvider with ChangeNotifier {
         color: existing.color,
         maxQuantity: existing.maxQuantity,
         withBox: existing.withBox,
+        withOriginalBox: existing.withOriginalBox,
+        allowOriginalBox: existing.allowOriginalBox,
       ),
     );
     notifyListeners();
@@ -297,6 +349,8 @@ class CartProvider with ChangeNotifier {
           color: existingCartItem.color,
           maxQuantity: existingCartItem.maxQuantity,
           withBox: existingCartItem.withBox,
+          withOriginalBox: existingCartItem.withOriginalBox,
+          allowOriginalBox: existingCartItem.allowOriginalBox,
         ),
       );
     } else {

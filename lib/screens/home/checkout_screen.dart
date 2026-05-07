@@ -183,15 +183,17 @@ class _CheckoutScreenState extends State<CheckoutScreen>
               'size': cp.size, // إضافة المقاس كحقل منفصل
               'color': cp.color, // إرسال اللون للباك اند
               'quantity': cp.quantity,
-              'price': cp.withBox
-                  ? cp.price + 5.0
-                  : cp.price, // السعر شامل التغليف للصنف
+              'price':
+                  cp.price +
+                  (cp.withBox ? 5.0 : 0) +
+                  (cp.withOriginalBox ? 10.0 : 0),
               'imageUrl': cp.imageUrl,
               'withBox': cp.withBox, // 🌟 إرسال خيار العلبة للباك اند
+              'withOriginalBox': cp.withOriginalBox,
             },
           )
           .toList(),
-      'subtotal': cart.subtotal + cart.giftTotal,
+      'subtotal': cart.subtotal + cart.giftTotal + cart.originalBoxTotal,
       'discountAmount': cart.discountAmount,
       'couponCode': cart.couponCode,
       'deliveryFee': _deliveryFee, // إضافة سعر التوصيل كحقل منفصل
@@ -891,6 +893,33 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                   ),
                                   Text(
                                     '${cart.giftTotal.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                            ],
+                            if (cart.originalBoxTotal > 0) ...[
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.translate('original_box_fee'),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${cart.originalBoxTotal.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
                                     style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,

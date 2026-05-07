@@ -202,4 +202,21 @@ class Product {
     }
     return '';
   }
+
+  // 🌟 هنا يمكنك تحديد أي الأقسام تدعم خيار "العلبة الأصلية" (+10 شيكل)
+  bool get canHaveOriginalBox {
+    if (category is Map) {
+      final cat = category as Map;
+      // 1. فحص الحقل في حال قمت بإضافته لاحقاً لقاعدة البيانات
+      if (cat['allowOriginalBox'] == true) return true;
+
+      // 2. فحص يدوي بناءً على "الرابط" (Slug) أو "الاسم العربي"
+      final String slug = (cat['slug'] ?? '').toString().toLowerCase();
+      final String nameAr = (cat['name']?['ar'] ?? '').toString();
+
+      // يمكنك إضافة المزيد من الأقسام هنا باستخدام || (OR)
+      return slug == 'watches' || nameAr == 'ساعات';
+    }
+    return false;
+  }
 }

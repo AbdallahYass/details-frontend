@@ -114,6 +114,7 @@ class OrdersProvider with ChangeNotifier {
                         size: p['size'],
                         color: p['color'],
                         withBox: p['withBox'] ?? false,
+                        withOriginalBox: p['withOriginalBox'] ?? false,
                       );
                     })
                     .whereType<CartItem>()

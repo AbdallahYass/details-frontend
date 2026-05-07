@@ -1288,6 +1288,7 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                 maxQuantity: _availableQuantity,
                                 quantityToAdd: _quantity,
                                 withBox: _withBox, // تمرير خيار العلبة للسلة
+                                allowOriginalBox: _product!.canHaveOriginalBox,
                               );
 
                               ScaffoldMessenger.of(
