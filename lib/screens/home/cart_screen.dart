@@ -551,24 +551,6 @@ class _CheckoutSection extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  AppLocalizations.of(context)!.translate('with_box'),
-                  style: const TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-                Text(
-                  '${cart.giftTotal.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF9E773A),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
                   AppLocalizations.of(context)!.translate('total'),
                   style: const TextStyle(
                     fontSize: 18,
@@ -576,7 +558,7 @@ class _CheckoutSection extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${cart.totalAmount.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                  '${(cart.subtotal - cart.discountAmount).toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -585,6 +567,26 @@ class _CheckoutSection extends StatelessWidget {
                 ),
               ],
             ),
+            if (cart.giftTotal > 0) ...[
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    AppLocalizations.of(context)!.translate('with_box'),
+                    style: const TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                  Text(
+                    '${cart.giftTotal.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF9E773A),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,

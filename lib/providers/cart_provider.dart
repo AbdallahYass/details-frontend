@@ -86,12 +86,12 @@ class CartProvider with ChangeNotifier {
     return total;
   }
 
-  // حساب رسوم التغليف الإجمالية (5 شيكل لكل قطعة مختار لها تغليف)
+  // حساب رسوم التغليف الإجمالية (5 شيكل لكل قطعة مختار لها تغليف لجميع الأصناف)
   double get giftTotal {
     var total = 0.0;
     _items.forEach((_, item) {
       if (item.withBox) {
-        total += (5.0 * item.quantity);
+        total += (5 * item.quantity);
       }
     });
     return total;

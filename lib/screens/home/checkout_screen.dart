@@ -829,7 +829,9 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    '${AppLocalizations.of(context)!.translate('total')} (${AppLocalizations.of(context)!.translate('products')})',
+                                    AppLocalizations.of(
+                                      context,
+                                    )!.translate('total'),
                                     style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -837,7 +839,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                     ),
                                   ),
                                   Text(
-                                    '${total.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                                    '${(cart.subtotal - cart.discountAmount).toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
                                     style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
