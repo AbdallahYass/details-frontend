@@ -67,6 +67,7 @@ class CartProvider with ChangeNotifier {
   double _couponDiscountValue = 0.0;
   String? _couponType;
   bool _withGiftBox = false; // 🌟 خيار التغليف للاوردر كامل
+  String _notes = ''; // 🌟 ملاحظات الطلب
 
   CartProvider() {
     _loadCartFromPrefs(); // تحميل البيانات فور إنشاء الـ Provider
@@ -77,6 +78,8 @@ class CartProvider with ChangeNotifier {
   int get itemCount => _items.length;
 
   bool get withGiftBox => _withGiftBox;
+
+  String get notes => _notes;
 
   // دالة لجلب العدد الإجمالي للقطع (مفيد لإظهار رقم فوق أيقونة السلة)
   int get totalItemsCount {
@@ -134,6 +137,7 @@ class CartProvider with ChangeNotifier {
         'couponDiscountValue': _couponDiscountValue,
         'couponType': _couponType,
         'withGiftBox': _withGiftBox,
+        'notes': _notes,
       });
       await prefs.setString('cart_items_data', cartData);
     } catch (e) {
@@ -169,11 +173,18 @@ class CartProvider with ChangeNotifier {
           (decoded['couponDiscountValue'] as num?)?.toDouble() ?? 0.0;
       _couponType = decoded['couponType'];
       _withGiftBox = decoded['withGiftBox'] ?? false;
+      _notes = decoded['notes'] ?? '';
 
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading cart: $e');
     }
+  }
+
+  void updateNotes(String value) {
+    _notes = value;
+    notifyListeners();
+    _saveCartToPrefs();
   }
 
   // دالة الإضافة مع ربطها بحدود المخزون
@@ -355,6 +366,7 @@ class CartProvider with ChangeNotifier {
     _couponCode = null;
     _couponDiscountValue = 0.0;
     _couponType = null;
+    _notes = '';
     notifyListeners();
     _saveCartToPrefs();
   }

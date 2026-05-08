@@ -21,7 +21,6 @@ class _CheckoutScreenState extends State<CheckoutScreen>
   final _phoneController = TextEditingController();
   final _couponController = TextEditingController();
   final _nameController = TextEditingController(); // حقل الاسم الجديد
-  final _notesController = TextEditingController(); // 🌟 حقل الملاحظات الجديد
   String _paymentMethod = 'cod'; // cash on delivery
   bool _isLoading = false;
   late AnimationController _rotationController;
@@ -118,7 +117,6 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     _phoneController.dispose();
     _couponController.dispose();
     _nameController.dispose();
-    _notesController.dispose(); // 🌟 تنظيف الذاكرة
     super.dispose();
   }
 
@@ -199,7 +197,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       'amount':
           cart.totalAmount +
           _deliveryFee, // totalAmount أصبح يشمل giftTotal تلقائياً من الـ Provider
-      'notes': _notesController.text.trim(), // 🌟 إرسال الملاحظات للباك إند
+      'notes': cart.notes, // 🌟 إرسال الملاحظات من السلة
       'withGiftBox': cart.withGiftBox, // 🌟 إرسال خيار التغليف للاوردر كامل
       'shippingAddress': {
         'name': _nameController.text.trim(), // إرسال الاسم المدخل في الحقل
@@ -654,14 +652,6 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                     },
                                   ),
                                   const SizedBox(height: 15),
-                                  _buildTextField(
-                                    controller: _notesController,
-                                    label: AppLocalizations.of(
-                                      context,
-                                    )!.translate('order_notes'),
-                                    icon: Icons.note_alt_outlined,
-                                    maxLines: 3, // السماح بكتابة 3 أسطر
-                                  ),
                                   if (_isDelivery) ...[
                                     const SizedBox(height: 15),
                                     Row(

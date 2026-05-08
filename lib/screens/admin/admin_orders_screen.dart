@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:details_app/app_imports.dart';
@@ -227,7 +229,9 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
             children: _orderStatuses.map((status) {
               final filteredOrders = _orders
                   .where((order) => order['status'] == status)
-                  .toList();
+                  .toList()
+                  .reversed
+                  .toList(); // عرض الأحدث أولاً
               return filteredOrders.isEmpty && !_isLoading
                   ? Center(
                       child: Text(
@@ -248,68 +252,116 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
                           final items =
                               order['products'] as List<dynamic>? ?? [];
                           final shipping = order['shippingAddress'];
+                          final createdAt = order['createdAt'] != null
+                              ? DateFormat(
+                                  'yyyy/MM/dd HH:mm',
+                                ).format(DateTime.parse(order['createdAt']))
+                              : '';
 
                           return Card(
-                            color: AppColors.adminSurface,
-                            margin: const EdgeInsets.all(10),
+                            color: Colors.white,
+                            elevation: 0,
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              side: BorderSide(color: Colors.grey.shade200),
+                            ),
                             child: ExpansionTile(
-                              title: Text(
-                                '${AppLocalizations.of(context)!.translate('order_number')}${orderId.length > 8 ? orderId.substring(0, 8) : orderId}',
+                              shape: const RoundedRectangleBorder(
+                                side: BorderSide.none,
                               ),
-                              subtitle: Row(
+                              title: Text(
+                                '${AppLocalizations.of(context)!.translate('order_number')} ${orderId.substring(orderId.length - 6)}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    '${order['amount']} ${AppLocalizations.of(context)!.translate('currency')} - ${_getStatusTranslation(order['status'], AppLocalizations.of(context)!)}',
-                                    style: TextStyle(
-                                      color: _getStatusColor(order['status']),
-                                      fontWeight: FontWeight.bold,
+                                    createdAt,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
                                     ),
                                   ),
-                                  if (order['withGiftBox'] == true) ...[
-                                    const SizedBox(width: 8),
-                                    const Icon(
-                                      Icons.card_giftcard,
-                                      size: 16,
-                                      color: Color(0xFF9E773A),
-                                    ),
-                                  ],
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      _buildStatusChip(order['status']),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        '${order['amount']} ${AppLocalizations.of(context)!.translate('currency')}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                      if (order['withGiftBox'] == true)
+                                        _buildAddon(
+                                          Icons.card_giftcard,
+                                          AppLocalizations.of(
+                                            context,
+                                          )!.translate('with_box'),
+                                        ),
+                                    ],
+                                  ),
                                 ],
                               ),
                               children: [
-                                ListTile(
-                                  leading: const Icon(
-                                    Icons.edit_attributes,
-                                    color: AppColors.adminEdit,
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
                                   ),
-                                  title: Text(
-                                    AppLocalizations.of(
-                                      context,
-                                    )!.translate('change_status'),
-                                  ),
-                                  trailing: DropdownButton<String>(
-                                    value:
-                                        _orderStatuses.contains(order['status'])
-                                        ? order['status']
-                                        : null,
-                                    items: _orderStatuses.map((s) {
-                                      return DropdownMenuItem(
-                                        value: s,
-                                        child: Text(
-                                          _getStatusTranslation(
-                                            s,
-                                            AppLocalizations.of(context)!,
-                                          ),
+                                  color: Colors.grey.shade50,
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        AppLocalizations.of(
+                                          context,
+                                        )!.translate('change_status'),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
                                         ),
-                                      );
-                                    }).toList(),
-                                    onChanged: (val) {
-                                      if (val != null) {
-                                        _updateStatus(orderId, val);
-                                      }
-                                    },
+                                      ),
+                                      DropdownButtonHideUnderline(
+                                        child: DropdownButton<String>(
+                                          value:
+                                              _orderStatuses.contains(
+                                                order['status'],
+                                              )
+                                              ? order['status']
+                                              : null,
+                                          items: _orderStatuses.map((s) {
+                                            return DropdownMenuItem(
+                                              value: s,
+                                              child: Text(
+                                                _getStatusTranslation(
+                                                  s,
+                                                  AppLocalizations.of(context)!,
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                          onChanged: (val) {
+                                            if (val != null) {
+                                              _updateStatus(orderId, val);
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                const Divider(),
                                 _buildCustomerInfo(user, shipping),
                                 _buildOrderNotes(order['notes']),
                                 _buildProductList(items),
@@ -351,6 +403,26 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
     );
   }
 
+  Widget _buildStatusChip(String status) {
+    final color = _getStatusColor(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Text(
+        _getStatusTranslation(status, AppLocalizations.of(context)!),
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
   Widget _buildCustomerInfo(dynamic user, dynamic shipping) {
     if (user == null && shipping == null) return const SizedBox.shrink();
     final loc = AppLocalizations.of(context)!;
@@ -363,18 +435,49 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
             loc.translate('customer_info'),
             style: const TextStyle(
               fontWeight: FontWeight.bold,
-              color: AppColors.textSecondary,
+              color: AppColors.primary,
+              fontSize: 14,
             ),
           ),
-          const SizedBox(height: 5),
-          if (user != null && user['name'] != null)
-            Text('👤 ${loc.translate('name')} ${user['name']}'),
-          if (shipping != null && shipping['phone'] != null)
-            Text('📞 ${loc.translate('phone_label')}: ${shipping['phone']}'),
-          if (shipping != null)
-            Text(
-              '📍 ${loc.translate('address')} ${shipping['city'] ?? ''} - ${shipping['street'] ?? ''}',
+          const SizedBox(height: 8),
+          _buildInfoRow(
+            Icons.person_outline,
+            loc.translate('name'),
+            user?['name'] ?? shipping?['name'] ?? '',
+          ),
+          _buildInfoRow(
+            Icons.phone_outlined,
+            loc.translate('phone_label'),
+            shipping?['phone'] ?? '',
+          ),
+          _buildInfoRow(
+            Icons.location_on_outlined,
+            loc.translate('address'),
+            '${shipping?['city'] ?? ''} - ${shipping?['street'] ?? ''}',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    if (value.isEmpty || value.contains('null')) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: Colors.grey.shade600),
+          const SizedBox(width: 8),
+          Text(
+            '$label: ',
+            style: const TextStyle(color: Colors.grey, fontSize: 13),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
             ),
+          ),
         ],
       ),
     );
@@ -386,23 +489,32 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
     }
     final loc = AppLocalizations.of(context)!;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '📝 ${loc.translate('order_notes')}',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.amber.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.amber.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '📝 ${loc.translate('order_notes')}',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.brown,
+                fontSize: 13,
+              ),
             ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            notes.toString(),
-            style: const TextStyle(fontSize: 13, height: 1.4),
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              notes.toString(),
+              style: const TextStyle(fontSize: 13, height: 1.4),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -423,7 +535,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
                 loc.translate('products'),
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textSecondary,
+                  color: AppColors.primary,
+                  fontSize: 14,
                 ),
               ),
               const SizedBox(height: 5),
@@ -452,15 +565,41 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen>
       ),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: CachedNetworkImage(
-              imageUrl: imageUrl ?? '',
-              width: 60,
-              height: 60,
-              fit: BoxFit.cover,
-              errorWidget: (context, url, error) =>
-                  const Icon(Icons.image_not_supported_outlined, size: 30),
+          GestureDetector(
+            onTap: () {
+              if (imageUrl != null && imageUrl.isNotEmpty) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Scaffold(
+                      backgroundColor: Colors.black,
+                      appBar: AppBar(
+                        backgroundColor: Colors.black,
+                        iconTheme: const IconThemeData(color: Colors.white),
+                      ),
+                      body: Center(
+                        child: InteractiveViewer(
+                          child: CachedNetworkImage(
+                            imageUrl: imageUrl,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: CachedNetworkImage(
+                imageUrl: imageUrl ?? '',
+                width: 60,
+                height: 60,
+                fit: BoxFit.cover,
+                errorWidget: (context, url, error) =>
+                    const Icon(Icons.image_not_supported_outlined, size: 30),
+              ),
             ),
           ),
           const SizedBox(width: 12),

@@ -9,6 +9,20 @@ class CartScreen extends StatefulWidget {
 
 class _CartScreenState extends State<CartScreen> {
   bool _isValidating = false;
+  late TextEditingController _notesController;
+
+  @override
+  void initState() {
+    super.initState();
+    final cart = Provider.of<CartProvider>(context, listen: false);
+    _notesController = TextEditingController(text: cart.notes);
+  }
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -134,6 +148,7 @@ class _CartScreenState extends State<CartScreen> {
                     SliverToBoxAdapter(
                       child: _CheckoutSection(
                         cart: cart,
+                        notesController: _notesController,
                         isValidating: _isValidating,
                         onCheckout: () => _handleCheckout(cart),
                       ),
@@ -558,10 +573,12 @@ class _CartItemCard extends StatelessWidget {
 class _CheckoutSection extends StatelessWidget {
   final CartProvider cart;
   final bool isValidating;
+  final TextEditingController notesController;
   final VoidCallback onCheckout;
 
   const _CheckoutSection({
     required this.cart,
+    required this.notesController,
     required this.isValidating,
     required this.onCheckout,
   });
@@ -669,6 +686,36 @@ class _CheckoutSection extends StatelessWidget {
                 ],
               ),
             ],
+            const SizedBox(height: 20),
+            // Order Notes Input
+            TextFormField(
+              controller: notesController,
+              maxLines: 3,
+              onChanged: (val) => cart.updateNotes(val),
+              decoration: InputDecoration(
+                labelText:
+                    AppLocalizations.of(context)!.translate('order_notes'),
+                alignLabelWithHint: true,
+                prefixIcon: const Padding(
+                  padding: EdgeInsets.only(bottom: 40),
+                  child: Icon(Icons.note_alt_outlined, color: Color(0xFF9E773A)),
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade200),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade200),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFF9E773A)),
+                ),
+              ),
+            ),
             const SizedBox(height: 20), // Separator before final total
             // Final Total
             Row(
