@@ -281,41 +281,46 @@ class _CartItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double extraCharges = (cartItem.withOriginalBox ? 10 : 0);
+    final double itemTotalPrice =
+        (cartItem.price + extraCharges) * cartItem.quantity;
+
     return Card(
-      elevation: 0.5,
+      elevation: 0,
       color: AppColors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: Colors.grey.shade100),
+      ),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // صورة المنتج
             InkWell(
               onTap: () => context.push('/product/${cartItem.productId}'),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               child: Hero(
                 tag: 'cart-${cartItem.id}',
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                   child: CachedNetworkImage(
                     imageUrl: cartItem.imageUrl,
-                    width: 60,
-                    height: 60,
+                    width: 85,
+                    height: 85,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => const Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppColors.primary,
-                      ),
-                    ),
+                    placeholder: (context, url) =>
+                        Container(color: Colors.grey.shade50),
                     errorWidget: (context, url, error) =>
                         const Icon(Icons.image_not_supported_outlined),
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
+            // تفاصيل المنتج
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -325,115 +330,49 @@ class _CartItemCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
                     ),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   if (cartItem.size != null || cartItem.color != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Row(
-                        children: [
-                          if (cartItem.size != null)
-                            Text(
-                              '${AppLocalizations.of(context)!.translate('size')}: ${cartItem.size}',
-                              style: const TextStyle(
-                                color: Colors.grey,
-                                fontSize: 12,
-                              ),
-                            ),
-                          if (cartItem.size != null && cartItem.color != null)
-                            const SizedBox(width: 8),
-                          if (cartItem.color != null)
-                            Text(
-                              '${AppLocalizations.of(context)!.translate('colors')}: ${cartItem.color}',
-                              style: const TextStyle(
-                                color: Colors.grey,
-                                fontSize: 12,
-                              ),
-                            ),
-                        ],
-                      ),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: [
+                        if (cartItem.size != null)
+                          _buildMiniChip(
+                            '${AppLocalizations.of(context)!.translate('size')}: ${cartItem.size}',
+                          ),
+                        if (cartItem.color != null)
+                          _buildMiniChip(
+                            '${AppLocalizations.of(context)!.translate('colors')}: ${cartItem.color}',
+                          ),
+                      ],
                     ),
-                  // عرض الكمية المتوفرة في المخزون
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text(
-                      '${AppLocalizations.of(context)!.translate('available')} ${cartItem.maxQuantity}',
-                      style: TextStyle(
-                        color: cartItem.maxQuantity < 5
-                            ? Colors.red
-                            : Colors.green,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${itemTotalPrice.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
+                    style: const TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
-                  Row(
+                  const SizedBox(height: 10),
+                  // خيارات الإضافات
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 8,
                     children: [
-                      Text(
-                        '${AppLocalizations.of(context)!.translate('total')}: ${((cartItem.price + (cartItem.withBox ? 5 : 0) + (cartItem.withOriginalBox ? 10 : 0)) * cartItem.quantity).toStringAsFixed(2)} '
-                        '${AppLocalizations.of(context)!.translate('currency')}',
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const Spacer(),
-                      // خيار إضافة علبة
-                      InkWell(
-                        onTap: () => cart.toggleWithBox(cartItem.id),
-                        child: Row(
-                          children: [
-                            Icon(
-                              cartItem.withBox
-                                  ? Icons.check_box
-                                  : Icons.check_box_outline_blank,
-                              size: 18,
-                              color: AppColors.primary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              AppLocalizations.of(
-                                context,
-                              )!.translate('with_box'),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: cartItem.withBox
-                                    ? AppColors.primary
-                                    : Colors.grey,
-                                fontWeight: cartItem.withBox
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                       if (cartItem.allowOriginalBox) ...[
-                        const SizedBox(width: 12),
-                        InkWell(
+                        _buildOptionToggle(
+                          context: context,
+                          label: 'علبة أصلية (+10)',
+                          isSelected: cartItem.withOriginalBox,
                           onTap: () => cart.toggleOriginalBox(cartItem.id),
-                          child: Row(
-                            children: [
-                              Icon(
-                                cartItem.withOriginalBox
-                                    ? Icons.check_box
-                                    : Icons.check_box_outline_blank,
-                                size: 18,
-                                color: AppColors.primary,
-                              ),
-                              const SizedBox(width: 4),
-                              const Text(
-                                'علبة أصلية (+10)',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ],
-                          ),
+                          icon: Icons.inventory_2_outlined,
                         ),
                       ],
                     ],
@@ -441,95 +380,177 @@ class _CartItemCard extends StatelessWidget {
                 ],
               ),
             ),
-            Column(
-              children: [
-                InkWell(
-                  onTap: () {
-                    final success = cart.updateItemQuantity(
-                      cartItem.id,
-                      cartItem.quantity + 1,
-                    );
-                    if (!success) {
-                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            AppLocalizations.of(
-                              context,
-                            )!.translate('max_quantity_reached'),
-                          ),
-                          duration: const Duration(seconds: 1),
-                        ),
+            // التحكم بالكمية
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: Colors.grey.shade100),
+              ),
+              child: Column(
+                children: [
+                  InkWell(
+                    onTap: () {
+                      final success = cart.updateItemQuantity(
+                        cartItem.id,
+                        cartItem.quantity + 1,
                       );
-                    }
-                  },
-                  child: const Icon(Icons.add_circle, color: AppColors.primary),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Text(
-                    '${cartItem.quantity}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-                InkWell(
-                  onTap: () async {
-                    if (cartItem.quantity > 1) {
-                      cart.removeSingleItem(cartItem.id);
-                    } else {
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Text(
-                              AppLocalizations.of(
-                                context,
-                              )!.translate('confirm_deletion'),
-                            ),
+                      if (!success) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
                             content: Text(
                               AppLocalizations.of(
                                 context,
-                              )!.translate('delete_user_confirmation'),
+                              )!.translate('max_quantity_reached'),
                             ),
-                            actions: <Widget>[
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(false),
-                                child: Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.translate('cancel'),
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(true),
-                                child: Text(
-                                  AppLocalizations.of(
-                                    context,
-                                  )!.translate('delete'),
-                                  style: const TextStyle(color: Colors.red),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                      if (confirm == true) {
-                        cart.removeItem(cartItem.id);
+                            duration: const Duration(seconds: 1),
+                          ),
+                        );
                       }
-                    }
-                  },
-                  child: Icon(Icons.remove_circle, color: Colors.grey[400]),
-                ),
-              ],
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: AppColors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.add,
+                        color: AppColors.primary,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Text(
+                      '${cartItem.quantity}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () async {
+                      if (cartItem.quantity > 1) {
+                        cart.removeSingleItem(cartItem.id);
+                      } else {
+                        final confirm = await _showDeleteDialog(context);
+                        if (confirm == true) {
+                          cart.removeItem(cartItem.id);
+                        }
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: AppColors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.remove,
+                        color: Colors.grey[400],
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildMiniChip(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 10, color: Colors.grey),
+      ),
+    );
+  }
+
+  Widget _buildOptionToggle({
+    required BuildContext context,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required IconData icon,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary.withValues(alpha: 0.1)
+              : Colors.transparent,
+          border: Border.all(
+            color: isSelected ? AppColors.primary : Colors.grey.shade200,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isSelected ? Icons.check_circle : icon,
+              size: 14,
+              color: isSelected ? AppColors.primary : Colors.grey,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: isSelected ? AppColors.primary : Colors.grey,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<bool?> _showDeleteDialog(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            AppLocalizations.of(context)!.translate('confirm_deletion'),
+          ),
+          content: Text(
+            AppLocalizations.of(context)!.translate('delete_user_confirmation'),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(AppLocalizations.of(context)!.translate('cancel')),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(
+                AppLocalizations.of(context)!.translate('delete'),
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -575,15 +596,47 @@ class _CheckoutSection extends StatelessWidget {
             ),
 
             // Gift Box Total
+            const SizedBox(height: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: cart.withGiftBox
+                    ? const Color(0xFF9E773A).withValues(alpha: 0.05)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: cart.withGiftBox
+                      ? const Color(0xFF9E773A).withValues(alpha: 0.2)
+                      : Colors.transparent,
+                ),
+              ),
+              child: SwitchListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                title: Text(
+                  AppLocalizations.of(context)!.translate('with_box'),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF9E773A),
+                  ),
+                ),
+                subtitle: Text(
+                  '+5.00 ${AppLocalizations.of(context)!.translate('currency')}',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                secondary: const Icon(
+                  Icons.card_giftcard,
+                  color: Color(0xFF9E773A),
+                ),
+                value: cart.withGiftBox,
+                activeThumbColor: const Color(0xFF9E773A),
+                onChanged: (_) => cart.toggleGiftBox(),
+              ),
+            ),
             if (cart.giftTotal > 0) ...[
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    AppLocalizations.of(context)!.translate('with_box'),
-                    style: const TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
                   Text(
                     '${cart.giftTotal.toStringAsFixed(2)} ${AppLocalizations.of(context)!.translate('currency')}',
                     style: const TextStyle(

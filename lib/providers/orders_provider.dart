@@ -113,7 +113,6 @@ class OrdersProvider with ChangeNotifier {
                         imageUrl: p['imageUrl'] ?? '',
                         size: p['size'],
                         color: p['color'],
-                        withBox: p['withBox'] ?? false,
                         withOriginalBox: p['withOriginalBox'] ?? false,
                       );
                     })

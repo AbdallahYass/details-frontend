@@ -27,7 +27,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   String? _selectedSize;
   int _quantity = 1; // متغير الكمية
   bool _isActionLoading = false;
-  bool _withBox = false; // خيار العلبة الجديد
   final PageController _pageController = PageController();
   int _selectedColorIndex = 0;
 
@@ -298,8 +297,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                           if (_product!.colors.isNotEmpty)
                             _buildColorSelector(),
                           if (_product!.sizes.isNotEmpty) _buildSizeSelector(),
-                          const SizedBox(height: 20),
-                          _buildGiftBoxToggle(), // زر خيار العلبة الجديد
                           const SizedBox(height: 30),
                           _buildDescription(),
                           if (relatedProducts.isNotEmpty)
@@ -689,47 +686,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildGiftBoxToggle() {
-    return InkWell(
-      onTap: () => setState(() => _withBox = !_withBox),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: _withBox ? _dsBrown.withValues(alpha: 0.05) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: _withBox ? _dsBrown : AppColors.grey200,
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              _withBox ? Icons.check_box : Icons.check_box_outline_blank,
-              color: _withBox ? _dsBrown : AppColors.grey,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.translate('with_box'),
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: _dsBrown,
-                      fontSize: 15,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -1287,7 +1243,6 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
                                 color: selectedColor,
                                 maxQuantity: _availableQuantity,
                                 quantityToAdd: _quantity,
-                                withBox: _withBox, // تمرير خيار العلبة للسلة
                                 allowOriginalBox: _product!.canHaveOriginalBox,
                               );
 

@@ -21,6 +21,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
   final _phoneController = TextEditingController();
   final _couponController = TextEditingController();
   final _nameController = TextEditingController(); // حقل الاسم الجديد
+  final _notesController = TextEditingController(); // 🌟 حقل الملاحظات الجديد
   String _paymentMethod = 'cod'; // cash on delivery
   bool _isLoading = false;
   late AnimationController _rotationController;
@@ -117,6 +118,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     _phoneController.dispose();
     _couponController.dispose();
     _nameController.dispose();
+    _notesController.dispose(); // 🌟 تنظيف الذاكرة
     super.dispose();
   }
 
@@ -183,23 +185,22 @@ class _CheckoutScreenState extends State<CheckoutScreen>
               'size': cp.size, // إضافة المقاس كحقل منفصل
               'color': cp.color, // إرسال اللون للباك اند
               'quantity': cp.quantity,
-              'price':
-                  cp.price +
-                  (cp.withBox ? 5.0 : 0) +
-                  (cp.withOriginalBox ? 10.0 : 0),
+              'price': cp.price + (cp.withOriginalBox ? 10.0 : 0),
               'imageUrl': cp.imageUrl,
-              'withBox': cp.withBox, // 🌟 إرسال خيار العلبة للباك اند
+              'withBox': false,
               'withOriginalBox': cp.withOriginalBox,
             },
           )
           .toList(),
-      'subtotal': cart.subtotal + cart.giftTotal + cart.originalBoxTotal,
+      'subtotal': cart.subtotal + cart.originalBoxTotal + cart.giftTotal,
       'discountAmount': cart.discountAmount,
       'couponCode': cart.couponCode,
       'deliveryFee': _deliveryFee, // إضافة سعر التوصيل كحقل منفصل
       'amount':
           cart.totalAmount +
           _deliveryFee, // totalAmount أصبح يشمل giftTotal تلقائياً من الـ Provider
+      'notes': _notesController.text.trim(), // 🌟 إرسال الملاحظات للباك إند
+      'withGiftBox': cart.withGiftBox, // 🌟 إرسال خيار التغليف للاوردر كامل
       'shippingAddress': {
         'name': _nameController.text.trim(), // إرسال الاسم المدخل في الحقل
         'city': _isDelivery
@@ -651,6 +652,15 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                       }
                                       return null;
                                     },
+                                  ),
+                                  const SizedBox(height: 15),
+                                  _buildTextField(
+                                    controller: _notesController,
+                                    label: AppLocalizations.of(
+                                      context,
+                                    )!.translate('order_notes'),
+                                    icon: Icons.note_alt_outlined,
+                                    maxLines: 3, // السماح بكتابة 3 أسطر
                                   ),
                                   if (_isDelivery) ...[
                                     const SizedBox(height: 15),
@@ -1224,12 +1234,15 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
     String? Function(String?)? validator,
+    int maxLines = 1, // 🌟 إضافة باراميتر جديد للتحكم بعدد الأسطر
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      maxLines: maxLines, // 🌟
       decoration: InputDecoration(
         labelText: label,
+        alignLabelWithHint: maxLines > 1, // لضمان ظهور العنوان في الأعلى
         prefixIcon: Icon(icon, color: AppColors.primary),
         filled: true,
         fillColor: AppColors.white,
