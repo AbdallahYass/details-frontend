@@ -448,6 +448,7 @@ class AuthProvider with ChangeNotifier {
     String? email,
     String? avatar,
     String? password,
+    String? fcmToken, // 🌟 إضافة توكن الإشعارات هنا
     bool? receiveNotifications, // 🌟 إضافة حقل جديد
   }) async {
     _isLoading = true;
@@ -462,6 +463,8 @@ class AuthProvider with ChangeNotifier {
         if (receiveNotifications != null)
           'receiveNotifications':
               receiveNotifications, // 🌟 إرسال إعدادات الإشعارات
+        if (fcmToken != null)
+          'fcmToken': fcmToken, // 🌟 إرسال التوكن للسيرفر ليتم حفظه
         if (avatar != null) 'avatar': avatar,
       };
       if (password != null && password.isNotEmpty) body['password'] = password;
@@ -476,7 +479,12 @@ class AuthProvider with ChangeNotifier {
       );
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        _user = User.fromJson(data);
+        // تحسين: دمج البيانات المحدثة مع البيانات الحالية لضمان عدم فقدان isAdmin أو غيرها
+        final updatedUserMap = _user!.toJson();
+        final responseMap = data as Map<String, dynamic>;
+        updatedUserMap.addAll(responseMap);
+
+        _user = User.fromJson(updatedUserMap);
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('userData', json.encode(_user!.toJson()));
         _isLoading = false;

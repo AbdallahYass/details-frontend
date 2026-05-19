@@ -149,6 +149,34 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
     }
   }
 
+  Future<bool> _showConfirmDialog() async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(
+              AppLocalizations.of(context)!.translate('confirm_delete'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(AppLocalizations.of(context)!.translate('cancel')),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(
+                  AppLocalizations.of(context)!.translate('delete'),
+                  style: const TextStyle(
+                    color: AppColors.adminDelete,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
   @override
   void dispose() {
     _nameArController.dispose();
@@ -751,10 +779,12 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                             .map(
                               (size) => Chip(
                                 label: Text(size),
-                                onDeleted: () {
-                                  setState(() {
-                                    _availableSizes.remove(size);
-                                  });
+                                onDeleted: () async {
+                                  if (await _showConfirmDialog()) {
+                                    setState(() {
+                                      _availableSizes.remove(size);
+                                    });
+                                  }
                                 },
                               ),
                             )
@@ -873,9 +903,13 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                                 top: -8,
                                 right: -8,
                                 child: GestureDetector(
-                                  onTap: () => setState(
-                                    () => _tempColorImages.remove(img),
-                                  ),
+                                  onTap: () async {
+                                    if (await _showConfirmDialog()) {
+                                      setState(
+                                        () => _tempColorImages.remove(img),
+                                      );
+                                    }
+                                  },
                                   child: const CircleAvatar(
                                     radius: 10,
                                     backgroundColor: AppColors.adminDelete,
@@ -914,10 +948,12 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                                     ),
                                   ),
                             label: Text(c.hex),
-                            onDeleted: () {
-                              setState(() {
-                                _colors.remove(c);
-                              });
+                            onDeleted: () async {
+                              if (await _showConfirmDialog()) {
+                                setState(() {
+                                  _colors.remove(c);
+                                });
+                              }
                             },
                           );
                         }).toList(),
@@ -1292,9 +1328,13 @@ class _AddEditProductScreenState extends State<AddEditProductScreen> {
                                 top: 0,
                                 right: 10,
                                 child: GestureDetector(
-                                  onTap: () => setState(() {
-                                    _galleryImages.removeAt(i);
-                                  }),
+                                  onTap: () async {
+                                    if (await _showConfirmDialog()) {
+                                      setState(() {
+                                        _galleryImages.removeAt(i);
+                                      });
+                                    }
+                                  },
                                   child: const CircleAvatar(
                                     radius: 12,
                                     backgroundColor: AppColors.adminDelete,

@@ -101,9 +101,12 @@ class _DetailsStoreAppState extends State<DetailsStoreApp> {
 
       NotificationSettings settings;
       if (kIsWeb) {
-        // في الويب، نطلب الصلاحية فقط، والمتصفح سيتجاهلها إذا لم تكن مرتبطة بـ Gesture
-        // لكننا نضعها في try-catch لمنع تعطل التطبيق بالكامل
-        settings = await messaging.getNotificationSettings();
+        // Safari PWA يحتاج طلب صريح للصلاحية
+        settings = await messaging.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
       } else {
         settings = await messaging.requestPermission(
           alert: true,
@@ -122,7 +125,19 @@ class _DetailsStoreAppState extends State<DetailsStoreApp> {
         );
 
         debugPrint('🔥 FCM Token: $token');
-        // سيتم لاحقاً إرسال هذا التوكن للباك إند لحفظه مع حساب المستخدم
+
+        // 🚀 الخطوة الأهم: ربط الجهاز بحساب الأدمن في السيرفر
+        if (token != null && mounted) {
+          final auth = Provider.of<AuthProvider>(context, listen: false);
+          if (auth.isAuthenticated) {
+            await auth.updateProfile(
+              name: auth.user!.name,
+              phone: auth.user!.phone,
+              fcmToken: token,
+              receiveNotifications: true,
+            );
+          }
+        }
       } else {
         debugPrint('❌ المستخدم رفض صلاحية الإشعارات');
       }

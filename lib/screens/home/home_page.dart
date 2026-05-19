@@ -52,6 +52,20 @@ class _HomePageState extends State<HomePage>
       if (mounted && auth.isAuthenticated) {
         notifProvider.fetchNotifications(context, authProvider: auth);
       }
+
+      // بدء تشغيل السلايدر بمجرد توفر البيانات
+      _setupHeroTimerListener();
+    });
+  }
+
+  void _setupHeroTimerListener() {
+    final provider = Provider.of<HomeProvider>(context, listen: false);
+    provider.addListener(() {
+      if (!provider.isLoading &&
+          provider.banners.isNotEmpty &&
+          (_heroTimer == null || !_heroTimer!.isActive)) {
+        _startHeroScroll();
+      }
     });
   }
 
@@ -60,7 +74,6 @@ class _HomePageState extends State<HomePage>
     WidgetsBinding.instance.removeObserver(this);
     _heroTimer?.cancel();
     _bannerIndexNotifier.dispose();
-    _heroController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -131,31 +144,28 @@ class _HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<HomeProvider>(
-      builder: (context, provider, child) {
-        // بدء التمرير إذا لم يكن نشطاً وكانت البيانات جاهزة
-        if (!provider.isLoading &&
-            provider.banners.isNotEmpty &&
-            (_heroTimer == null || !_heroTimer!.isActive)) {
-          _startHeroScroll();
-        }
-
-        return Scaffold(
-          backgroundColor: const Color(0xFFFDFBF7),
-          extendBodyBehindAppBar: true,
-          body: Stack(
-            children: [
-              Positioned.fill(
-                child: Image.asset(
-                  'assets/images/bg.png',
-                  fit: BoxFit.cover,
-                  gaplessPlayback: true,
-                  cacheWidth: 1080,
-                  filterQuality: FilterQuality.none, // 5️⃣ Performance
-                ),
+    return Scaffold(
+      backgroundColor: const Color(0xFFFDFBF7),
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
+          // تحسين 1: عزل الخلفية خارج الـ Consumer تماماً لمنع إعادة بنائها
+          Positioned.fill(
+            child: RepaintBoundary(
+              child: Image.asset(
+                'assets/images/bg.png',
+                fit: BoxFit.cover,
+                gaplessPlayback: true,
+                cacheWidth: 1080,
               ),
-              CustomScrollView(
+            ),
+          ),
+          Consumer<HomeProvider>(
+            builder: (context, provider, child) {
+              return CustomScrollView(
                 controller: _scrollController,
+                cacheExtent:
+                    1000, // تحسين 2: تحميل مسبق للعناصر لتقليل التقطيع أثناء السكرول
                 physics: const BouncingScrollPhysics(
                   parent: AlwaysScrollableScrollPhysics(),
                 ),
@@ -229,13 +239,16 @@ class _HomePageState extends State<HomePage>
                     SliverToBoxAdapter(
                       child: (provider.isLoading && provider.banners.isEmpty)
                           ? _buildHeroSkeleton()
-                          : HomeHeroSlider(
-                              banners: provider.banners,
-                              controller: _heroController,
-                              notifier: _bannerIndexNotifier,
-                              onBannerTap: _onBannerTap,
-                              onPointerDown: (_) => _heroTimer?.cancel(),
-                              onPointerUp: (_) => _startHeroScroll(),
+                          : RepaintBoundary(
+                              // تحسين 3: عزل السلايدر تماماً لأنه يتحرك باستمرار
+                              child: HomeHeroSlider(
+                                banners: provider.banners,
+                                controller: _heroController,
+                                notifier: _bannerIndexNotifier,
+                                onBannerTap: _onBannerTap,
+                                onPointerDown: (_) => _heroTimer?.cancel(),
+                                onPointerUp: (_) => _startHeroScroll(),
+                              ),
                             ),
                     ),
                     if (provider.isLoading && provider.categories.isEmpty)
@@ -259,11 +272,11 @@ class _HomePageState extends State<HomePage>
                     ),
                   ],
                 ],
-              ),
-            ],
+              );
+            },
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
@@ -437,23 +450,27 @@ class _HomePageState extends State<HomePage>
             height:
                 MediaQuery.of(context).size.height *
                 0.35, // 6️⃣ UX: Responsive Height
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              itemCount: provider.popularProducts.length,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemBuilder: (context, index) {
-                final product = provider.popularProducts[index];
-                return Container(
-                  width: 175,
-                  margin: const EdgeInsetsDirectional.only(end: 16),
-                  child: ProductCardItem(
-                    product: product,
-                    isHot: provider.popularIds.contains(product.id),
-                    heroEnabled: false,
-                  ),
-                );
-              },
+            child: RepaintBoundary(
+              // تحسين 4: عزل القائمة الأفقية
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                addRepaintBoundaries: true,
+                itemCount: provider.popularProducts.length,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemBuilder: (context, index) {
+                  final product = provider.popularProducts[index];
+                  return Container(
+                    width: 175,
+                    margin: const EdgeInsetsDirectional.only(end: 16),
+                    child: ProductCardItem(
+                      product: product,
+                      isHot: provider.popularIds.contains(product.id),
+                      heroEnabled: false,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -513,22 +530,26 @@ class _HomePageState extends State<HomePage>
               ),
               SizedBox(
                 height: 260,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: categoryProducts.length,
-                  itemBuilder: (context, index) {
-                    final product = categoryProducts[index];
-                    return Container(
-                      width: 160,
-                      margin: const EdgeInsetsDirectional.only(end: 15),
-                      child: ProductCardItem(
-                        product: product,
-                        isHot: provider.popularIds.contains(product.id),
-                      ),
-                    );
-                  },
+                child: RepaintBoundary(
+                  // تحسين 5: عزل كل صف تصنيفات
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    addRepaintBoundaries: true,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: categoryProducts.length,
+                    itemBuilder: (context, index) {
+                      final product = categoryProducts[index];
+                      return Container(
+                        width: 160,
+                        margin: const EdgeInsetsDirectional.only(end: 15),
+                        child: ProductCardItem(
+                          product: product,
+                          isHot: provider.popularIds.contains(product.id),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -625,21 +646,27 @@ class _HomePageState extends State<HomePage>
           ),
         ),
       ),
-      SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 5),
-        sliver: SliverGrid(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 15,
-            childAspectRatio: 0.85,
-          ),
-          delegate: SliverChildBuilderDelegate(
-            (context, index) => _buildCategoryItem(
-              category: provider.categories[index],
-              provider: provider,
+      SliverToBoxAdapter(
+        child: RepaintBoundary(
+          // عزل قائمة التصنيفات الأفقية لتحسين أداء السكرول
+          child: SizedBox(
+            height: 110, // الارتفاع المناسب لأيقونة التصنيف مع النص
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 26),
+              itemCount: provider.categories.length,
+              itemBuilder: (context, index) {
+                return Container(
+                  width: 85, // العرض المحدد لكل عنصر تصنيف
+                  margin: const EdgeInsetsDirectional.only(end: 12),
+                  child: _buildCategoryItem(
+                    category: provider.categories[index],
+                    provider: provider,
+                  ),
+                );
+              },
             ),
-            childCount: provider.categories.length,
           ),
         ),
       ),
