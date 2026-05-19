@@ -503,7 +503,7 @@ class AppDrawer extends StatelessWidget {
 
   Widget _drawerTile(
     BuildContext context, {
-    required IconData icon,
+    required dynamic icon,
     required String title,
     VoidCallback? onTap,
     Widget? trailing,
@@ -538,7 +538,9 @@ class AppDrawer extends StatelessWidget {
             color: themeColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: themeColor, size: 20),
+          child: icon is FaIconData
+              ? FaIcon(icon, color: themeColor, size: 20)
+              : Icon(icon as IconData, color: themeColor, size: 20),
         ),
         title: Text(
           title,

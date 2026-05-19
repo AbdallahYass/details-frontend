@@ -247,7 +247,7 @@ class HomeFooter extends StatelessWidget {
     );
   }
 
-  Widget _socialButton(IconData icon, String url) {
+  Widget _socialButton(FaIconData icon, String url) {
     return GestureDetector(
       onTap: () async {
         if (!await launchUrl(
