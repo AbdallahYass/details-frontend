@@ -476,7 +476,7 @@ class AuthProvider with ChangeNotifier {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_token',
         },
-      );
+      );//
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         // تحسين: دمج البيانات المحدثة مع البيانات الحالية لضمان عدم فقدان isAdmin أو غيرها
