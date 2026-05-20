@@ -118,6 +118,9 @@ class _DetailsStoreAppState extends State<DetailsStoreApp> {
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
         debugPrint('✅ المستخدم وافق على الإشعارات');
 
+        // انتظر قليلاً لضمان تسجيل الـ Service Worker في المتصفح
+        await Future.delayed(const Duration(seconds: 2));
+
         // 2. جلب التوكن الخاص بهذا المتصفح باستخدام مفتاح VAPID
         String? token = await messaging.getToken(
           vapidKey:

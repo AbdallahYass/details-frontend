@@ -503,7 +503,7 @@ class AppDrawer extends StatelessWidget {
 
   Widget _drawerTile(
     BuildContext context, {
-    required dynamic icon,
+    required dynamic icon, // تغيير النوع إلى dynamic
     required String title,
     VoidCallback? onTap,
     Widget? trailing,
